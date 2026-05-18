@@ -19,7 +19,28 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'https://superhumanly-thoughts.com'
 ];
 
-app.use(helmet());
+// D-12: style-src 'unsafe-inline' required for Tailwind + admin customCss until server-side CSS pipeline exists.
+const isDev = process.env.NODE_ENV !== 'production';
+const connectSrc = ["'self'"];
+if (isDev) {
+  connectSrc.push('http://localhost:5173', 'ws://localhost:5173', 'http://localhost:3001');
+}
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        frameSrc: ['https://www.youtube.com', 'https://www.youtube-nocookie.com'],
+        connectSrc,
+      },
+    },
+  }),
+);
 app.use(cors({
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
