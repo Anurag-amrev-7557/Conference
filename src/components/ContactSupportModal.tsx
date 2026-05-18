@@ -1,50 +1,47 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Mail, X, Send, Loader2, CheckCircle2 } from "lucide-react";
+/**
+ * Email-agent integration is deferred to Phase 3 (MKT-*).
+ * This modal uses mailto until the book API proxies /email-agent/process.
+ */
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, X, Send, Loader2, CheckCircle2 } from 'lucide-react';
 
 export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [responseMsg, setResponseMsg] = useState("");
-
-  const MARKETING_API_URL = import.meta.env.VITE_MARKETING_HUB_URL?.replace("/webhook", "") || "http://localhost:8000";
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [responseMsg, setResponseMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus("loading");
+    setStatus('loading');
+
+    // Phase 3 will proxy email-agent/process; no direct marketing-backend calls in Phase 2 (D-20).
+    const mailto = `mailto:support@bookwebsite.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+      `From: ${email}\n\n${body}`,
+    )}`;
+
     try {
-      const res = await fetch(`${MARKETING_API_URL}/email-agent/process`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sender: email,
-          recipient: "support@bookwebsite.com",
-          subject: subject,
-          body: body,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to send email");
-
-      const data = await res.json();
-      setResponseMsg(data.reply || "Message received! We will get back to you soon.");
-      setStatus("success");
-    } catch (err) {
-      console.error(err);
-      setStatus("error");
+      window.location.href = mailto;
+      setResponseMsg(
+        'Your email client should open with this message. Full AI support chat ships in Phase 3.',
+      );
+      setStatus('success');
+    } catch {
+      setStatus('error');
+      setResponseMsg(
+        'Support chat is temporarily unavailable. Email us at support@bookwebsite.com or try again later.',
+      );
     }
   };
 
   const handleClose = () => {
-    setStatus("idle");
-    setResponseMsg("");
-    setEmail("");
-    setSubject("");
-    setBody("");
+    setStatus('idle');
+    setResponseMsg('');
+    setEmail('');
+    setSubject('');
+    setBody('');
     onClose();
   };
 
@@ -70,32 +67,29 @@ export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onCl
               <X className="w-5 h-5" />
             </button>
 
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
+            <motion.div className="p-8">
+              <motion.div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-text">Email Support</h3>
-                  <p className="text-sm text-text2">Powered by our AI Agent</p>
+                  <p className="text-sm text-text2">Opens your mail app (AI agent in Phase 3)</p>
                 </div>
-              </div>
+              </motion.div>
 
-              {status === "success" ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
+              {status === 'success' ? (
+                <motion.div className="flex flex-col items-center justify-center py-8 text-center">
                   <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-                  <h4 className="text-lg font-bold text-text mb-2">Message Sent!</h4>
-                  <p className="text-text2 mb-6 max-w-[80%]">Our AI Agent has processed your request.</p>
-                  <div className="bg-off p-4 rounded-xl text-left border border-border text-sm text-text2 w-full max-h-48 overflow-y-auto whitespace-pre-wrap">
-                    {responseMsg}
-                  </div>
+                  <h4 className="text-lg font-bold text-text mb-2">Ready to Send</h4>
+                  <p className="text-text2 mb-6 max-w-[80%]">{responseMsg}</p>
                   <button
                     onClick={handleClose}
                     className="mt-6 px-6 py-2 bg-text text-white rounded-full text-sm font-medium hover:bg-text2 transition-colors"
                   >
                     Close
                   </button>
-                </div>
+                </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -132,29 +126,30 @@ export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onCl
                     />
                   </div>
 
-                  {status === "error" && (
+                  {status === 'error' && (
                     <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-                      Failed to contact our support agent. Please try again later.
+                      {responseMsg ||
+                        'Support is temporarily unavailable. Email support@bookwebsite.com directly.'}
                     </div>
                   )}
 
                   <button
                     type="submit"
-                    disabled={status === "loading"}
+                    disabled={status === 'loading'}
                     className="w-full mt-2 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent2 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {status === "loading" ? (
+                    {status === 'loading' ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <>
-                        <span>Send Message</span>
+                        <span>Open in Email App</span>
                         <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                       </>
                     )}
                   </button>
                 </form>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         </motion.div>
       )}
