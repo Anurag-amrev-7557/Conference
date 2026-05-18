@@ -7,7 +7,7 @@ Milestone v1.0 delivers a production-ready book marketing platform in nine depen
 ## Phases
 
 - [x] **Phase 1: Backend Completeness** — Close API gaps so every client mutation has a working server route and validated contracts. (completed 2026-05-18)
-- [ ] **Phase 2: Security Hardening** — Production-safe auth, sanitization, CORS, and server-side marketing proxy (no secrets in browser).
+- [x] **Phase 2: Security Hardening** — Production-safe auth, sanitization, CORS, and server-side marketing proxy (no secrets in browser). (completed 2026-05-18)
 - [ ] **Phase 3: Marketing Integration** — End-to-end linkage with `marketing-backend` for telemetry, identity, and email agent flows.
 - [ ] **Phase 4: Production Infrastructure** — CI/CD, env separation, database strategy, deployment runbook, domain alignment.
 - [ ] **Phase 5: Quality & Testing** — Automated regression coverage and dependency hygiene for release confidence.
@@ -60,15 +60,15 @@ Plans:
 
 **Wave 1**
 
-- [ ] 02-01: JWT boot checks, rate limiting, gitignore for `dev.db`, safe seed behavior.
+- [x] 02-01: JWT boot checks, rate limiting, gitignore for `dev.db`, safe seed behavior.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02: Markdown/CSS sanitization and tightened Helmet/CSP.
+- [x] 02-02: Markdown/CSS sanitization and tightened Helmet/CSP.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03: Marketing proxy routes on book API; remove client-side API key usage.
+- [x] 02-03: Marketing proxy routes on book API; remove client-side API key usage.
 
 ### Phase 3: Marketing Integration
 
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → … → 9
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Completeness | 3/3 | Complete   | 2026-05-18 |
-| 2. Security Hardening | 0/3 | Not started | - |
+| 2. Security Hardening | 3/3 | Complete   | 2026-05-18 |
 | 3. Marketing Integration | 0/2 | Not started | - |
 | 4. Production Infrastructure | 0/3 | Not started | - |
 | 5. Quality & Testing | 0/2 | Not started | - |
