@@ -1,53 +1,181 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { sanitizeArticleHtml } from '../lib/sanitize';
 
 const router = Router();
 
-// GET /api/v1/content
-// Unified site data fetch
-router.get('/', async (req, res) => {
+const safeParse = (str: string | null | undefined, fallback: unknown = {}) => {
   try {
-    const [content, articles, events, communityPosts] = await Promise.all([
-      prisma.siteContent.findUnique({ where: { id: 'global' } }),
+    return str ? JSON.parse(str) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+function parsePagination(req: Request) {
+  const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1), 100);
+  const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+  return { limit, offset };
+}
+
+function mapEvent(e: {
+  id: string;
+  day: string;
+  weekday: string;
+  time: string;
+  full_time: string;
+  title: string;
+  host: string;
+  location: string;
+  tags: string;
+  price: string;
+  thumbnail: string;
+  status: string;
+  isPublished: boolean;
+  lat: number | null;
+  lng: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return {
+    ...e,
+    tags: safeParse(e.tags, []),
+    coordinates: e.lat != null && e.lng != null ? { lat: e.lat, lng: e.lng } : undefined,
+  };
+}
+
+function mapArticle<T extends { content: string }>(article: T): T {
+  return { ...article, content: sanitizeArticleHtml(article.content) };
+}
+
+function mapCommunityPost(p: {
+  id: string;
+  title: string;
+  content: string;
+  authorName: string;
+  authorAvatar: string;
+  authorRole: string | null;
+  category: string;
+  votes: number;
+  createdAt: Date;
+  updatedAt: Date;
+  isPinned: boolean;
+  comments: { id: string; authorName: string; authorAvatar: string; content: string; createdAt: Date }[];
+}) {
+  return {
+    ...p,
+    comments: p.comments.map((c) => ({
+      ...c,
+      author: { name: c.authorName, avatar: c.authorAvatar },
+    })),
+  };
+}
+
+async function fetchSitePayload() {
+  const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
+  return {
+    hero: safeParse(content?.hero),
+    stats: safeParse(content?.stats, []),
+    pillars: safeParse(content?.pillars, []),
+    perks: safeParse(content?.perks, []),
+    settings: safeParse(content?.settings),
+    appearance: safeParse(content?.appearance),
+  };
+}
+
+// GET /api/v1/content/site
+router.get('/site', async (_req, res) => {
+  try {
+    res.json(await fetchSitePayload());
+  } catch (error) {
+    console.error('Content site fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch site content.' });
+  }
+});
+
+// GET /api/v1/content/articles
+router.get('/articles', async (req, res) => {
+  const { limit, offset } = parsePagination(req);
+  try {
+    const [items, total] = await Promise.all([
+      prisma.article.findMany({
+        orderBy: { publishedAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.article.count(),
+    ]);
+    res.setHeader('X-Total-Count', String(total));
+    res.json({ items: items.map(mapArticle), total });
+  } catch (error) {
+    console.error('Articles fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch articles.' });
+  }
+});
+
+// GET /api/v1/content/events
+router.get('/events', async (req, res) => {
+  const { limit, offset } = parsePagination(req);
+  try {
+    const [rows, total] = await Promise.all([
+      prisma.event.findMany({
+        orderBy: { day: 'asc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.event.count(),
+    ]);
+    const items = rows.map(mapEvent);
+    res.setHeader('X-Total-Count', String(total));
+    res.json({ items, total });
+  } catch (error) {
+    console.error('Events fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch events.' });
+  }
+});
+
+// GET /api/v1/content/community
+router.get('/community', async (req, res) => {
+  const { limit, offset } = parsePagination(req);
+  try {
+    const [rows, total] = await Promise.all([
+      prisma.communityPost.findMany({
+        include: {
+          comments: { take: 5, orderBy: { createdAt: 'desc' } },
+        },
+        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+        take: limit,
+        skip: offset,
+      }),
+      prisma.communityPost.count(),
+    ]);
+    const items = rows.map(mapCommunityPost);
+    res.setHeader('X-Total-Count', String(total));
+    res.json({ items, total });
+  } catch (error) {
+    console.error('Community fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch community posts.' });
+  }
+});
+
+// GET /api/v1/content — legacy monolithic (backward compat)
+router.get('/', async (_req, res) => {
+  try {
+    const site = await fetchSitePayload();
+    const [articlesRes, eventsRes, communityRes] = await Promise.all([
       prisma.article.findMany({ orderBy: { publishedAt: 'desc' } }),
       prisma.event.findMany({ orderBy: { day: 'asc' } }),
-      prisma.communityPost.findMany({ 
-        include: { 
-          comments: { take: 5, orderBy: { createdAt: 'desc' } } 
-        },
-        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }]
-      })
+      prisma.communityPost.findMany({
+        include: { comments: { take: 5, orderBy: { createdAt: 'desc' } } },
+        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+      }),
     ]);
 
-    // Safe JSON Parsing Utility
-    const safeParse = (str: string | null | undefined, fallback: any = {}) => {
-      try {
-        return str ? JSON.parse(str) : fallback;
-      } catch (e) {
-        return fallback;
-      }
-    };
-
     res.json({
-      hero: safeParse(content?.hero),
-      articles,
-      events: events.map(e => ({
-        ...e,
-        tags: safeParse(e.tags, []),
-        coordinates: e.lat && e.lng ? { lat: e.lat, lng: e.lng } : undefined
-      })),
-      communityPosts: communityPosts.map(p => ({
-        ...p,
-        comments: p.comments.map(c => ({
-          ...c,
-          author: { name: c.authorName, avatar: c.authorAvatar }
-        }))
-      })),
-      stats: safeParse(content?.stats, []),
-      pillars: safeParse(content?.pillars, []),
-      perks: safeParse(content?.perks, []),
-      settings: safeParse(content?.settings),
-      appearance: safeParse(content?.appearance)
+      ...site,
+      articles: articlesRes.map(mapArticle),
+      events: eventsRes.map(mapEvent),
+      communityPosts: communityRes.map(mapCommunityPost),
     });
   } catch (error) {
     console.error('Content fetch error:', error);
