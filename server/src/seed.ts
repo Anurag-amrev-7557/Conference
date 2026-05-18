@@ -1,3 +1,7 @@
+/**
+ * BACK-06 single source of truth for demo/production site content.
+ * Frontend initialData is skeleton-only; run seed to populate the database.
+ */
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
@@ -5,10 +9,10 @@ const prisma = new PrismaClient();
 
 async function main() {
   // 1. Create Admin
-  const hashedPassword = await bcrypt.hash('admin123', 10);
+  const hashedPassword = await bcrypt.hash('Welcome@1234', 10);
   await prisma.admin.upsert({
     where: { username: 'admin' },
-    update: { password: hashedPassword },
+    update: {},
     create: {
       username: 'admin',
       password: hashedPassword
