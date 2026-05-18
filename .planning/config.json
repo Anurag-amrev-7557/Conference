@@ -1,0 +1,9 @@
+{
+  "project_code": "BOOK",
+  "project_title": "Book Website",
+  "workflow": {
+    "research": true,
+    "ui_phase": true,
+    "text_mode": false
+  }
+}
