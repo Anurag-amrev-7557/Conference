@@ -11,6 +11,7 @@ import {
   communityPinSchema,
 } from '../schemas/community';
 import { getJwtSecret } from '../lib/jwtSecret';
+import { sanitizeArticleHtml, validateCustomCss } from '../lib/sanitize';
 
 const router = Router();
 
@@ -54,6 +55,16 @@ router.get('/me', (req: Request, res: Response) => {
 // PATCH /api/v1/admin/content
 router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
   const { hero, settings, appearance, stats, pillars, perks } = req.body;
+
+  if (settings && typeof settings === 'object' && settings !== null && 'customCss' in settings) {
+    const cssCheck = validateCustomCss((settings as Record<string, unknown>).customCss);
+    if (!cssCheck.ok) {
+      return res.status(400).json({
+        errors: [{ path: cssCheck.field, message: cssCheck.message }],
+      });
+    }
+  }
+
   try {
     const updated = await prisma.siteContent.update({
       where: { id: 'global' },
@@ -76,7 +87,11 @@ router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
 
 router.post('/blogs', validateBody(articleCreateSchema), async (req, res) => {
   try {
-    const article = await prisma.article.create({ data: req.body });
+    const data = { ...req.body };
+    if (typeof data.content === 'string') {
+      data.content = sanitizeArticleHtml(data.content);
+    }
+    const article = await prisma.article.create({ data });
     res.json(article);
   } catch {
     res.status(500).json({ error: 'Failed to create article.' });
@@ -85,9 +100,13 @@ router.post('/blogs', validateBody(articleCreateSchema), async (req, res) => {
 
 router.put('/blogs/:id', validateBody(articleUpdateSchema), async (req, res) => {
   try {
+    const data = { ...req.body };
+    if (typeof data.content === 'string') {
+      data.content = sanitizeArticleHtml(data.content);
+    }
     const article = await prisma.article.update({
       where: { id: req.params.id },
-      data: req.body,
+      data,
     });
     res.json(article);
   } catch {
