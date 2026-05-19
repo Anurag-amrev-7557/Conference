@@ -25,7 +25,7 @@ const LinkedInIcon = (props: any) => (
 
 export const BlogPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { data } = useWebsiteData();
+  const { data, loading } = useWebsiteData();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -40,11 +40,11 @@ export const BlogPostPage: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!article) {
+    if (!loading && !article) {
       navigate('/blog');
     }
     window.scrollTo(0, 0);
-  }, [article, navigate]);
+  }, [article, navigate, loading]);
 
   const handleCopyLink = () => {
     if (!article) return;
