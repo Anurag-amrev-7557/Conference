@@ -78,20 +78,19 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v1.0 Production-Ready Book Website
+## Current Milestone: v1.1 Premium Presentation & SEO Dominance
 
-**Goal:** Deliver a production-ready book marketing platform with complete backend, hardened security, marketing-backend integration, deployable infrastructure, test coverage, and expanded product capabilities (RBAC, chat, payments, mobile).
+**Goal:** Transform the book website into a polished, modern, conversion-ready experience with best-in-class technical SEO so the site ranks competitively on Google for brand and topic queries.
 
 **Target features:**
-- Backend completeness (community APIs, validation, contract alignment)
-- Security hardening (secrets, rate limits, sanitization, marketing proxy)
-- Marketing integration (marketing-backend linkage, lead flows)
-- Production infrastructure (CI/CD, env, database strategy, deployment)
-- Quality (automated tests, dependency hygiene)
-- Multi-admin RBAC
-- Real-time chat
-- Payment processing
-- Mobile app / PWA
+- Technical SEO foundation (per-route meta, JSON-LD, dynamic sitemap, robots tuning)
+- Crawlability & Core Web Vitals (prerender/SSR strategy, performance, semantic HTML)
+- Content SEO (slug URLs, heading hierarchy, internal linking, per-page admin SEO)
+- Search Console readiness (verification, analytics, indexability audit)
+- Premium UI/UX polish (design system, responsive layouts, stable motion, premium flows)
+- Admin SEO tools (per-page OG images, noindex, snippet preview)
+
+**Prior milestone (v1.0) — paused at Phase 3:** Backend completeness and security hardening shipped (Phases 1–2). Marketing integration, infra, RBAC, chat, payments, and mobile deferred.
 
 ---
-*Last updated: 2026-05-18 after milestone v1.0 initialization*
+*Last updated: 2026-05-19 after milestone v1.1 initialization*
