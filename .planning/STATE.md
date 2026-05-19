@@ -2,40 +2,58 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Premium Presentation & SEO Dominance
-status: planning
-last_updated: "2026-05-19T05:04:30.636Z"
+status: ready_to_plan
+last_updated: "2026-05-19T18:00:00.000Z"
 last_activity: 2026-05-19
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
   percent: 0
+paused_milestone: v1.0
+paused_at_phase: 3
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-18)
-++
+See: .planning/PROJECT.md (updated 2026-05-19)
+
 **Core value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and marketing intelligence.
-**Current focus:** Phase 3 — marketing integration
+
+**Current focus:** Phase 10 — SEO Data Model & Site URL Contract (v1.1)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 10 of 16 (SEO Data Model & Site URL Contract)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-19 — Milestone v1.1 started
+Status: Ready to plan
+Last activity: 2026-05-19 — v1.1 roadmap created (Phases 10–16); v1.0 paused at Phase 3
+
+Progress: [░░░░░░░░░░] 0% (v1.1)
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed (v1.1): 0
+- v1.0 carryover: Phases 1–2 complete (6 plans)
+
+**By Phase (v1.1):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 10–16 | - | TBD | - |
 
 ## Accumulated Context
 
 ### Decisions
 
-- [Milestone v1.0]: Full scope includes RBAC, chat, payments, and mobile after foundation phases.
-- [Milestone v1.0]: Marketing integration uses server-side proxy (no API key in browser).
-- [Milestone v1.0]: Database strategy (Postgres vs SQLite volume) decided in Phase 4 planning.
+- [Milestone v1.1]: Stack continuity — prerender on Vite SPA, no Next.js migration.
+- [Milestone v1.1]: `SITE_URL` is single source of truth for canonical, OG, sitemap, JSON-LD.
+- [Milestone v1.1]: UI polish and CWV pass last to avoid regressing SEO validation.
+- [Milestone v1.0]: Paused at Phase 3; Phases 1–2 shipped.
 
 ### Pending Todos
 
@@ -43,4 +61,18 @@ None yet.
 
 ### Blockers/Concerns
 
-- GSD subagents not installed locally — plan/execute phases inline or run `npx get-shit-done-cc@latest --global`.
+- Community indexing policy: default `noindex` for `/community` unless product confirms — decide before Phases 13–14 planning.
+- Prerender CI: confirm Puppeteer path vs `GET /api/v1/seo/prerender-paths` in Phase 14 planning.
+
+## Deferred Items
+
+| Category | Item | Status | Deferred At |
+|----------|------|--------|-------------|
+| v1.0 | Marketing integration (Phase 3) | Paused | 2026-05-19 |
+| v1.0 | Infra, quality, RBAC, chat, payments, mobile (Phases 4–9) | Paused | 2026-05-19 |
+
+## Session Continuity
+
+Last session: 2026-05-19
+Stopped at: v1.1 roadmap written; ready for `/gsd:plan-phase 10`
+Resume file: None

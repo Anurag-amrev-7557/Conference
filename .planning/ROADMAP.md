@@ -1,218 +1,168 @@
 # Roadmap: Book Website
 
+## Milestones
+
+- ⏸️ **v1.0 Production-Ready** — Phases 1–9 (paused at Phase 3; Phases 1–2 complete) — see [MILESTONES.md](./MILESTONES.md)
+- 🚧 **v1.1 Premium Presentation & SEO Dominance** — Phases 10–16 (in progress)
+
 ## Overview
 
-Milestone v1.0 delivers a production-ready book marketing platform in nine dependency-ordered phases. Foundation work (backend completeness, security, marketing integration, infrastructure, quality) hardens the existing monorepo and marketing-backend linkage before expansion features (multi-admin RBAC, real-time chat, payments, mobile).
+**v1.1** transforms the existing React/Vite monograph site into a crawlable, shareable, premium author brand surface without a framework migration. Work follows dependency order: SEO data model and `SITE_URL` contract → per-route head management → structured data and semantics → crawl policy and dynamic sitemap → build-time prerender → admin SEO tools and measurement → premium UI and Core Web Vitals polish.
 
-## Phases
+**v1.0** foundation (backend APIs, security) remains shipped; marketing integration, infra, RBAC, chat, payments, and mobile stay deferred until v1.0 resumes or a later milestone.
 
-- [x] **Phase 1: Backend Completeness** — Close API gaps so every client mutation has a working server route and validated contracts. (completed 2026-05-18)
-- [x] **Phase 2: Security Hardening** — Production-safe auth, sanitization, CORS, and server-side marketing proxy (no secrets in browser). (completed 2026-05-18)
-- [ ] **Phase 3: Marketing Integration** — End-to-end linkage with `marketing-backend` for telemetry, identity, and email agent flows.
-- [ ] **Phase 4: Production Infrastructure** — CI/CD, env separation, database strategy, deployment runbook, domain alignment.
-- [ ] **Phase 5: Quality & Testing** — Automated regression coverage and dependency hygiene for release confidence.
-- [ ] **Phase 6: Multi-Admin RBAC** — Multiple editors with roles, permissions, and audit logging.
-- [ ] **Phase 7: Real-Time Chat** — Live community or support chat with moderation hooks.
-- [ ] **Phase 8: Payment Processing** — Book and event checkout with webhooks and marketing events.
-- [ ] **Phase 9: Mobile Experience** — Responsive polish, PWA installability, and API stability for native clients.
+## Phases (v1.1 — active)
 
-## Phase Details
+- [ ] **Phase 10: SEO Data Model & Site URL Contract** — Prisma/CMS SEO fields and `SITE_URL` as single source of truth for absolute URLs.
+- [ ] **Phase 11: Per-Route Head Management** — `react-helmet-async` per-route title, canonical, OG/Twitter; admin `noindex`; shell-only `index.html`.
+- [ ] **Phase 12: Structured Data & Semantic HTML** — JSON-LD on landing, blog, events; semantic heading/landmark/alt audit.
+- [ ] **Phase 13: Crawl Policy & Dynamic Sitemap** — Live `sitemap.xml` from published content; hardened `robots.txt`.
+- [ ] **Phase 14: Build-Time Prerender** — Post-build Puppeteer prerender bakes meta into static HTML for public routes.
+- [ ] **Phase 15: Admin SEO Tools & Measurement** — Per-article SEO tab, snippet preview, OG upload pipeline, GSC verification, web-vitals RUM.
+- [ ] **Phase 16: Premium UI & Core Web Vitals** — Design tokens, self-hosted fonts, accessible modals, motion/CWV budget, mobile polish.
 
-### Phase 1: Backend Completeness
+<details>
+<summary>⏸️ v1.0 Production-Ready (Phases 1–9) — PAUSED at Phase 3</summary>
 
+### Phase 1: Backend Completeness ✅
 **Goal**: Every CMS and community action the UI exposes persists through validated Express/Prisma APIs.
-**Depends on**: Nothing (first phase)
-**Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06, BACK-07
-**Success Criteria** (what must be TRUE):
+**Requirements**: BACK-01–BACK-07 | **Completed**: 2026-05-18
 
-  1. User can create community posts and comments without 404; votes persist.
-  2. Admin opening `/admin/*` with an expired token is redirected to login after server validation.
-  3. Invalid admin payloads return 400 with field-level errors, not silent Prisma failures.
-  4. Default content drift between `websiteData.ts` and seed is eliminated or documented as skeleton-only.
-
-**Plans**: 3 plans (TBD in `$gsd-plan-phase 1`)
-
-Plans:
-**Wave 1**
-
-- [x] 01-01: Implement community post/comment/vote routes and wire `WebsiteDataProvider` + `api.ts`.
-- [x] 01-02: Add admin session validation endpoint and Zod DTOs on admin mutating routes.
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [x] 01-03: Refine content API shape (pagination or split endpoints) and shared defaults strategy.
-
-### Phase 2: Security Hardening
-
-**Goal**: The stack meets production security baselines before handling payments and multi-user admin.
-**Depends on**: Phase 1
-**Requirements**: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, SEC-07
-**Success Criteria** (what must be TRUE):
-
-  1. Production boot fails fast without strong `JWT_SECRET`.
-  2. Login brute-force attempts are throttled.
-  3. XSS vectors from markdown and custom CSS are mitigated.
-  4. No marketing master key appears in built frontend assets.
-
-**Plans**: 3 plans (TBD in `$gsd-plan-phase 2`)
-
-Plans:
-
-**Wave 1**
-
-- [x] 02-01: JWT boot checks, rate limiting, gitignore for `dev.db`, safe seed behavior.
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [x] 02-02: Markdown/CSS sanitization and tightened Helmet/CSP.
-
-**Wave 3** *(blocked on Wave 2 completion)*
-
-- [x] 02-03: Marketing proxy routes on book API; remove client-side API key usage.
+### Phase 2: Security Hardening ✅
+**Goal**: Production security baselines before payments and multi-user admin.
+**Requirements**: SEC-01–SEC-07 | **Completed**: 2026-05-18
 
 ### Phase 3: Marketing Integration
+**Goal**: Book site and `marketing-backend` work as one lead-intelligence pipeline.
+**Requirements**: MKT-01–MKT-06 | **Status**: Not started
 
-**Goal**: Book site and `marketing-backend` work as one lead-intelligence pipeline in dev and prod.
-**Depends on**: Phase 2
-**Requirements**: MKT-01, MKT-02, MKT-03, MKT-04, MKT-05, MKT-06
+### Phases 4–9
+Production infrastructure, quality/testing, RBAC, chat, payments, mobile — deferred. Full detail in git history and prior ROADMAP revisions.
+
+</details>
+
+## Phase Details (v1.1)
+
+### Phase 10: SEO Data Model & Site URL Contract
+
+**Goal**: Editors and the stack share one SEO data model; all absolute URLs derive from a single `SITE_URL` configuration.
+**Depends on**: v1.0 Phases 1–2 (API/CMS baseline)
+**Requirements**: CRAWL-01, CMS-01, CMS-02
 **Success Criteria** (what must be TRUE):
 
-  1. All telemetry and form events reach marketing-backend with correct payload shape and API key server-side.
-  2. Anonymous and identified users merge correctly in marketing identity mesh.
-  3. Contact/email agent flow works through proxy without CORS or auth failures locally and in staging.
+  1. Editor can set per-article `seoTitle`, `seoDescription`, `ogImage`, and `noindex` in admin; values persist via API.
+  2. Editor can set global default OG image and Google Search Console verification token in site settings.
+  3. Canonical, OG, sitemap, and JSON-LD builders all resolve URLs from `SITE_URL` (no hardcoded production host drift).
 
-**Plans**: 2 plans (TBD in `$gsd-plan-phase 3`)
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
+### Phase 11: Per-Route Head Management
 
-- [ ] 03-01: Proxy implementation, event mapping, CORS alignment across three services.
-- [ ] 03-02: Lead capture, contact form, and session-resume flows verified against marketing-backend scoring.
-
-### Phase 4: Production Infrastructure
-
-**Goal**: The project is deployable repeatably with documented env, database, and health verification.
-**Depends on**: Phase 3
-**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06
+**Goal**: Every public URL exposes correct, unique head tags for users, crawlers, and social platforms.
+**Depends on**: Phase 10
+**Requirements**: META-01, META-02, META-03, META-04, META-05, META-06
 **Success Criteria** (what must be TRUE):
 
-  1. CI passes lint, build, and tests on every PR.
-  2. Database strategy is chosen and implemented (Postgres or persistent SQLite) with backup path documented.
-  3. Deploy runbook brings up frontend + book API + marketing-backend behind reverse proxy.
+  1. Visitor opening `/`, `/blog`, `/blog/:slug`, `/events`, or `/community` sees a unique document title and meta description (verify in dev tools or View Source after prerender).
+  2. Each public page includes a canonical link matching `SITE_URL` plus the current path.
+  3. Sharing any public page produces correct Open Graph and Twitter card previews (title, description, image, URL).
+  4. `/admin` and `/dashboard` include `noindex` and are excluded from sitemap generation.
+  5. Root `index.html` contains only minimal shell fallbacks—no duplicate canonical/OG conflicting with route head.
 
-**Plans**: 3 plans (TBD in `$gsd-plan-phase 4`)
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
+### Phase 12: Structured Data & Semantic HTML
 
-- [ ] 04-01: Env examples, naming alignment, health-check integration.
-- [ ] 04-02: CI workflow (GitHub Actions or equivalent).
-- [ ] 04-03: Database migration/volume + deployment runbook.
-
-### Phase 5: Quality & Testing
-
-**Goal**: Critical journeys have automated coverage so foundation phases stay stable during expansion.
-**Depends on**: Phase 4
-**Requirements**: QUAL-01, QUAL-02, QUAL-03, QUAL-04, QUAL-05
+**Goal**: Search engines and assistive tech understand page content through JSON-LD and semantic markup aligned with visible CMS data.
+**Depends on**: Phase 11
+**Requirements**: SCHEMA-01, SCHEMA-02, SCHEMA-03, SCHEMA-04, SCHEMA-05, SCHEMA-06
 **Success Criteria** (what must be TRUE):
 
-  1. Auth and admin CRUD routes have API tests; provider merge logic has unit tests.
-  2. Full local smoke path documented and runnable in one command sequence.
-  3. Dead dependencies and legacy config removed.
+  1. Landing page includes valid `WebSite` and `Organization` JSON-LD from CMS settings.
+  2. Landing page includes `Book` JSON-LD when title, author, cover, or ISBN are provided in CMS.
+  3. Each published blog post page includes `BlogPosting` JSON-LD matching the visible article.
+  4. Blog and event detail pages include `BreadcrumbList` JSON-LD reflecting site navigation.
+  5. Published events expose `Event` JSON-LD with machine-readable ISO start dates.
+  6. Public pages pass semantic audit: one `h1`, logical heading order, landmark regions, and non-empty `alt` on key images.
 
-**Plans**: 2 plans (TBD in `$gsd-plan-phase 5`)
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
+### Phase 13: Crawl Policy & Dynamic Sitemap
 
-- [ ] 05-01: Vitest + supertest suite for highest-risk paths.
-- [ ] 05-02: Cleanup, smoke script, and release checklist.
-
-### Phase 6: Multi-Admin RBAC
-
-**Goal**: Multiple staff can manage the site with role-appropriate permissions and accountability.
-**Depends on**: Phase 5
-**Requirements**: RBAC-01, RBAC-02, RBAC-03, RBAC-04, RBAC-05
+**Goal**: Crawlers discover all indexable public URLs through authoritative server-generated crawl files.
+**Depends on**: Phase 10 (published slugs, `SITE_URL`)
+**Requirements**: CRAWL-02, CRAWL-03
 **Success Criteria** (what must be TRUE):
 
-  1. Owner can create editor/moderator accounts without sharing one password.
-  2. Editors cannot access sections outside their role (e.g., settings vs blogs only).
-  3. Audit log shows who changed what and when.
+  1. `GET /sitemap.xml` returns XML listing published articles and events with accurate `lastmod` dates.
+  2. `robots.txt` allows public marketing paths, disallows `/admin` and `/dashboard`, and references the dynamic sitemap URL at `SITE_URL`.
 
-**Plans**: 3 plans (TBD in `$gsd-plan-phase 6`)
+**Plans**: TBD
 
-Plans:
+### Phase 14: Build-Time Prerender
 
-- [ ] 06-01: Admin user model, roles, JWT claims, permission middleware.
-- [ ] 06-02: Admin UI for user management and role assignment.
-- [ ] 06-03: Audit log storage and viewer in admin.
-
-### Phase 7: Real-Time Chat
-
-**Goal**: Users can converse in real time with persisted history and moderator controls.
-**Depends on**: Phase 6
-**Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05
+**Goal**: Non-JavaScript crawlers and social bots receive full HTML with baked meta for all indexable marketing routes.
+**Depends on**: Phases 11, 13 (working `SeoHead`, crawl route list)
+**Requirements**: CRAWL-04, CRAWL-05
 **Success Criteria** (what must be TRUE):
 
-  1. Messages appear in channel within 1s under normal load.
-  2. History loads on join; moderators can delete/mute per RBAC.
-  3. Optional marketing events fire for high-value chat engagement.
+  1. View Source on `/`, `/blog`, `/blog/:slug`, and `/events` shows title, description, canonical, and OG tags without executing client JS.
+  2. Prerendered HTML matches the meta Helmet renders in development for the same URL.
+  3. Build pipeline produces static HTML files for the public route allowlist (community only if product confirms indexing).
 
-**Plans**: 3 plans (TBD in `$gsd-plan-phase 7`)
+**Plans**: TBD
 
-Plans:
+### Phase 15: Admin SEO Tools & Measurement
 
-- [ ] 07-01: Transport layer (WebSocket/SSE) and message persistence schema.
-- [ ] 07-02: Chat UI integrated with community or support entry point.
-- [ ] 07-03: Moderation tools and marketing event hooks.
-
-### Phase 8: Payment Processing
-
-**Goal**: Users can buy the book and pay for events with verified webhooks and admin visibility.
-**Depends on**: Phase 7
-**Requirements**: PAY-01, PAY-02, PAY-03, PAY-04, PAY-05
+**Goal**: Editors control and preview SEO before publish; production reports Core Web Vitals and supports Search Console verification.
+**Depends on**: Phases 10, 11, 14 (live meta pipeline and prerender)
+**Requirements**: CMS-03, CMS-04, CMS-05, MSMT-01, PERF-04
 **Success Criteria** (what must be TRUE):
 
-  1. Successful Stripe (or chosen provider) checkout completes and records order state.
-  2. Paid event registration reflects in admin and triggers marketing lead event.
-  3. Webhook signatures are verified; invalid payloads rejected.
+  1. Editor uses a per-article SEO tab with fallback chain (override → title/excerpt → site defaults).
+  2. Editor sees SERP and social snippet previews that match live head output for the same fields.
+  3. Uploaded OG images are served at 1200×630 after server-side resize.
+  4. Google Search Console verification meta from admin settings appears in production HTML, including prerendered pages.
+  5. Production telemetry receives LCP, INP, and CLS from `web-vitals`.
 
-**Plans**: 3 plans (TBD in `$gsd-plan-phase 8`)
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
+### Phase 16: Premium UI & Core Web Vitals
 
-- [ ] 08-01: Payment provider integration, product/catalog model, checkout UI.
-- [ ] 08-02: Webhook handlers and admin registration views.
-- [ ] 08-03: Marketing-backend purchase events and receipt flow.
-
-### Phase 9: Mobile Experience
-
-**Goal**: Core journeys work excellently on mobile with installable PWA and stable APIs for future native apps.
-**Depends on**: Phase 8
-**Requirements**: MOB-01, MOB-02, MOB-03, MOB-04, MOB-05
+**Goal**: The public site feels premium and fast on mobile and desktop without undoing SEO crawlability.
+**Depends on**: Phase 15 (SEO milestone stable before motion/font changes)
+**Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, UX-06, PERF-01, PERF-02, PERF-03
 **Success Criteria** (what must be TRUE):
 
-  1. Landing, blog, events, and lead capture pass mobile UX review on iOS and Android browsers.
-  2. PWA is installable with manifest and icons; offline shell behavior documented.
-  3. Admin CMS usable on tablet for common edit tasks.
+  1. Landing, blog, events, and community share consistent design tokens (spacing, radius, shadow, typography).
+  2. Critical fonts load from self-hosted packages without visible layout shift from webfont swap.
+  3. Animations respect `prefers-reduced-motion`; LCP element is visible on first paint (not opacity-zero).
+  4. Mobile viewports pass review: no horizontal scroll, 44px touch targets, readable type scale.
+  5. Three.js and heavy GSAP are lazy-loaded or limited to below-fold/landing contexts; above-fold images have dimensions to prevent CLS.
 
-**Plans**: 2 plans (TBD in `$gsd-plan-phase 9`)
-
-Plans:
-
-- [ ] 09-01: Responsive polish, PWA manifest, service worker shell.
-- [ ] 09-02: API versioning policy doc and admin tablet layout pass.
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order: 1 → 2 → … → 9
+**Execution order (v1.1):** 10 → 11 → 12 → 13 → 14 → 15 → 16  
+*(Phase 12 can overlap Phase 13 after Phase 11; Phase 13 must precede Phase 14.)*
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Backend Completeness | 3/3 | Complete   | 2026-05-18 |
-| 2. Security Hardening | 3/3 | Complete   | 2026-05-18 |
-| 3. Marketing Integration | 0/2 | Not started | - |
-| 4. Production Infrastructure | 0/3 | Not started | - |
-| 5. Quality & Testing | 0/2 | Not started | - |
-| 6. Multi-Admin RBAC | 0/3 | Not started | - |
-| 7. Real-Time Chat | 0/3 | Not started | - |
-| 8. Payment Processing | 0/3 | Not started | - |
-| 9. Mobile Experience | 0/2 | Not started | - |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 10. SEO Data Model & Site URL Contract | v1.1 | 0/TBD | Not started | - |
+| 11. Per-Route Head Management | v1.1 | 0/TBD | Not started | - |
+| 12. Structured Data & Semantic HTML | v1.1 | 0/TBD | Not started | - |
+| 13. Crawl Policy & Dynamic Sitemap | v1.1 | 0/TBD | Not started | - |
+| 14. Build-Time Prerender | v1.1 | 0/TBD | Not started | - |
+| 15. Admin SEO Tools & Measurement | v1.1 | 0/TBD | Not started | - |
+| 16. Premium UI & Core Web Vitals | v1.1 | 0/TBD | Not started | - |
+
+**v1.1 requirement coverage:** 33/33 mapped ✓
+
+---
+*Roadmap updated: 2026-05-19 — Milestone v1.1 Phases 10–16*

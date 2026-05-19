@@ -93,45 +93,45 @@ Deferred enhancements beyond v1.1 roadmap scope.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| META-01 | TBD | Pending |
-| META-02 | TBD | Pending |
-| META-03 | TBD | Pending |
-| META-04 | TBD | Pending |
-| META-05 | TBD | Pending |
-| META-06 | TBD | Pending |
-| CRAWL-01 | TBD | Pending |
-| CRAWL-02 | TBD | Pending |
-| CRAWL-03 | TBD | Pending |
-| CRAWL-04 | TBD | Pending |
-| CRAWL-05 | TBD | Pending |
-| SCHEMA-01 | TBD | Pending |
-| SCHEMA-02 | TBD | Pending |
-| SCHEMA-03 | TBD | Pending |
-| SCHEMA-04 | TBD | Pending |
-| SCHEMA-05 | TBD | Pending |
-| SCHEMA-06 | TBD | Pending |
-| CMS-01 | TBD | Pending |
-| CMS-02 | TBD | Pending |
-| CMS-03 | TBD | Pending |
-| CMS-04 | TBD | Pending |
-| CMS-05 | TBD | Pending |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
-| UX-03 | TBD | Pending |
-| UX-04 | TBD | Pending |
-| UX-05 | TBD | Pending |
-| UX-06 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| PERF-04 | TBD | Pending |
-| MSMT-01 | TBD | Pending |
+| CRAWL-01 | Phase 10 | Pending |
+| CMS-01 | Phase 10 | Pending |
+| CMS-02 | Phase 10 | Pending |
+| META-01 | Phase 11 | Pending |
+| META-02 | Phase 11 | Pending |
+| META-03 | Phase 11 | Pending |
+| META-04 | Phase 11 | Pending |
+| META-05 | Phase 11 | Pending |
+| META-06 | Phase 11 | Pending |
+| SCHEMA-01 | Phase 12 | Pending |
+| SCHEMA-02 | Phase 12 | Pending |
+| SCHEMA-03 | Phase 12 | Pending |
+| SCHEMA-04 | Phase 12 | Pending |
+| SCHEMA-05 | Phase 12 | Pending |
+| SCHEMA-06 | Phase 12 | Pending |
+| CRAWL-02 | Phase 13 | Pending |
+| CRAWL-03 | Phase 13 | Pending |
+| CRAWL-04 | Phase 14 | Pending |
+| CRAWL-05 | Phase 14 | Pending |
+| CMS-03 | Phase 15 | Pending |
+| CMS-04 | Phase 15 | Pending |
+| CMS-05 | Phase 15 | Pending |
+| MSMT-01 | Phase 15 | Pending |
+| PERF-04 | Phase 15 | Pending |
+| UX-01 | Phase 16 | Pending |
+| UX-02 | Phase 16 | Pending |
+| UX-03 | Phase 16 | Pending |
+| UX-04 | Phase 16 | Pending |
+| UX-05 | Phase 16 | Pending |
+| UX-06 | Phase 16 | Pending |
+| PERF-01 | Phase 16 | Pending |
+| PERF-02 | Phase 16 | Pending |
+| PERF-03 | Phase 16 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 32 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 32
+- v1.1 requirements: 33 total
+- Mapped to phases: 33
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-19*  
-*Last updated: 2026-05-19 after milestone v1.1 scoping*
+*Last updated: 2026-05-19 after v1.1 roadmap traceability*
