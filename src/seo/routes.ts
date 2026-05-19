@@ -1,0 +1,48 @@
+export const PUBLIC_ROUTE_PATHS = ['/', '/blog', '/events', '/community'] as const
+
+export type PublicRoutePath = (typeof PUBLIC_ROUTE_PATHS)[number]
+
+export interface RouteDefaultSeo {
+  title?: string
+  description?: string
+  ogImage?: string
+}
+
+export const routeDefaults: Record<PublicRoutePath, RouteDefaultSeo> = {
+  '/': {
+    title: 'Superhumanly Monograph — Agentic AI Playbook',
+    description:
+      'Discover the definitive playbook for building AI agents and automating business workflows.',
+  },
+  '/blog': {
+    title: 'Insights & Playbook — Superhumanly Blog',
+    description:
+      'Articles on agentic orchestration, automation patterns, and scaling with AI agents.',
+  },
+  '/events': {
+    title: 'Live Training & Events — Superhumanly',
+    description:
+      'Join workshops and live sessions on agentic AI, workflow automation, and founder strategy.',
+  },
+  '/community': {
+    title: 'Founders Hub — Superhumanly Community',
+    description:
+      'Connect with innovators building agentic systems and sharing playbooks in a vetted network.',
+  },
+}
+
+export function isAdminPath(pathname: string): boolean {
+  return pathname === '/dashboard' || pathname.startsWith('/admin')
+}
+
+export function isPublicMarketingPath(pathname: string): boolean {
+  if ((PUBLIC_ROUTE_PATHS as readonly string[]).includes(pathname)) {
+    return true
+  }
+  return /^\/blog\/[^/]+\/?$/.test(pathname)
+}
+
+export function parseBlogSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/blog\/([^/]+)\/?$/)
+  return match ? match[1] : null
+}
