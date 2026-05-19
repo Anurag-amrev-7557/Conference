@@ -13,7 +13,7 @@
 - [ ] **META-03**: Each public route renders Open Graph tags (type, title, description, image, url) appropriate to page content
 - [ ] **META-04**: Each public route renders Twitter card tags consistent with Open Graph data
 - [ ] **META-05**: Admin and dashboard routes include `noindex` robots directive and are excluded from sitemap
-- [ ] **META-06**: Static `index.html` contains only minimal shell fallbacks; no duplicate canonical/OG that conflict with per-route head
+- [x] **META-06**: Static `index.html` contains only minimal shell fallbacks; no duplicate canonical/OG that conflict with per-route head
 
 ### Crawl Infrastructure
 
@@ -101,7 +101,7 @@ Deferred enhancements beyond v1.1 roadmap scope.
 | META-03 | Phase 11 | Pending |
 | META-04 | Phase 11 | Pending |
 | META-05 | Phase 11 | Pending |
-| META-06 | Phase 11 | Pending |
+| META-06 | Phase 11 | Complete |
 | SCHEMA-01 | Phase 12 | Pending |
 | SCHEMA-02 | Phase 12 | Pending |
 | SCHEMA-03 | Phase 12 | Pending |
