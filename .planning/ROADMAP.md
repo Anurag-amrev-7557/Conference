@@ -74,8 +74,8 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 
 Plans:
 - [x] 11-01-PLAN.md — react-helmet-async, src/seo core, provider shell, index.html trim, og-image.jpg
-- [ ] 11-02-PLAN.md — Wire all routes + admin SEO help microcopy
-- [ ] 11-03-PLAN.md — Vitest unit tests for resolvePageSeo
+- [x] 11-02-PLAN.md — Wire all routes + admin SEO help microcopy
+- [x] 11-03-PLAN.md — Vitest unit tests for resolvePageSeo
 
 **UI hint**: yes
 
@@ -161,7 +161,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 10. SEO Data Model & Site URL Contract | v1.1 | 0/TBD | Not started | - |
-| 11. Per-Route Head Management | v1.1 | 1/3 | In Progress|  |
+| 11. Per-Route Head Management | v1.1 | 3/3 | Complete   | 2026-05-19 |
 | 12. Structured Data & Semantic HTML | v1.1 | 0/TBD | Not started | - |
 | 13. Crawl Policy & Dynamic Sitemap | v1.1 | 0/TBD | Not started | - |
 | 14. Build-Time Prerender | v1.1 | 0/TBD | Not started | - |
