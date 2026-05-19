@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Premium Presentation & SEO Dominance
-status: ready_to_plan
-stopped_at: Phase 12 context gathered — ready to plan
-last_updated: 2026-05-19T12:45:00Z
-last_activity: 2026-05-19 -- Phase 12 discuss-phase complete
+status: phase_complete
+stopped_at: Phase 13 context gathered — chain to plan+execute
+last_updated: 2026-05-19T13:15:00Z
+last_activity: 2026-05-19 -- Phase 13 discuss-phase complete
 progress:
-  total_phases: 10
+  total_phases: 7
   completed_phases: 3
-  total_plans: 14
-  completed_plans: 15
-  percent: 30
+  total_plans: 18
+  completed_plans: 18
+  percent: 43
 ---
 
 # Project State
@@ -22,16 +22,16 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and marketing intelligence.
 
-**Current focus:** Phase 12 — structured data & semantic HTML
+**Current focus:** Phase 13 — crawl policy & dynamic sitemap
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-05-19
+Phase: 13
+Plan: 13-01 (first of 3)
+Status: Planned
+Last activity: 2026-05-19 — Phase 12 complete
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 43%
 
 ## Performance Metrics
 
@@ -64,8 +64,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Community indexing policy: default `noindex` for `/community` unless product confirms — decide before Phases 13–14 planning.
 - Prerender CI: confirm Puppeteer path vs `GET /api/v1/seo/prerender-paths` in Phase 14 planning.
+
+### Resolved (Phase 13 discuss)
+
+- Community indexing: `Disallow: /community` in robots; omit from sitemap and prerender-paths (see `13-CONTEXT.md` D-14/D-15).
 
 ## Deferred Items
 
