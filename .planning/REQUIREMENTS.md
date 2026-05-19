@@ -1,172 +1,137 @@
 # Requirements: Book Website
 
-**Defined:** 2026-05-18  
+**Defined:** 2026-05-19  
+**Milestone:** v1.1 Premium Presentation & SEO Dominance  
 **Core Value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and marketing intelligence.
 
-## v1 Requirements
+## v1.1 Requirements
 
-### Backend Completeness
+### Per-Route Meta & Head Management
 
-- [ ] **BACK-01**: User can create, edit, and delete community posts via authenticated admin or moderated public flow (server routes match `src/lib/api.ts`)
-- [ ] **BACK-02**: User can add comments to community posts with persistence and cascade delete
-- [ ] **BACK-03**: User can vote on community posts with persisted vote counts
-- [ ] **BACK-04**: Admin session is validated on load (`GET /api/v1/admin/me` or equivalent); expired JWT redirects to login
-- [ ] **BACK-05**: Admin API requests are validated with Zod (or equivalent) before Prisma writes; invalid payloads return 400 with field errors
-- [ ] **BACK-06**: Single source of truth for default content — server seed or shared package; frontend `initialData` is skeleton-only
-- [ ] **BACK-07**: Content API supports pagination or split endpoints for blog/events/community to avoid monolithic payload at scale
+- [ ] **META-01**: Each public route (`/`, `/blog`, `/blog/:slug`, `/events`, `/community`) renders unique title and meta description in document head
+- [ ] **META-02**: Each public route renders a canonical link matching `SITE_URL` and the current path
+- [ ] **META-03**: Each public route renders Open Graph tags (type, title, description, image, url) appropriate to page content
+- [ ] **META-04**: Each public route renders Twitter card tags consistent with Open Graph data
+- [ ] **META-05**: Admin and dashboard routes include `noindex` robots directive and are excluded from sitemap
+- [ ] **META-06**: Static `index.html` contains only minimal shell fallbacks; no duplicate canonical/OG that conflict with per-route head
 
-### Security Hardening
+### Crawl Infrastructure
 
-- [ ] **SEC-01**: Server refuses to start in production without `JWT_SECRET` set (no `supersecret` fallback)
-- [ ] **SEC-02**: Login endpoint has rate limiting and lockout protection against brute force
-- [ ] **SEC-03**: Blog markdown and admin-injected custom CSS are sanitized before render
-- [ ] **SEC-04**: Marketing events are proxied through book API; browser bundle contains no marketing master API key
-- [ ] **SEC-05**: CORS policy separates public read vs admin mutate origins; requests without origin are not blanket-allowed in production
-- [ ] **SEC-06**: `dev.db` and secrets are excluded from version control; production seed does not reset admin password on re-run
-- [ ] **SEC-07**: Security headers (Helmet/CSP) configured for production admin and public surfaces
+- [ ] **CRAWL-01**: `SITE_URL` environment variable is the single source of truth for absolute URLs in canonical, OG, sitemap, and JSON-LD
+- [ ] **CRAWL-02**: `GET /sitemap.xml` generates XML dynamically from published articles and events with accurate `lastmod`
+- [ ] **CRAWL-03**: `robots.txt` allows public marketing paths, disallows `/admin` and `/dashboard`, and references the dynamic sitemap URL
+- [ ] **CRAWL-04**: Build-time prerender produces static HTML for `/`, `/blog`, `/blog/:slug`, `/events` (and `/community` if indexed)
+- [ ] **CRAWL-05**: Prerendered pages include baked meta tags visible in View Source (not only post-hydration DOM)
 
-### Marketing Integration
+### Structured Data & Semantics
 
-- [ ] **MKT-01**: Book API proxy forwards webhook payloads to `marketing-backend` `/webhook` with server-held `VELLUX_API_KEY`
-- [ ] **MKT-02**: Page views, CTA clicks, scroll milestones, and outbound link events reach marketing-backend with `source: book_website` and `visitor_id`
-- [ ] **MKT-03**: Lead capture and contact forms identify users (`user_identified`, `form_submit`) and trigger identity merge in marketing-backend
-- [ ] **MKT-04**: Contact/support flow invokes marketing-backend `/email-agent/process` via server proxy (not direct browser call with secrets)
-- [ ] **MKT-05**: CORS and `ALLOWED_ORIGINS` aligned across book frontend, book API, and marketing-backend for dev and prod
-- [ ] **MKT-06**: Anonymous telemetry works without email; identified events merge visitor history when email is provided
+- [ ] **SCHEMA-01**: Landing page includes `WebSite` and `Organization` JSON-LD derived from CMS settings
+- [ ] **SCHEMA-02**: Landing page includes `Book` JSON-LD with title, author, cover image, and ISBN when provided in CMS
+- [ ] **SCHEMA-03**: Each blog post page includes `BlogPosting` JSON-LD matching visible article content
+- [ ] **SCHEMA-04**: Blog post and events pages include `BreadcrumbList` JSON-LD reflecting navigation hierarchy
+- [ ] **SCHEMA-05**: Published events include `Event` JSON-LD with machine-readable ISO start dates
+- [ ] **SCHEMA-06**: Public pages pass semantic audit: one `h1`, logical heading order, landmark regions, non-empty image `alt` on key images
 
-### Production Infrastructure
+### Admin SEO Tools
 
-- [ ] **INFRA-01**: Root and server `.env.example` document all required variables; no committed production secrets
-- [ ] **INFRA-02**: CI pipeline runs lint, typecheck, frontend build, server build, and test suite on PR/push
-- [ ] **INFRA-03**: Production database strategy implemented (Postgres migration or documented SQLite volume + backup)
-- [ ] **INFRA-04**: Deployment runbook covers frontend static host, book API, and marketing-backend reverse-proxy paths
-- [ ] **INFRA-05**: Health checks (`/health` book API, marketing-backend `/`) integrated into deploy verification
-- [ ] **INFRA-06**: Package naming and API base URLs aligned to book product domains (resolve Superhumanly/Vellux drift)
+- [ ] **CMS-01**: `Article` model stores `seoTitle`, `seoDescription`, `ogImage`, and `noindex` with API and admin UI
+- [ ] **CMS-02**: Global `settings.seo` supports `ogImage` and `googleSiteVerification` fields editable in admin
+- [ ] **CMS-03**: BlogManager exposes per-article SEO tab with fallback chain (override → title/excerpt → site defaults)
+- [ ] **CMS-04**: Admin displays SERP and social snippet preview using the same meta fields as the live site
+- [ ] **CMS-05**: OG image uploads are resized server-side to 1200×630 via sharp before storage/serving
 
-### Quality
+### Premium UI & UX
 
-- [ ] **QUAL-01**: Vitest tests cover `WebsiteDataProvider` merge/preview and critical admin flows
-- [ ] **QUAL-02**: Supertest (or equivalent) covers auth, content read, and admin CRUD routes
-- [ ] **QUAL-03**: Unused frontend dependencies removed (`three`, `@react-three/*` if still unused)
-- [ ] **QUAL-04**: Legacy `VITE_ADMIN_PASSWORD` client config removed; docs reference JWT-only admin auth
-- [ ] **QUAL-05**: Smoke script or documented manual checklist validates full local stack (Vite + book API + marketing-backend)
+- [ ] **UX-01**: Design tokens (spacing, radius, shadow, typography) are formalized and applied consistently across public sections
+- [ ] **UX-02**: Critical fonts are self-hosted (fontsource) to improve LCP and reduce layout shift from webfont loading
+- [ ] **UX-03**: Motion and animations respect `prefers-reduced-motion` and avoid layout-affecting properties on critical path
+- [ ] **UX-04**: Landing, blog, events, and community flows receive premium visual polish (hierarchy, spacing, CTAs)
+- [ ] **UX-05**: Interactive overlays use accessible Radix dialog patterns where modals are required
+- [ ] **UX-06**: Mobile viewports pass responsive review: no horizontal scroll, 44px touch targets, readable type scale
 
-### Multi-Admin RBAC
+### Performance & Core Web Vitals
 
-- [ ] **RBAC-01**: Multiple admin users can be created with unique usernames and bcrypt passwords
-- [ ] **RBAC-02**: Roles defined (e.g., owner, editor, moderator) with permission matrix for CMS sections
-- [ ] **RBAC-03**: Admin actions (create/update/delete content, settings, users) are logged with actor and timestamp
-- [ ] **RBAC-04**: JWT claims include role; middleware enforces permissions per route
-- [ ] **RBAC-05**: Owner can invite/deactivate admins without sharing a single password
+- [ ] **PERF-01**: LCP element on landing and blog is not delayed by opacity-zero or off-screen animation on first paint
+- [ ] **PERF-02**: Three.js and heavy GSAP sequences are lazy-loaded or restricted to below-fold/landing-only contexts
+- [ ] **PERF-03**: Above-fold images specify width/height or aspect-ratio to prevent cumulative layout shift
+- [ ] **PERF-04**: `web-vitals` reports LCP, INP, and CLS to existing telemetry in production
 
-### Real-Time Chat
+### Measurement
 
-- [ ] **CHAT-01**: Authenticated or guest users can join a real-time channel (community or support)
-- [ ] **CHAT-02**: Messages deliver with sub-second latency (WebSocket or SSE; technology chosen in phase plan)
-- [ ] **CHAT-03**: Chat history persists and loads on channel open
-- [ ] **CHAT-04**: Moderators can delete messages and mute users (ties to RBAC)
-- [ ] **CHAT-05**: Chat events optionally feed marketing-backend for engagement scoring
-
-### Payment Processing
-
-- [ ] **PAY-01**: User can purchase the book (or designated product) via integrated checkout (Stripe or equivalent)
-- [ ] **PAY-02**: User can pay for paid events with confirmation and receipt
-- [ ] **PAY-03**: Webhook handler on book API verifies payment provider signatures and updates order/registration state
-- [ ] **PAY-04**: Admin can view payment/registration status for events
-- [ ] **PAY-05**: Successful purchase triggers marketing-backend event (`purchase`, `form_submit`) for lead scoring
-
-### Mobile App
-
-- [ ] **MOB-01**: Core reader journeys (landing, blog read, events list, lead capture) work on mobile viewports with responsive polish
-- [ ] **MOB-02**: Installable PWA with manifest, icons, and offline shell (or native wrapper decision documented)
-- [ ] **MOB-03**: Mobile push notification strategy documented (defer implementation if PWA-only v1)
-- [ ] **MOB-04**: Admin CMS usable on tablet breakpoints for content edits (responsive admin layout)
-- [ ] **MOB-05**: API contracts stable for future native app consumers (versioned or documented breaking-change policy)
+- [ ] **MSMT-01**: Google Search Console verification meta tag is injectable from admin settings and appears in prerendered HTML
 
 ## v2 Requirements
 
-Deferred enhancements beyond v1 roadmap scope.
+Deferred enhancements beyond v1.1 roadmap scope.
 
-### Analytics & Observability
+### International & Discovery
 
-- **OBS-01**: Sentry or equivalent error tracking on frontend and API
-- **OBS-02**: Structured logging with request IDs shipped to log aggregator
+- **I18N-01**: hreflang tags and locale-specific URLs for multi-language content
+- **I18N-02**: IndexNow ping on article publish for faster Bing discovery
 
-### Advanced Community
+### Advanced SEO
 
-- **COMM-01**: User accounts for community (OAuth) with reputation
-- **COMM-02**: AI moderation queue for posts and comments
+- **SEO-ADV-01**: Author profile pages (`/author`) with Person schema
+- **SEO-ADV-02**: FAQ / HowTo structured data for landing Q&A sections
+
+### v1.0 Deferred (prior milestone)
+
+- Marketing integration (MKT-*), production infra (INFRA-*), RBAC, chat, payments — see archived v1.0 requirements in git history
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Replacing marketing-backend | User requires integration with existing workspace service |
-| Multi-vendor marketplace | Payments limited to book and events |
-| Custom ML training pipeline | Not part of book website domain |
-| Streamlit marketing dashboard in book repo | Lives in marketing-backend `streamlit_app.py` |
+| Full SSR / Next.js migration | Research recommends prerender on existing Vite SPA; rewrite cost exceeds v1.1 value |
+| Keyword meta tag field | Google ignores; encourages stuffing |
+| Indexing all community UGC | Brand SEO risk; default noindex unless explicitly required |
+| Auto-generated tag archive pages | Thin duplicate content risk |
+| Heavy 3D hero on every page | CWV regression; landing-only per research |
+| hreflang | No bilingual content in v1.1 |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BACK-01 | Phase 1 | Pending |
-| BACK-02 | Phase 1 | Pending |
-| BACK-03 | Phase 1 | Pending |
-| BACK-04 | Phase 1 | Pending |
-| BACK-05 | Phase 1 | Pending |
-| BACK-06 | Phase 1 | Pending |
-| BACK-07 | Phase 1 | Pending |
-| SEC-01 | Phase 2 | Pending |
-| SEC-02 | Phase 2 | Pending |
-| SEC-03 | Phase 2 | Pending |
-| SEC-04 | Phase 2 | Pending |
-| SEC-05 | Phase 2 | Pending |
-| SEC-06 | Phase 2 | Pending |
-| SEC-07 | Phase 2 | Pending |
-| MKT-01 | Phase 3 | Pending |
-| MKT-02 | Phase 3 | Pending |
-| MKT-03 | Phase 3 | Pending |
-| MKT-04 | Phase 3 | Pending |
-| MKT-05 | Phase 3 | Pending |
-| MKT-06 | Phase 3 | Pending |
-| INFRA-01 | Phase 4 | Pending |
-| INFRA-02 | Phase 4 | Pending |
-| INFRA-03 | Phase 4 | Pending |
-| INFRA-04 | Phase 4 | Pending |
-| INFRA-05 | Phase 4 | Pending |
-| INFRA-06 | Phase 4 | Pending |
-| QUAL-01 | Phase 5 | Pending |
-| QUAL-02 | Phase 5 | Pending |
-| QUAL-03 | Phase 5 | Pending |
-| QUAL-04 | Phase 5 | Pending |
-| QUAL-05 | Phase 5 | Pending |
-| RBAC-01 | Phase 6 | Pending |
-| RBAC-02 | Phase 6 | Pending |
-| RBAC-03 | Phase 6 | Pending |
-| RBAC-04 | Phase 6 | Pending |
-| RBAC-05 | Phase 6 | Pending |
-| CHAT-01 | Phase 7 | Pending |
-| CHAT-02 | Phase 7 | Pending |
-| CHAT-03 | Phase 7 | Pending |
-| CHAT-04 | Phase 7 | Pending |
-| CHAT-05 | Phase 7 | Pending |
-| PAY-01 | Phase 8 | Pending |
-| PAY-02 | Phase 8 | Pending |
-| PAY-03 | Phase 8 | Pending |
-| PAY-04 | Phase 8 | Pending |
-| PAY-05 | Phase 8 | Pending |
-| MOB-01 | Phase 9 | Pending |
-| MOB-02 | Phase 9 | Pending |
-| MOB-03 | Phase 9 | Pending |
-| MOB-04 | Phase 9 | Pending |
-| MOB-05 | Phase 9 | Pending |
+| META-01 | TBD | Pending |
+| META-02 | TBD | Pending |
+| META-03 | TBD | Pending |
+| META-04 | TBD | Pending |
+| META-05 | TBD | Pending |
+| META-06 | TBD | Pending |
+| CRAWL-01 | TBD | Pending |
+| CRAWL-02 | TBD | Pending |
+| CRAWL-03 | TBD | Pending |
+| CRAWL-04 | TBD | Pending |
+| CRAWL-05 | TBD | Pending |
+| SCHEMA-01 | TBD | Pending |
+| SCHEMA-02 | TBD | Pending |
+| SCHEMA-03 | TBD | Pending |
+| SCHEMA-04 | TBD | Pending |
+| SCHEMA-05 | TBD | Pending |
+| SCHEMA-06 | TBD | Pending |
+| CMS-01 | TBD | Pending |
+| CMS-02 | TBD | Pending |
+| CMS-03 | TBD | Pending |
+| CMS-04 | TBD | Pending |
+| CMS-05 | TBD | Pending |
+| UX-01 | TBD | Pending |
+| UX-02 | TBD | Pending |
+| UX-03 | TBD | Pending |
+| UX-04 | TBD | Pending |
+| UX-05 | TBD | Pending |
+| UX-06 | TBD | Pending |
+| PERF-01 | TBD | Pending |
+| PERF-02 | TBD | Pending |
+| PERF-03 | TBD | Pending |
+| PERF-04 | TBD | Pending |
+| MSMT-01 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 44 total
-- Mapped to phases: 44
-- Unmapped: 0 ✓
+- v1.1 requirements: 32 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 32
 
 ---
-*Requirements defined: 2026-05-18*  
-*Last updated: 2026-05-18 after roadmap creation*
+*Requirements defined: 2026-05-19*  
+*Last updated: 2026-05-19 after milestone v1.1 scoping*
