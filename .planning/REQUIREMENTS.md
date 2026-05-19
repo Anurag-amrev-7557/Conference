@@ -17,7 +17,7 @@
 
 ### Crawl Infrastructure
 
-- [ ] **CRAWL-01**: `SITE_URL` environment variable is the single source of truth for absolute URLs in canonical, OG, sitemap, and JSON-LD
+- [x] **CRAWL-01**: `SITE_URL` environment variable is the single source of truth for absolute URLs in canonical, OG, sitemap, and JSON-LD
 - [ ] **CRAWL-02**: `GET /sitemap.xml` generates XML dynamically from published articles and events with accurate `lastmod`
 - [ ] **CRAWL-03**: `robots.txt` allows public marketing paths, disallows `/admin` and `/dashboard`, and references the dynamic sitemap URL
 - [ ] **CRAWL-04**: Build-time prerender produces static HTML for `/`, `/blog`, `/blog/:slug`, `/events` (and `/community` if indexed)
@@ -34,8 +34,8 @@
 
 ### Admin SEO Tools
 
-- [ ] **CMS-01**: `Article` model stores `seoTitle`, `seoDescription`, `ogImage`, and `noindex` with API and admin UI
-- [ ] **CMS-02**: Global `settings.seo` supports `ogImage` and `googleSiteVerification` fields editable in admin
+- [x] **CMS-01**: `Article` model stores `seoTitle`, `seoDescription`, `ogImage`, and `noindex` with API and admin UI
+- [x] **CMS-02**: Global `settings.seo` supports `ogImage` and `googleSiteVerification` fields editable in admin
 - [ ] **CMS-03**: BlogManager exposes per-article SEO tab with fallback chain (override → title/excerpt → site defaults)
 - [ ] **CMS-04**: Admin displays SERP and social snippet preview using the same meta fields as the live site
 - [ ] **CMS-05**: OG image uploads are resized server-side to 1200×630 via sharp before storage/serving
@@ -93,9 +93,9 @@ Deferred enhancements beyond v1.1 roadmap scope.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CRAWL-01 | Phase 10 | Pending |
-| CMS-01 | Phase 10 | Pending |
-| CMS-02 | Phase 10 | Pending |
+| CRAWL-01 | Phase 10 | Complete |
+| CMS-01 | Phase 10 | Complete |
+| CMS-02 | Phase 10 | Complete |
 | META-01 | Phase 11 | Complete |
 | META-02 | Phase 11 | Complete |
 | META-03 | Phase 11 | Complete |
