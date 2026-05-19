@@ -1,148 +1,155 @@
 # Feature Research
 
-**Domain:** Book / author marketing website — technical SEO + premium presentation (v1.1 milestone)
+**Domain:** Apple-minimal premium marketing site (author/book monograph) — UI/UX milestone v1.2
 **Researched:** 2026-05-19
-**Confidence:** HIGH (stack/architecture), MEDIUM (competitive UX patterns — industry blogs, not A/B data)
+**Confidence:** HIGH (accessibility/motion/dark-mode patterns — MDN, web.dev, Apple Design Tips); MEDIUM (Apple.com motion heuristics — observational, not official spec); MEDIUM (author-site competitive patterns — industry blogs)
 
-## Brownfield Baseline (Already Built — Out of Scope for “New” Rows)
+## Brownfield Baseline (v1.1 Phase 16 — Do Not Re-Litigate)
 
-| Capability | Current state |
-|------------|---------------|
-| Global title + meta description | `index.html` defaults + `ThemeSynchronizer` overwrites from `settings.seo` |
-| Static sitemap | `public/sitemap.xml` — 3 URLs, stale `lastmod`, no blog slugs |
-| robots.txt | `public/robots.txt` — allow all, sitemap pointer |
-| Blog slug URLs | `/blog/:slug`, `Article.slug` in Prisma |
-| Admin CMS | Global SEO tab (title + description only); `ogImage` in types unused |
-| Premium motion (partial) | Framer Motion on blog (reading progress), GSAP/Three on landing |
-| Semantic shells (partial) | `<main>` on some pages; blog uses `<article>` |
+| Capability | Current state | v1.2 implication |
+|------------|---------------|------------------|
+| Design tokens | `--space-*`, `--text-*`, `--radius-*`, accent palette in `@theme` | **Extend** with semantic light/dark tokens; tighten neutral “Apple” palette |
+| Typography fonts | Self-hosted Instrument Serif + Plus Jakarta Sans via CSS vars | **Polish** optical scale + tracking; avoid adding a third face |
+| Section rhythm | `section-public`, `section-inner`, `section-heading`, CTA utilities | **Apply consistently** on all public pages + admin |
+| Modals | Radix `AppDialog`, lead/community modals | **Unify** styling with public component craft pass |
+| Reduced motion | Global CSS `@media (prefers-reduced-motion)` + `usePrefersReducedMotion` | **Table stakes met** — extend to any new motion, don’t regress |
+| Motion (partial) | Framer on blog/admin; GSAP/Three on landing hero | **Cap** — differentiate via restraint, not more libraries |
+| Dark mode | **Not implemented** (light-only `body` background) | **Primary v1.2 gap** |
+| Component unity | Split: `btn-cta-*` / `btn-dynamic` vs shadcn `Button.tsx` (slate/indigo) | **Table stakes gap** — one token-driven system |
+| Imagery | Rounded prose images, hero assets from CMS | **Gap:** dimensions, blur-up, dark-safe assets |
 
-This document covers **gaps only** — what v1.1 must add for “SEO dominance” and premium UX.
+This document covers **v1.2 UI gaps and competitive bar** — not v1.1 SEO (see git history for prior SEO-focused FEATURES.md).
 
 ---
 
 ## Feature Landscape
 
-### Table Stakes (Users & Google Expect These)
+### Table Stakes (Users Expect These)
 
-Missing these makes the site feel amateur and hurts indexation/sharing despite good content.
+Missing these makes a “premium” site feel template-grade or broken on modern devices — even if SEO and content are strong.
 
-| Feature | Why Expected | Complexity | Notes / CMS dependency |
-|---------|--------------|------------|------------------------|
-| **Per-route meta tags** (title, description, canonical, OG, Twitter) | Every shared blog URL should show the article title and image, not the homepage defaults. Google and social crawlers use `<head>` per URL. | MEDIUM | Requires `react-helmet-async` (or equivalent) on each public route **plus** crawlable HTML (see prerender). Extend beyond global `settings.seo` in `App.tsx`. Blog: derive from `Article`; static routes: section-specific defaults in CMS or code. |
-| **Crawlable HTML for public routes** | React SPA serves one shell; social bots and delayed Google indexing see empty/generic head without prerender/SSR. | HIGH | **Recommended:** build-time prerender for `/`, `/blog`, `/blog/:slug`, `/events`, `/community` (Vite plugin or Puppeteer post-build). Full SSR is overkill for this site size. Blocks correct OG until done. |
-| **Dynamic XML sitemap** | Static file misses all blog posts and has wrong dates; Google expects `lastmod` when content changes ([Google sitemap docs](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)). | MEDIUM | **Depends on Express API:** `GET /sitemap.xml` generated from `Article`, `Event`, published flags. Include only canonical HTTPS URLs. Replace hand-edited `public/sitemap.xml`. |
-| **robots.txt hardening** | Best practice: allow marketing pages, disallow private/admin surfaces. | LOW | Disallow `/admin`, `/dashboard`; keep sitemap URL. Optional: `Disallow: /community` if UGC should not be indexed (product decision). No CMS — deploy config. |
-| **JSON-LD structured data** | Book/author sites use `Book`, `Organization`/`WebSite`, `BlogPosting`, `Event` for rich results ([Google Book](https://developers.google.com/search/docs/appearance/structured-data/book), [Article/BlogPosting](https://developers.google.com/search/docs/appearance/structured-data/article)). | MEDIUM | **CMS:** global book metadata (ISBN, author name, image) in `settings`; per-article `BlogPosting` from existing `Article` fields (`title`, `authorName`, `publishedAt`, `thumbnail`). Validate with Rich Results Test. |
-| **Semantic HTML & heading hierarchy** | One clear `h1` per page, logical `h2`–`h3`, landmarks (`header`, `main`, `nav`, `footer`) — accessibility and SEO alignment. | LOW–MEDIUM | Audit landing sections and blog markdown output. Fix empty `alt` on author avatars in `BlogPostPage`. |
-| **Core Web Vitals pass** | Google uses LCP, INP, CLS as page-experience signals ([CWV docs](https://developers.google.com/search/docs/appearance/core-web-vitals)). | MEDIUM | Defer heavy Three.js/GSAP below fold or lazy-load; reserve image dimensions; reduce layout shift on theme/font load from `ThemeSynchronizer`. |
-| **Mobile-first responsive polish** | Majority of author-site traffic is mobile; broken tap targets or horizontal scroll = bounce. | MEDIUM | Table stakes for UX milestone: consistent spacing scale, `sm:` breakpoints on hero/CTA, 44px touch targets. Uses existing Tailwind + `appearance` tokens. |
-| **404 / soft-404 handling** | Unknown URLs should return proper status and `noindex` where appropriate. | LOW | `NotFoundPage` exists; ensure server/CDN returns 404 (not 200) for unknown paths if prerender adds static routes. |
-| **Search Console verification** | Cannot measure indexing/CWV without property verification ([GSC help](https://support.google.com/webmasters/answer/35179)). | LOW | **CMS:** optional `settings.seo.googleSiteVerification` meta tag field in admin; inject in `index.html` or Helmet. |
-| **Internal linking** | Blog hubs and related posts distribute PageRank; author sites link book → blog → events. | LOW | Partial: related articles on `BlogPostPage`. Add contextual links from landing sections to `/blog`, `/events`; breadcrumb UI optional. |
-| **Image SEO basics** | Crawlable images need `alt`, reasonable file size, stable URLs. | LOW | **CMS:** alt text on article thumbnails (new field or reuse title/excerpt). Hero and OG images from settings. |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| **Two-role typography system** (display serif + UI sans) | Apple and top SaaS marketing sites use at most two families with clear roles; mixing three+ reads chaotic ([Apple HIG typography guidance](https://developer.apple.com/design/human-interface-guidelines)). | LOW (fonts exist) | Keep CMS-driven `--font-serif-dynamic` / `--font-sans-dynamic`; enforce roles in components, not per-section one-offs. |
+| **Optical type scale + fluid headings** | Premium sites scale headlines smoothly (`clamp`) with tighter tracking on large type and looser on small caps ([modular scale practice](https://relogic.dev/blog/typography-in-web)). | MEDIUM | Extend beyond `section-heading`; map H1–H6 + body/caption to a single ratio (recommend **1.25 Major Third** for UI, **1.333 Perfect Fourth** for marketing heroes). |
+| **Generous whitespace + max content width** | “Apple-minimal” is mostly rhythm: predictable section padding, ~65ch prose, clear vertical hierarchy ([Apple Design Tips — spacing & alignment](https://developer.apple.com/design/tips/)). | MEDIUM | `section-public` exists — audit landing/blog/events/community/404/admin for drift; align admin tables/forms to same spacing scale. |
+| **System-aware dark mode** | OS dark mode is default for many users; premium sites respect `prefers-color-scheme` with readable contrast ([MDN `prefers-color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)). | HIGH | Add `<meta name="color-scheme" content="light dark">`, semantic CSS variables, dark variants of glass/shadows; **must not break** CMS `appearance` preview (`DesignSystemManager` + `ThemeSynchronizer`). |
+| **No theme flash (FOUC)** | Toggle or system switch without white flash is expected on marketing sites ([dark mode CSS patterns](https://design.dev/guides/dark-mode-css/)). | MEDIUM | Inline head script: read `localStorage` + `prefers-color-scheme` before paint; default `theme: system`. |
+| **WCAG contrast in both themes** | Low-contrast gray-on-gray fails “premium” on OLED and accessibility audits ([web.dev motion/a11y](https://web.dev/learn/accessibility/motion/)). | MEDIUM | Use stepped neutrals (#F5F5F7 light bg, ~#1C1C1E dark — not #000/#FFF); verify accent on dark. |
+| **`prefers-reduced-motion` honored everywhere** | Vestibular/disorder users expect reduced parallax/zoom ([web.dev prefers-reduced-motion](https://web.dev/articles/prefers-reduced-motion)). | MEDIUM (partially done) | Gate Framer `initial`/`animate`, GSAP hero, scroll-linked effects; keep instant state change, not 0.01ms hacks only. |
+| **GPU-safe micro-motion** | Hover/focus/enter should use `transform` + `opacity` only; avoid animating `width`, `margin`, `box-shadow` blur radius. | MEDIUM | Standardize on one easing (e.g. `cubic-bezier(0.16, 1, 0.3, 1)` already in `transition-studio`). |
+| **Visible focus states** | Keyboard users are non-negotiable for forms/modals ([Apple 44pt targets](https://developer.apple.com/design/tips/)). | LOW | `focus-visible` rings on all interactives; 44×44px min touch targets on mobile CTAs. |
+| **Unified component primitives** | Buttons, inputs, cards, modals, lists should look like one system — mixed shadcn slate + custom `btn-cta-*` reads unfinished. | HIGH | Single CVA/token layer for public + admin; deprecate orphan variants. |
+| **Consistent elevation** | Apple marketing uses **subtle** separation (hairline borders, soft shadows), not heavy drop shadows. | MEDIUM | Replace stacked `shadow-premium` + `glass-*` combos with one elevation ladder (0–3). |
+| **Responsive imagery without CLS** | Premium = no layout jump; Google CWV still applies ([web.dev CWV](https://web.dev/articles/vitals)). | MEDIUM | `width`/`height` or `aspect-ratio` on heroes, cards, blog thumbnails; `sizes` for srcset if CDN allows. |
+| **Meaningful `alt` + aspect-stable cards** | Broken or stretched book covers undermine author credibility ([Apple — distortion & resolution](https://developer.apple.com/design/tips/)). | LOW | CMS fields or fallbacks; object-fit `cover` with fixed ratios for blog/event/community cards. |
+| **Hero/LCP discipline** | Marketing table stakes: fast first paint; blur placeholders must not lazy-load LCP ([LQIP/LCP guidance](https://csswizardry.com/2023/09/the-ultimate-lqip-lcp-technique/)). | MEDIUM | Priority-load hero; blur-up only below fold or as non-LCP enhancement. |
+| **Mobile nav + thumb-zone CTAs** | Majority of author traffic is mobile ([author site guides](https://blog.chapter.pub/author-website-design/)). | MEDIUM | Sticky nav, full-width primary CTA, no hover-only affordances. |
+| **Admin visual parity** | Editors judge quality by CMS; mismatched admin erodes trust in “premium” brand. | HIGH | Reuse public tokens in `AdminLayout`, managers, forms — not a separate gray admin theme unless intentional. |
 
 ### Differentiators (Competitive Advantage)
 
-Not required to launch, but align with “premium” and “SEO dominance” positioning for a monograph/playbook brand.
+Not required to function, but signal “Apple-grade” vs typical author templates (Wix/AuthorPages tier).
 
-| Feature | Value Proposition | Complexity | Notes / CMS dependency |
-|---------|-------------------|------------|------------------------|
-| **Admin SERP + social snippet preview** | Editors see Google/Twitter card mock before publish — reduces bad CTR from truncated titles. | MEDIUM | **Depends on** per-route meta + `react-helmet-async`. Build in `SettingsManager` / `BlogManager` using same fields as live meta. |
-| **Per-entity SEO overrides in CMS** | Global SEO is insufficient for ranking long-tail blog queries; competitors tune each post. | MEDIUM | **Prisma:** add `metaTitle`, `metaDescription`, `ogImage`, `canonicalUrl`, `noindex` on `Article` (optional on `Event`). **BlogManager** tab mirroring global SEO. Fallback chain: override → title/excerpt → site defaults. |
-| **Book + Author rich results** | `Book` schema with ISBN, offers, ratings drives knowledge panel / book actions where eligible. | MEDIUM | **CMS:** book panel in settings (title, ISBN-13, cover URL, author Person, publisher Org). Single JSON-LD template on landing. |
-| **BreadcrumbList JSON-LD** | Clear trail in SERPs for blog and events (`Home > Blog > Post`). | LOW | Code-generated from route + `Article.title`; no CMS unless custom labels needed. |
-| **Event structured data** | Events map can surface event rich results when dates/locations are structured. | MEDIUM | Map `Event` model to `Event` schema; needs ISO dates — may require schema migration (`startDate` vs display strings). |
-| **Premium editorial reading UX** | Differentiator vs template author sites: progress bar, typography, share/bookmark (already started on blog). | MEDIUM | Extend reading progress, ToC from markdown headings, estimated read time sync with `Article.time`. Mostly frontend. |
-| **Stable, intentional motion system** | Premium feel without jank: reduced-motion respect, no CLS from animations. | MEDIUM | Centralize motion tokens; `prefers-reduced-motion` guard on Framer/GSAP; avoid animating layout-affecting properties. |
-| **Design system consolidation** | Consistent radius, shadow, type from `appearance` across admin + public — “one brand” feel. | MEDIUM | **CMS:** already has `appearance` — enforce token usage in section components; document spacing scale in code. |
-| **hreflang / multi-locale** | Only if brand goes international. | HIGH | **Anti-scope for v1.1** unless bilingual content exists. |
-| **IndexNow / Bing Webmaster** | Faster discovery after publish for Bing ecosystem. | LOW | Ping on article publish from Express — optional after dynamic sitemap. |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Optional manual theme control (light / dark / system)** | Power users and brand demos expect override beyond OS — with persistence. | MEDIUM | Complements table-stakes `prefers-color-scheme`; icon in nav/footer, `localStorage`, no full-page color flash. |
+| **CMS-driven theme tokens in both modes** | Editors tune accent/fonts once; site adapts light/dark — rare on author sites. | HIGH | Extend `appearance` schema with dark overrides or auto-generated tints; live preview in `DesignSystemManager`. |
+| **Editorial reading mode (blog)** | Long-form monograph content: progress, comfortable measure, restrained motion — aligns with book brand. | MEDIUM | Partial (`prose` overrides exist); add ToC, read time, sticky progress — **without** Medium-style clutter. |
+| **Scroll-triggered section reveals (restrained)** | Apple product pages use staggered fade/slide on scroll — premium when subtle and once-only. | MEDIUM | Intersection Observer + Framer; disable on `prefers-reduced-motion`; never on LCP hero text. |
+| **Refined glass/nav blur** | Floating nav with backdrop blur reads “native” when contrast and border are tuned per theme. | MEDIUM | `glass-pill` exists — add dark variant, reduce saturation on scroll. |
+| **Imagery art direction pipeline** | Consistent duotone/muted treatment on CMS uploads makes UGC (events/community) feel designed. | MEDIUM | CSS filters or upload presets in admin; optional, not blocking launch. |
+| **Blur-up below-fold only** | Perceived performance polish without hurting LCP. | MEDIUM | Tiny base64/SVG LQIP for cards; skip on hero ([Mux LQIP caveats](https://mux.com/blog/blurry-image-placeholders-on-the-web)). |
+| **Purposeful empty & skeleton states** | Premium apps never show raw “Loading…” text in layout-shifting blocks. | LOW | Skeleton cards for blog/community feeds; align with design tokens. |
+| **Haptic-feel button press (scale)** | Subtle `active:scale-[0.98]` on primary CTAs — already on shadcn Button; extend consistently. | LOW | Apply to `btn-cta-primary` family only — avoid carnival on every chip. |
+| **404 as brand moment** | Minimal, on-brand dead-end with one clear escape — shows craft on edge cases. | LOW | `NotFoundPage` polish pass with same type scale as landing. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Keyword meta tag field** | Legacy SEO belief | Google ignores `keywords` since ~2009; encourages stuffing. | Focus on title, description, content, internal links. |
-| **Auto-generated tag/author archive pages** | “More indexed pages” | Thin duplicate content, crawl budget waste, manual actions risk. | One `/blog` index + strong post pages; categories as filters with canonical to `/blog`. |
-| **Full SSR migration for entire app** | “Maximum SEO” | High cost for admin + community; Express already separate. | Prerender **public marketing routes only**; keep SPA for `/admin`. |
-| **Indexing all community UGC** | Community growth | Low-quality UGC, duplicate titles, moderation risk hurts brand queries. | `noindex` community or selective indexing; canonical to hub. |
-| **Heavy 3D hero on all pages** | Visual wow | Kills LCP/INP on mobile ([web.dev CWV](https://web.dev/articles/vitals#core-web-vitals)). | Landing-only, lazy init, static poster image for LCP. |
-| **Infinite scroll blog without paginated fallback** | Modern UX | Crawlers may not see all posts; no stable URLs for page 2+. | Paginated `/blog?page=` or “Load more” with `<a href>` fallbacks. |
-| **Separate mobile subdomain (m.)** | Old mobile pattern | Splits signals, duplicate content. | Responsive CSS (current stack). |
-| **Client-only sitemap in JS bundle** | SPA convenience | Crawlers won’t execute reliably; must be raw XML at `/sitemap.xml`. | Server-generated or build-time XML. |
-| **Duplicate global meta on every URL** | Easy implementation | All SERPs look identical; poor CTR for blog. | Per-route Helmet + prerendered head. |
-| **AI-generated SEO text without review** | Speed | E-E-A-T risk for YMYL-adjacent business/AI topics. | Human-edited overrides in CMS; AI suggest-only if ever added. |
-| **Structured data that doesn’t match visible content** | Rich result chasing | Manual actions, rich result loss ([Google SD policies](https://developers.google.com/search/docs/appearance/structured-data/sd-policies)). | Generate JSON-LD from same fields rendered on page. |
+| **Custom cursor / magnetic everything** | “Premium interactiveness” (`CustomCursor`, `MagneticButton` exist) | Hurts accessibility, mobile, and Apple-like restraint; distracts from content. | Strong hover/focus on real controls only; remove or gate behind `prefers-reduced-motion: no-preference` demo flag. |
+| **Heavy 3D / WebGL hero on all routes** | Visual wow | Kills LCP/INP; not Apple-like on inner pages ([web.dev CWV](https://web.dev/articles/vitals)). | Landing-only, static poster + reduced motion fallback. |
+| **Scrolljacking / full-page snap** | Mimics Apple keynotes | Breaks reading flow, SEO UX, accessibility. | Native scroll + in-section reveals. |
+| **Parallax on mobile** | Depth | Jank + vestibular issues; Apple web uses parallax sparingly and often disables on small screens. | Desktop-only or replace with static layered art. |
+| **Glassmorphism on every card** | Trendy premium look | Reduces contrast, clashes with dark mode, looks dated when overused. | Level 1 elevation on content cards; reserve glass for nav/modals only. |
+| **Theme toggle with long cross-fade** | Smooth transition | Layout thrash, flashing text; violates reduced-motion spirit. | Instant token swap or ≤150ms opacity on `color` only. |
+| **Third display font or neon gradients** | Stand out | Breaks minimal brand; fights CMS accent discipline. | Two fonts + neutral base + one accent. |
+| **Auto-playing hero video with sound** | Engagement | Accessibility and mobile data backlash. | Muted, poster-first, pause control, respect `prefers-reduced-motion`. |
+| **Animation on `box-shadow` / `blur`** | Soft feel | Main-thread expensive; stutters on low-end devices. | Pre-baked shadow tokens per theme. |
+| **Separate “admin design system”** | Faster admin ship | Visible quality cliff; editors don’t trust preview. | Shared tokens + admin-specific density utilities only. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Crawlable HTML / Prerender]
-    └──requires──> [Per-route meta tags in <head>]
-                       └──requires──> [CMS fields OR sensible defaults per route]
+[Semantic color tokens (light + dark)]
+    └──requires──> [CMS appearance contract extended OR auto-derived dark palette]
+    └──requires──> [Theme FOUC prevention script in index.html]
 
-[Dynamic sitemap.xml]
-    └──requires──> [Published Article/Event in DB]
-    └──enhances──> [Search Console monitoring]
+[Unified components (Button, Input, Card, Modal)]
+    └──requires──> [Semantic color tokens]
+    └──enhances──> [Admin visual parity]
 
-[JSON-LD BlogPosting]
-    └──requires──> [Per-route canonical URL]
-    └──requires──> [Article author/date/image visible on page]
+[System dark mode via prefers-color-scheme]
+    └──requires──> [Semantic color tokens]
+    └──enhances──> [Glass/elevation dark variants]
 
-[Admin SERP preview]
-    └──requires──> [Per-entity SEO overrides]
-    └──requires──> [Per-route meta tags]
+[Manual theme toggle]
+    └──requires──> [System dark mode tokens]
+    └──conflicts──> [Heavy transition animations on theme change]
 
-[Book schema on landing]
-    └──requires──> [CMS: book metadata block in settings]
-    └──enhances──> [Brand + product queries]
+[Scroll section reveals]
+    └──requires──> [usePrefersReducedMotion / CSS reduce gate]
+    └──conflicts──> [GSAP hero timeline on same viewport — coordinate]
 
-[Social sharing cards for blog]
-    └──requires──> [Prerender OR SSR] + [og:image per post]
+[Blur-up placeholders]
+    └──enhances──> [Card/blog imagery]
+    └──conflicts──> [Hero LCP if misapplied to above-fold hero]
 
-[Core Web Vitals pass]
-    └──conflicts──> [Heavy uncapped 3D/motion on critical path]
+[Optical type scale]
+    └──enhances──> [Section utilities + prose]
+    └──requires──> [No per-page arbitrary text-* classes]
 ```
 
 ### Dependency Notes
 
-- **Prerender requires per-route meta:** Injecting meta only via `useEffect` (current `ThemeSynchronizer` pattern) is invisible to non-JS crawlers; prerender must bake Helmet output into static HTML.
-- **Dynamic sitemap requires API:** `WebsiteDataProvider` loads content client-side; sitemap generation belongs in `server/` reading Prisma, not Vite alone.
-- **Per-article SEO requires schema migration:** `Article` has no SEO columns today; admin UI depends on API + Prisma change before BlogManager fields matter.
-- **Community indexing conflicts with brand SEO:** Default to `noindex` for `/community` unless moderation and quality bar are explicit requirements.
+- **Dark mode blocks component pass:** Shipping new button styles in light-only hex values creates rework; define semantic tokens (`--surface`, `--text-primary`, `--border-subtle`) first.
+- **CMS theming is on critical path:** `ThemeSynchronizer` injects accent/fonts today — dark mode must compose with preview, not fork a second hack.
+- **Motion budget is shared with CWV:** v1.1 PERF requirements still apply; v1.2 motion is polish, not new heavy deps.
+- **Imagery depends on CMS/asset pipeline:** OG upload exists; card thumbnails need stable dimensions for layout polish.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.1 — this milestone)
+### Launch With (v1.2 — this milestone)
 
-Minimum to claim “technical SEO foundation” + visible premium polish:
+Minimum to credibly claim “Apple-minimal premium” across public + admin:
 
-- [ ] **Per-route meta + canonical + OG/Twitter** — all public routes, especially `/blog/:slug`
-- [ ] **Prerender public routes** (or SSR subset) — crawlable head and body for indexable pages
-- [ ] **Dynamic sitemap + robots.txt tune** — blog slugs, events, fresh `lastmod`; block admin
-- [ ] **JSON-LD:** `WebSite`, `Organization`, `Book` (landing), `BlogPosting` (posts)
-- [ ] **CMS: per-article SEO fields** + global OG image / verification tag
-- [ ] **CWV + mobile pass** — lazy heavy assets, image dimensions, reduced-motion
-- [ ] **Semantic/heading audit** — one `h1`, fix alts, landmark consistency
-- [ ] **Search Console verification** — meta tag from admin settings
+- [ ] **Semantic design tokens** — light + dark neutrals, accent-safe contrast, elevation ladder; CMS-compatible
+- [ ] **System dark mode** — `prefers-color-scheme` + `color-scheme` meta + no FOUC
+- [ ] **Optical type scale applied site-wide** — fluid headings, body 16px+, consistent section headings
+- [ ] **Unified components** — buttons, inputs, cards, modals, lists on token system (public + admin)
+- [ ] **Full public surface polish** — landing, blog (+ post), events, community, 404
+- [ ] **Imagery baseline** — aspect ratios, dimensions, hero LCP-safe loading, alts
+- [ ] **Motion pass** — hover/focus/enter only; reduced-motion gated; remove or tame gimmick cursor/parallax
+- [ ] **Admin parity** — managers/forms match public quality bar
 
-### Add After Validation (v1.1.x)
+### Add After Validation (v1.2.x)
 
-- [ ] **Admin SERP/social preview** — once per-entity SEO is stable
-- [ ] **Event structured data** — after date fields are machine-readable
-- [ ] **BreadcrumbList schema** — low effort once meta pipeline exists
-- [ ] **IndexNow ping** — after dynamic sitemap and publish flow are reliable
+- [ ] **Manual theme toggle (light/dark/system)** — after system tokens stable
+- [ ] **Scroll-triggered section reveals** — landing + key sections only
+- [ ] **Blur-up on card grids** — blog/events/community, not hero
+- [ ] **CMS dark palette overrides** — if auto-derived contrast insufficient
+- [ ] **Imagery art-direction presets** — upload filters in admin
 
-### Future Consideration (v2+)
+### Future Consideration (v3+)
 
-- [ ] **hreflang** — only if multi-language content ships
-- [ ] **Author profile pages (`/author`)** — Person schema hub; needs content strategy
-- [ ] **FAQ / HowTo schema** — if landing adds structured Q&A sections
-- [ ] **Full SSR** — only if prerender limits exceeded (thousands of routes)
+- [ ] **Cinematic video hero** — only with performance budget proof
+- [ ] **Per-section motion themes in CMS** — editor complexity vs value
+- [ ] **PWA theming / install splash** — ties to deferred mobile milestone
 
 ---
 
@@ -150,54 +157,52 @@ Minimum to claim “technical SEO foundation” + visible premium polish:
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Per-route meta tags | HIGH | MEDIUM | P1 |
-| Prerender / crawlable HTML | HIGH | HIGH | P1 |
-| Dynamic sitemap | HIGH | MEDIUM | P1 |
-| JSON-LD (Book + BlogPosting) | HIGH | MEDIUM | P1 |
-| Per-article SEO in CMS | HIGH | MEDIUM | P1 |
-| robots.txt / noindex rules | MEDIUM | LOW | P1 |
-| CWV + mobile polish | HIGH | MEDIUM | P1 |
-| Search Console verification field | MEDIUM | LOW | P1 |
-| Semantic HTML / alt text | MEDIUM | LOW | P1 |
-| Admin snippet preview | MEDIUM | MEDIUM | P2 |
-| Event schema | MEDIUM | MEDIUM | P2 |
-| BreadcrumbList | LOW | LOW | P2 |
-| IndexNow | LOW | LOW | P3 |
-| hreflang | LOW | HIGH | P3 |
+| Semantic tokens + dark mode (system) | HIGH | HIGH | P1 |
+| Optical type scale site-wide | HIGH | MEDIUM | P1 |
+| Unified components (public + admin) | HIGH | HIGH | P1 |
+| Public page polish (all routes) | HIGH | HIGH | P1 |
+| Imagery CLS + aspect ratios | HIGH | MEDIUM | P1 |
+| Motion/focus pass + reduced-motion | HIGH | MEDIUM | P1 |
+| Admin visual parity | HIGH | HIGH | P1 |
+| Manual theme toggle | MEDIUM | MEDIUM | P2 |
+| Scroll reveals | MEDIUM | MEDIUM | P2 |
+| Blur-up below fold | MEDIUM | MEDIUM | P2 |
+| Remove custom cursor / tame 3D | MEDIUM | LOW | P2 |
+| CMS dark overrides | MEDIUM | HIGH | P2 |
+| Imagery art-direction presets | LOW | MEDIUM | P3 |
 
-**Priority key:** P1 = milestone launch blockers; P2 = soon after; P3 = defer
+**Priority key:** P1 = v1.2 launch; P2 = soon after tokens stable; P3 = polish
 
 ---
 
 ## Competitor Feature Analysis
 
-Patterns from high-performing author/book marketing sites (e.g. major publisher author pages, BookBub-linked author hubs, 2025–2026 industry guides — [Chapter author design](https://blog.chapter.pub/author-website-design/), [Guided Web Design conversion layouts](https://guidedwebdesign.com/blog/high-converting-author-website-layouts)):
+Observational patterns from Apple.com product pages, Stripe/Linear marketing (minimal SaaS bar), and premium author sites ([Chapter author design](https://blog.chapter.pub/author-website-design/), [AuthorPages](https://authorpages.net/)):
 
-| Feature | Typical competitor | Our approach (v1.1) |
-|---------|------------------|---------------------|
-| Homepage clarity (who / what / buy) | Hero + single primary CTA above fold | Polish landing hierarchy + internal links; book CTA via existing hero/CMS |
-| Email capture | Lead magnet, prominent signup | Existing registry CTA; ensure visible on mobile — UX phase |
-| Blog SEO | Unique title/description per post, share images | **Gap:** add per-article CMS + prerender |
-| Structured data | Book + Article markup on key pages | **Gap:** JSON-LD templates from CMS |
-| Sitemap | Auto-updated on publish | **Gap:** API-driven sitemap |
-| Premium feel | Fast load, strong typography, restrained motion | Leverage existing blog editorial UI; cap motion for CWV |
-| Social proof | Reviews, endorsements | Use stats/testimonials sections — content in CMS, not new SEO tech |
-| Events | Calendar + location | Events map exists; add Event schema when dates are structured |
+| Feature | Apple.com / top SaaS | Typical author template | Our approach (v1.2) |
+|---------|---------------------|-------------------------|---------------------|
+| Typography | 1–2 families, large hero, tight tracking | Many fonts, small body | Keep serif+sans; enforce scale + clamp |
+| Whitespace | Very wide margins, few elements per viewport | Cluttered widgets | `section-*` utilities on every page |
+| Dark mode | System-native product pages; marketing often light-first | Rare or broken invert | System-first + CMS-safe tokens |
+| Motion | Subtle scroll fades; respects accessibility | Parallax/snow/confetti | Gate Framer/GSAP; no scrolljacking |
+| Components | Consistent pills, minimal borders | Mixed Bootstrap widgets | Token-unify shadcn + custom CTAs |
+| Imagery | Full-bleed product on neutral bg | Low-res covers stretched | aspect-ratio + LCP discipline |
+| Admin | N/A (marketing only) | Theme picker only | Live preview + same tokens as public |
 
 ---
 
 ## Sources
 
-- [Google Search Central — Article/BlogPosting structured data](https://developers.google.com/search/docs/appearance/structured-data/article) (HIGH)
-- [Google Search Central — Book structured data](https://developers.google.com/search/docs/appearance/structured-data/book) (HIGH)
-- [Google Search Central — Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals) (HIGH)
-- [Google Search Central — Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap) (HIGH)
-- [Google Search Console — Verify site ownership](https://support.google.com/webmasters/answer/35179) (HIGH)
-- Codebase: `index.html`, `public/sitemap.xml`, `public/robots.txt`, `src/App.tsx`, `server/prisma/schema.prisma`, `SettingsManager.tsx` (HIGH)
-- [react-helmet-async](https://www.npmjs.com/package/react-helmet-async) — per-route head management (MEDIUM)
-- Author UX patterns: [Chapter — author website design](https://blog.chapter.pub/author-website-design/), [Guided Web Design — converting layouts](https://guidedwebdesign.com/blog/high-converting-author-website-layouts) (MEDIUM)
-- SPA SEO prerender patterns: [Vite SSR guide](https://vitejs.dev/guide/ssr.html), industry prerender articles (MEDIUM)
+- [Apple Design Tips](https://developer.apple.com/design/tips/) — contrast, spacing, touch targets, image fidelity (HIGH)
+- [MDN — prefers-color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) (HIGH)
+- [web.dev — prefers-reduced-motion](https://web.dev/articles/prefers-reduced-motion) (HIGH)
+- [web.dev — Animation and motion (a11y)](https://web.dev/learn/accessibility/motion/) (HIGH)
+- [design.dev — Dark mode CSS guide](https://design.dev/guides/dark-mode-css/) (MEDIUM)
+- [CSS Wizardry — LQIP vs LCP](https://csswizardry.com/2023/09/the-ultimate-lqip-lcp-technique/) (MEDIUM)
+- [Mux — Blurry image placeholders](https://mux.com/blog/blurry-image-placeholders-on-the-web) (MEDIUM)
+- [Chapter — Author website design 2026](https://blog.chapter.pub/author-website-design/) (MEDIUM)
+- Codebase: `src/index.css`, `src/lib/motion.ts`, `src/components/ui/Button.tsx`, `src/components/admin/DesignSystemManager.tsx`, `src/App.tsx` (`ThemeSynchronizer`) (HIGH)
 
 ---
-*Feature research for: Premium Presentation & SEO Dominance (v1.1)*
+*Feature research for: v1.2 Apple-Grade Premium Experience*
 *Researched: 2026-05-19*

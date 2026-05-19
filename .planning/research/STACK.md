@@ -1,8 +1,8 @@
 # Stack Research
 
-**Domain:** Technical SEO + premium UI on brownfield React 19 / Vite 8 SPA with Express/Prisma API  
+**Domain:** Apple-minimal premium UI milestone (v1.2) on existing React/Vite/Tailwind book SPA  
 **Researched:** 2026-05-19  
-**Confidence:** HIGH (versions via npm registry); MEDIUM (prerender path — official RR7 docs vs brownfield SPA tradeoff)
+**Confidence:** HIGH (brownfield audit + official Tailwind v4 docs); MEDIUM for optional Radix scope
 
 ## Recommended Stack
 
@@ -10,168 +10,189 @@
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| **react-helmet-async** | **3.0.0** | Per-route `<title>`, meta, canonical, OG/Twitter tags | v3 adds React 19 peer support and runtime detection; replaces ad-hoc `document.title` / `querySelector` in `ThemeSynchronizer` with declarative, testable head management. Still valuable when you need `titleTemplate`, `noindex`, or consistent admin snippet preview. |
-| **schema-dts** | **2.0.0** | TypeScript types for JSON-LD (`Book`, `Article`, `Organization`, `BreadcrumbList`) | Zero runtime cost; prevents invalid structured-data shapes at compile time. Pair with inline `<script type="application/ld+json">` in page components. |
-| **sitemap** | **9.0.1** | Dynamic `sitemap.xml` on Express from Prisma | Replaces stale static `public/sitemap.xml` (lastmod 2024-04-11). Streams XML from published `Article.slug`, events, and static marketing routes. Single source of truth with CMS publishes. |
-| **puppeteer** | **25.0.4** | Post-build prerender of public routes | Brownfield app uses `BrowserRouter` in `App.tsx`, not React Router framework mode — RR7’s built-in `prerender` config does not apply without a major routing migration. Puppeteer + a small `scripts/prerender.mts` is the lowest-risk way to emit static HTML for `/`, `/blog`, `/blog/:slug`, `/events`, `/community`. |
-| **sharp** | **0.34.5** | OG image resize/optimize on server upload | Native, fast image pipeline for admin “OG image” uploads (1200×630 WebP/JPEG). Keeps LCP-friendly assets without shipping a separate image SaaS. |
-| **web-vitals** | **5.2.0** | RUM for LCP, INP, CLS | Feeds Core Web Vitals into existing marketing telemetry or GTM; required to validate SEO milestone, not guess from Lighthouse alone. |
+| **Tailwind CSS** (existing) | `^4.2.2` | Design tokens, `dark:` utilities, `light-dark()` | v1.2 is a **token + variant** milestone, not a CSS framework change. v4’s CSS-first `@theme` and `@custom-variant` are the correct dark-mode surface. |
+| **Framer Motion** (existing) | `^12.38.0` | Micro-interactions, layout, page/section motion | Already used across public + admin (~30 files). Standardizing on it avoids a second animation runtime and keeps bundle predictable with lazy GSAP only where scroll timelines matter. |
+| **GSAP + @gsap/react** (existing) | `^3.14.2` / `^2.1.2` | Hero/scroll choreography (`BookShowcase`) | Keep **scoped** to scroll-heavy sections; do not expand GSAP site-wide. |
+| **next-themes** (add) | `^0.4.6` | Light / dark / system toggle, `localStorage`, no FOUC | Official Tailwind dark-mode docs describe the same `class` + `localStorage` pattern; next-themes implements it with ~0 deps and works in Vite SPAs via `attribute="class"` on `<html>`. |
+| **Radix Primitives** (extend) | see below | Accessible switches, menus, tabs, tooltips | You already ship Dialog + Slot + Visually Hidden. Add only primitives missing from the component craft pass—no full shadcn install. |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| **@radix-ui/react-dialog** | **1.1.15** | Accessible modal primitive (focus trap, ESC, `aria-*`) | Upgrade `ContactSupportModal`, `LeadCaptureModal`, `CreatePostModal` from hand-rolled overlays — premium UX + a11y without a second design system. |
-| **@radix-ui/react-visually-hidden** | **1.2.4** | Screen-reader-only labels | Dialog titles, icon-only buttons in navbar/mobile menu. |
-| **@fontsource-variable/plus-jakarta-sans** | **5.2.8** | Self-hosted body font | Replace render-blocking Google Fonts `<link>`; improves LCP and works offline in preview. Match existing `--font-sans` mapping in `App.tsx`. |
-| **@fontsource/instrument-serif** | **5.2.8** | Self-hosted heading font | Pairs with existing Instrument Serif usage in theme tokens. |
-| **vite-plugin-compression** | **0.5.1** | Brotli/gzip of `dist/` assets | Production static host serves precompressed bundles; cheap win for transfer size (CWV). |
-| **rollup-plugin-visualizer** | **6.0.5** | Bundle treemap (dev only) | Audit `three` / `gsap` weight on landing route before lazy-loading decisions. |
-| **vite-imagetools** | **10.0.0** | Build-time responsive `srcset` for static images | Hero/OG assets in `public/`; optional if most images are CMS URLs (then **sharp** on server is enough). |
+| **tw-animate-css** | `^1.4.0` (dev) | `animate-in` / `animate-out` for Radix overlays | Pair with `AppDialog` and future drawers; replaces legacy `tailwindcss-animate` plugin (not v4-native). |
+| **@radix-ui/react-switch** | `^1.2.6` | Theme toggle, boolean CMS settings | Public nav theme control + admin Design System panel. |
+| **@radix-ui/react-dropdown-menu** | `^2.1.16` | Nav overflow, admin actions | Replace bespoke animated menus where focus trap + keyboard nav matter. |
+| **@radix-ui/react-tabs** | `^1.1.x` (match Dialog era) | Admin section chrome | Settings / Blog / Events managers already hand-roll tab UI—Radix reduces a11y risk. |
+| **@radix-ui/react-tooltip** | `^1.2.x` | Dense admin hints | Icon-only controls in CMS without hover-only tooltips. |
+| **@radix-ui/react-label** | `^2.1.x` | Form field association | Admin forms + public lead capture after component craft pass. |
+| **@tailwindcss/forms** | `^0.5.x` | Normalize inputs/selects | Optional; use if native form controls still look “off” after token pass. |
+| **class-variance-authority**, **clsx**, **tailwind-merge** (existing) | current | Component variants | Already power `Button.tsx`; extend pattern to Input, Card, Badge—no new styling stack. |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| **puppeteer** (dev) | Prerender script in CI | Run after `vite build`; point at `vite preview` or `sirv-cli` on `dist/`. Pass route list from `prisma.article.findMany({ where: { isPublished: true } })`. |
-| **@types/sitemap** | Types for `sitemap` package | DevDependency on `server/`. |
-| **Google Search Console** | Index coverage, CWV field data | No npm package — HTML meta verification tag via `react-helmet-async` on `/` or env-injected snippet in `settings.scripts`. |
-| **Lighthouse CI** (optional) | PR performance budgets | `lhci` in GitHub Actions once Phase 4 infra exists; not blocking for stack choice. |
+| **Playwright** (existing) | Visual + interaction regression | Add dark-mode snapshots (`prefers-color-scheme`, `.dark` class) in premium milestone QA—not a new dependency. |
+| **Inline theme boot script** | Prevent flash of wrong theme | Add small blocking script in `index.html` **before** module load (Tailwind docs pattern); `next-themes` documents equivalent `storageKey` behavior. |
+
+## CSS-First Changes (No New npm)
+
+These are **required** stack changes in `src/index.css`, not optional polish:
+
+```css
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Manual toggle + CMS override (extends default prefers-color-scheme) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Semantic surfaces — auto flip with color-scheme on html */
+  --color-bg: light-dark(#F2F2F0, #0A0A0A);
+  --color-off: light-dark(#EBEBE8, #141414);
+  --color-border: light-dark(#D1D1CE, #2A2A2A);
+  --color-text: light-dark(#000000, #F5F5F5);
+  --color-text2: light-dark(#2D2D2D, #A3A3A3);
+  --color-muted: light-dark(#333333, #737373);
+  --color-tag: light-dark(#E2E2DF, #1F1F1F);
+  /* Keep CMS-driven accent as runtime override on :root */
+}
+
+@layer base {
+  html {
+    color-scheme: light dark; /* enables light-dark() + native form controls */
+  }
+  .dark {
+    color-scheme: dark;
+  }
+}
+```
+
+**CMS integration (Express/Prisma — no new server packages):**
+
+| Layer | Change |
+|-------|--------|
+| `SiteAppearance` (`websiteData.ts`) | Add `colorScheme: 'light' \| 'dark' \| 'system'` (default `'system'`). |
+| `ThemeSynchronizer` (`App.tsx`) | After CMS hydration: apply `next-themes` `setTheme` from `appearance.colorScheme`; keep existing `--color-accent` / typography / radius runtime overrides. |
+| `DesignSystemManager` | UI to edit `colorScheme` + optional dark palette overrides (or “use auto dark palette”). |
+| Prisma `appearance` JSON | Backward-compatible merge in `WebsiteDataProvider` (same pattern as `typography` / `theme`). |
+
+Accent color stays **CMS-driven** via `document.documentElement.style.setProperty`; neutrals move to **`light-dark()` + `.dark` overrides** so editors don’t maintain two full palettes unless they opt in.
 
 ## Installation
 
 ```bash
-# Frontend (repo root) — SEO head + CWV + premium primitives + fonts
-npm install react-helmet-async@3.0.0 web-vitals@5.2.0 \
-  @radix-ui/react-dialog@1.1.15 @radix-ui/react-visually-hidden@1.2.4 \
-  @fontsource-variable/plus-jakarta-sans@5.2.8 @fontsource/instrument-serif@5.2.8
+# Theme orchestration (runtime)
+npm install next-themes@^0.4.6
 
-npm install -D schema-dts@2.0.0 puppeteer@25.0.4 \
-  vite-plugin-compression@0.5.1 rollup-plugin-visualizer@6.0.5
+# Radix — add only what you implement in the craft pass
+npm install @radix-ui/react-switch@^1.2.6 \
+  @radix-ui/react-dropdown-menu@^2.1.16 \
+  @radix-ui/react-tabs@^1.1.13 \
+  @radix-ui/react-tooltip@^1.2.8 \
+  @radix-ui/react-label@^2.1.7
 
-# Optional frontend image pipeline
-npm install -D vite-imagetools@10.0.0
+# Tailwind v4 animation utilities (build-time CSS import)
+npm install -D tw-animate-css@^1.4.0
 
-# Server (server/)
-cd server && npm install sitemap@9.0.1 sharp@0.34.5
-npm install -D @types/sitemap
+# Optional form normalization
+npm install -D @tailwindcss/forms@^0.5.10
 ```
 
-## Integration Points (Existing Stack)
+**`index.css` additions after install:**
 
-### Frontend (`src/`)
-
-| Concern | Integration |
-|---------|-------------|
-| **App shell** | Wrap `App` in `HelmetProvider` in `main.tsx`. Keep `WebsiteDataProvider` — site-wide defaults from `settings.seo` become `Helmet` defaults on a `SiteSeoDefaults` component. |
-| **Per-route SEO** | Add `components/seo/PageSeo.tsx` consumed by `LandingPage`, `BlogPage`, `BlogPostPage`, `EventsPage`, `CommunityPage`. Remove SEO block from `ThemeSynchronizer` (lines 68–73 in `App.tsx`) to avoid double-writes. |
-| **JSON-LD** | `BlogPostPage`: `Article` + `BreadcrumbList`. `/`: `WebSite` + `Organization` (or `Book` if appropriate). Use `schema-dts` types, serialize with `JSON.stringify`. |
-| **Admin preview** | Reuse same `PageSeo` props in admin snippet preview panel (extend `SettingsManager` / per-article fields). |
-| **CWV** | `web-vitals` listener in `MarketingTracker` or dedicated `reportWebVitals.ts` posting to `/api/v1/marketing/events` (after proxy hardening). |
-| **Vite** | Register `vite-plugin-compression` + optional `vite-imagetools` in `vite.config.ts`; do not add SSR plugins here. |
-
-### Backend (`server/`)
-
-| Concern | Integration |
-|---------|-------------|
-| **Dynamic sitemap** | New `seoRoutes.ts`: `GET /sitemap.xml` queries `Article` (published), static paths, optional `Event` IDs. Set `SITE_URL` env (e.g. `https://monograph.superhumanly.ai`). Update `public/robots.txt` to reference API-served sitemap or proxy path on CDN. |
-| **robots.txt** | `GET /robots.txt` with `Disallow: /admin`, `Disallow: /dashboard`; allow marketing routes. |
-| **OG uploads** | Admin route: accept image → **sharp** resize 1200×630 → write to `public/og/` or object storage → persist URL in `SiteContent.settings` JSON (`seo.ogImage`) or per-article field (schema extension). |
-| **Prerender input** | Export `GET /api/v1/seo/prerender-paths` (public, cached) returning slug list for CI script — avoids CI needing direct DB file access. |
-
-### Build / Deploy
-
-```text
-prisma migrate → vite build → node scripts/prerender.mts → deploy dist/
+```css
+@import "tw-animate-css";
+/* optional */ @plugin "@tailwindcss/forms";
 ```
 
-- Prerender only **public** routes; exclude `/admin/*`, `/dashboard`.
-- Hosting: serve `dist/blog/my-slug/index.html` when present, else `index.html` (SPA fallback). Many CDNs need explicit rewrite rules (see React Router SPA fallback docs).
-- **Do not** run Puppeteer on the production Express server — build-time only.
+**`main.tsx` wrapper:**
+
+```tsx
+import { ThemeProvider } from 'next-themes'
+
+<ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="book-theme">
+  <WebsiteDataProvider>
+    <App />
+  </WebsiteDataProvider>
+</ThemeProvider>
+```
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| **react-helmet-async@3** | React 19 native `<title>` / `<meta>` hoisting | Greenfield pages with no `titleTemplate`, no SSR head serialization, no admin preview — fewer deps, but weaker for OG/canonical consistency across 6+ routes. |
-| **puppeteer post-build prerender** | React Router 7 `prerender` in `react-router.config.ts` | Willing to migrate from `BrowserRouter` SPA to `@react-router/dev` framework mode; best long-term if milestone budget allows routing restructure. Official docs: https://reactrouter.com/how-to/pre-rendering |
-| **puppeteer post-build prerender** | Vike (vite-plugin-ssr) | Greenfield or full SSR/SSG rewrite — too much churn for v1.1 on a CMS-driven site. |
-| **puppeteer post-build prerender** | Prerender.io / Cloudflare Workers | Zero build-time Puppeteer, ops cost, vendor lock — good if CI cannot run headless Chrome. |
-| **sitemap on Express** | `vite-plugin-sitemap` (build-time only) | Static marketing site with no CMS — fails for dynamic `/blog/:slug` without rebuild on every publish. |
-| **sharp on server** | Client-side canvas resize | Avoids quality loss and keeps uploads off oversized originals; don’t process images in browser for OG. |
-| **@radix-ui/react-dialog** | `@headlessui/react` | Equivalent a11y; Radix already partially adopted (`@radix-ui/react-slot`). |
+| **next-themes** | ~40-line custom `ThemeProvider` + `index.html` inline script | If you want zero runtime deps; you must reimplement storage, system listener, and tab sync yourself. |
+| **Framer Motion** (keep) | GSAP everywhere | Only for complex scroll-scrub timelines; worse fit for hover/focus/list layout animations. |
+| **tw-animate-css** | Hand-written `@keyframes` in `index.css` | Fine for 2–3 animations; painful for Radix enter/exit matrix. |
+| **`light-dark()` tokens** | Duplicate `dark:bg-*` on every utility | Works but explodes class noise and fights CMS token model. |
+| **Selective Radix** | Full **shadcn/ui** CLI | Overkill— you already own `Button`, `Card`, `AppDialog`; copying shadcn creates duplicate primitives and migration churn. |
+| **CSS blur-up** | **plaiceholder** / **vite-imagetools** LQIP | Only if hero LCP still fails after `loading`, `fetchpriority`, and fixed `aspect-ratio`; adds build pipeline complexity. |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| **vite-plugin-ssr / Vike** | Full-stack SSR framework; replaces Vite SPA architecture and duplicates Express responsibilities. | Post-build prerender or RR7 `prerender` migration. |
-| **Next.js / Remix rewrite** | Violates stack-continuity constraint; splits admin CMS and marketing into two deployables. | Stay on Vite + Express; prerender public HTML only. |
-| **react-snap** | Unmaintained; breaks on React 18+. | puppeteer prerender script. |
-| **vite-react-ssg@0.9.1-beta.1** | Beta; peers `react-router-dom@^6.14`, Vite `<=7` — project is RR **7.14** + Vite **8**. | puppeteer or RR7 framework prerender. |
-| **vite-plugin-prerender@1.0.8** | Stale (2021), same Puppeteer approach but unmaintained config surface. | Custom `scripts/prerender.mts` with puppeteer@25. |
-| **Separate `react-helmet` (v6)** | Unmaintained; no React 19 support. | react-helmet-async@3. |
-| **next-seo** | Next.js-only API. | PageSeo + react-helmet-async. |
-| **Material UI / Chakra** | Second design system fights Tailwind 4 + existing motion/3D stack. | Radix primitives + existing CVA/tokens. |
-| **Gatsby** | SSG-centric; poor fit for live CMS + admin SPA. | Express sitemap + prerender script. |
-| **Client-only sitemap in `public/`** | Already stale; won’t include new blog slugs. | Express `sitemap` package. |
+| **tailwindcss-animate** (legacy plugin) | JS plugin model; v4 prefers CSS-first `@import` | **tw-animate-css** |
+| **Material UI / Chakra / Mantine** | Competing design systems; breaks Tailwind token + CMS model | Existing Tailwind + CVA components |
+| **styled-components / Emotion** | Second styling runtime; hurts CWV | Tailwind + CSS variables |
+| **DaisyUI / Flowbite** | Opinionated classes conflict with Apple-minimal custom tokens | `@theme` + utilities |
+| **Second motion library** (react-spring, anime.js, Lottie site-wide) | Bundle + `prefers-reduced-motion` inconsistency | Framer Motion + targeted GSAP |
+| **Migrating to `motion` package rename** now | `framer-motion@12` already installed; rename is churn with no v1.2 payoff | Keep `framer-motion` until a dedicated dep-upgrade phase |
+| **@mui/material DarkMode** | Wrong stack | next-themes + Tailwind `dark:` |
+| **Server-side theme SSR package** | Vite SPA prerenders static HTML; client theme is correct layer | Inline boot script + next-themes |
+| **Heavy image libs** (Cloudinary SDK, etc.) | Out of milestone scope | Native `loading="lazy"`, `decoding="async"`, CSS `blur` placeholder |
+| **Adding Framer Motion** | Already in `package.json` | Standardize patterns, lazy-load heavy pages only |
 
 ## Stack Patterns by Variant
 
-**If milestone ships without routing migration (default):**
-- **react-helmet-async** + **schema-dts** + Express **sitemap** + **puppeteer** post-build prerender.
-- Express continues to serve API; CDN/static host serves prerendered `dist/`.
-- Admin stays client-rendered (`noindex` via Helmet).
+**If CMS sets `colorScheme: 'system'`:**
+- Use `next-themes` `defaultTheme="system"` + `enableSystem`.
+- Do not force `.dark` in CSS alone—respect `prefers-color-scheme` until user overrides.
 
-**If team approves React Router framework migration mid-milestone:**
-- Add `@react-router/dev`, `react-router.config.ts` with `async prerender({ getStaticPaths })` loading slugs from Prisma.
-- Drop puppeteer script; use RR7-generated `build/client/**/*.html`.
-- **Cost:** Restructure `App.tsx` routes, data loading, and deploy rewrites — plan as its own phase.
+**If CMS sets explicit `light` / `dark`:**
+- Call `setTheme(appearance.colorScheme)` from `ThemeSynchronizer` when appearance loads.
+- User nav toggle can still override via `localStorage` (document precedence in UI copy).
 
-**If prerender CI is blocked (no headless Chrome):**
-- Ship helmet + sitemap + JSON-LD first (indexing improvement without full HTML snapshot).
-- Add Cloudflare prerender or similar for bot User-Agents only — document as infra phase, not npm dep.
+**If `prefers-reduced-motion: reduce`:**
+- Keep existing global CSS neutering in `index.css`.
+- In Framer Motion: `const reduce = useReducedMotion();` → `transition: reduce ? { duration: 0 } : spring`.
+- Disable `CustomCursor` / magnetic effects when reduced motion is on.
 
-**Premium UI without new CSS frameworks:**
-- Radix Dialog for modals + fontsource for fonts + existing Tailwind tokens (`--radius-global`, `--shadow-dynamic`).
-- Defer heavy `three` hero behind `matchMedia('(prefers-reduced-motion)')` and dynamic `import()` — code change, not a package.
+**If admin preview must match public:**
+- `LivePreview` iframe should inherit `class="dark"` from parent or sync theme via `postMessage` / shared `ThemeProvider`—no second theme stack.
+
+## Motion Strategy (Consolidation, Not Expansion)
+
+| Use case | Library | Notes |
+|----------|---------|-------|
+| Button hover, modal, list stagger, page sections | **Framer Motion** | `AnimatePresence`, `layout`, `whileHover`, `useInView` — already in codebase |
+| Scroll-scrub, pinned sections | **GSAP + ScrollTrigger** | Dynamic `import()` in section files only |
+| Focus rings, color transitions | **Tailwind** `transition-*`, `@utility transition-studio` | Prefer CSS for CWV |
+| Dialog open/close | **tw-animate-css** + Radix | `data-[state=open]:animate-in` pattern |
 
 ## Version Compatibility
 
 | Package A | Compatible With | Notes |
 |-----------|-----------------|-------|
-| react-helmet-async@3.0.0 | react@^19.2.4 | peer: `^16.6 \|\| ^17 \|\| ^18 \|\| ^19` (npm, HIGH) |
-| react-helmet-async@3.0.0 | react-router-dom@^7.14.0 | Works in SPA mode; no conflict |
-| puppeteer@25.0.4 | Node 20+ | Align with server `@types/node` ^20; Chromium downloaded on install (~size CI concern) |
-| sharp@0.34.5 | Node 20+ on Linux deploy | May need `libc` compat on Alpine — use Debian-based image or sharp prebuilds |
-| vite-plugin-compression@0.5.1 | vite@^8.0.1 | Dev plugin only |
-| web-vitals@5.2.0 | Modern browsers | INP replaces FID in v4+; v5 current on npm |
-| sitemap@9.0.1 | express@^4.19.2 | ESM/CJS: use `import sitemap from 'sitemap'` or dynamic import in TS |
-| @radix-ui/react-dialog@1.1.15 | react@^19.2.4 | Matches existing `@radix-ui/react-slot@^1.2.4` generation |
-
-## React 19 Native Metadata (Optional Simplification)
-
-React 19 can hoist `<title>`, `<meta>`, `<link>` from components to `<head>` without Helmet. **Limitation:** `htmlAttributes`/`bodyAttributes`, `titleTemplate`, and SSR head replay still favor **react-helmet-async@3** for this project’s admin preview and future prerender head replay.
-
-**Recommendation:** Standardize on **react-helmet-async@3** for one pattern across all public routes and admin preview — avoids mixing native metadata and Helmet on different pages.
-
-## Data Model Extensions (Not npm — required for stack to work)
-
-| Field | Location | Purpose |
-|-------|----------|---------|
-| `seoTitle`, `seoDescription`, `ogImage`, `noindex` | `Article` and/or `SiteContent.settings` JSON | Per-post OG + snippet preview |
-| `SITE_URL` | server `.env` | Canonical + sitemap absolute URLs |
-| `prerenderPaths` | build script input | `/`, `/blog`, `/events`, `/community`, `/blog/${slug}` |
+| `tailwindcss@4.2.x` | `@tailwindcss/vite@4.2.x` | Already aligned in repo |
+| `next-themes@0.4.6` | `react@19.x` | Framework-agnostic; not Next-only despite name |
+| `framer-motion@12.x` | `react@19.x` | Already used in repo |
+| `tw-animate-css@1.4.x` | Tailwind v4 | Import in CSS, not `tailwind.config.js` |
+| `light-dark()` | `color-scheme` on `html` | Set `scheme-light-dark` or `color-scheme: light dark` on root; watch LightningCSS optimize issues in production—test dark tokens in `vite build` preview |
+| Radix `2.x` menus | `@radix-ui/react-dialog@1.1.x` | Keep z-index scale documented in one `index.css` layer |
 
 ## Sources
 
-- [react-helmet-async v3.0.0 on npm](https://www.npmjs.com/package/react-helmet-async) — React 19 peerDependencies (HIGH)
-- [react-helmet-async PR #260](https://github.com/staylor/react-helmet-async/pull/260) — React 19 support notes (HIGH)
-- [React Router Pre-Rendering](https://reactrouter.com/how-to/pre-rendering) — official `prerender` config; requires framework mode (HIGH)
-- [npm registry](https://www.npmjs.com/) — version pins for sitemap, sharp, puppeteer, web-vitals, radix (HIGH)
-- Project baseline: `.planning/codebase/STACK.md`, `package.json`, `vite.config.ts`, `index.html`, `public/sitemap.xml`, `src/App.tsx` (HIGH)
-- SPA SEO delivery / AI crawlers — industry articles (MEDIUM): indexing delay and non-JS crawlers motivate prerender, not helmet alone
+- [Tailwind CSS — Dark mode](https://tailwindcss.com/docs/dark-mode) — `@custom-variant`, manual toggle, `localStorage` pattern (**HIGH**)
+- [Tailwind CSS — color-scheme](https://tailwindcss.com/docs/color-scheme) — `scheme-*` utilities (**HIGH**)
+- [Tailwind CSS v4.0 blog](https://tailwindcss.com/blog/tailwindcss-v4) — `light-dark()`, CSS-first config (**HIGH**)
+- [next-themes npm](https://www.npmjs.com/package/next-themes) — v0.4.6, Vite-compatible `ThemeProvider` (**HIGH**)
+- [tw-animate-css npm](https://www.npmjs.com/package/tw-animate-css) — v4-compatible animate utilities (**MEDIUM** — verify import path in milestone spike)
+- [Radix Primitives docs](https://www.radix-ui.com/primitives/docs) — unstyled a11y primitives (**HIGH**)
+- Brownfield: `package.json`, `src/index.css`, `src/App.tsx` `ThemeSynchronizer`, Framer/GSAP usage grep (**HIGH**)
 
 ---
-*Stack research for: v1.1 Premium Presentation & SEO Dominance*  
+*Stack research for: v1.2 Apple-grade premium UI (incremental on React/Vite/Tailwind CMS book site)*  
 *Researched: 2026-05-19*

@@ -1,76 +1,79 @@
 # Architecture Research
 
-**Domain:** Premium marketing SPA + headless CMS (React/Vite + Express/Prisma)  
+**Domain:** Premium marketing SPA + CMS-driven theming (React/Vite, Tailwind v4, Express/Prisma)  
+**Milestone:** v1.2 Apple-Grade Premium Experience  
 **Researched:** 2026-05-19  
-**Confidence:** HIGH (brownfield codebase verified); MEDIUM for prerender tooling choice (ecosystem, not yet installed)
+**Confidence:** HIGH (brownfield `index.css`, `ThemeSynchronizer`, `SiteAppearance` verified); MEDIUM for derived dark palettes (pattern standard, not yet implemented)
 
 ## Executive Integration Answer
 
-SEO and UI polish **extend the existing layers** rather than replacing them. The SPA keeps `WebsiteDataProvider` as the single content source; SEO adds a **parallel head-management layer** (`SeoHead`) and **build/deploy artifacts** (sitemap, prerendered HTML). Premium UI formalizes what `ThemeSynchronizer` and `@theme` in `index.css` already do into a **design-token contract** consumed by sections and admin preview.
+Dark mode, design tokens, and shared premium components **extend the existing token bridge** — they do not replace `WebsiteDataProvider` or the CMS. Today:
 
-**Rendering strategy for this milestone:** **Meta-first + build-time prerender** — not full SSR. Full SSR would fight stack continuity, Docker/Nginx static frontend, and the unified `GET /api/v1/content` hydration model. Google explicitly recommends server-side or pre-rendering when possible ([JavaScript SEO basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)); prerender fits the current `frontend` container serving `dist/` without a Node render server.
+- **Static layer:** `@theme` in `src/index.css` registers Tailwind utilities (`bg-off`, `text-text`, `shadow-premium`, section utilities).
+- **Runtime CMS layer:** `ThemeSynchronizer` in `App.tsx` sets `--color-accent`, `--font-*`, `--radius-global`, `--shadow-dynamic` on `document.documentElement` from `appearance`.
+- **Gap:** No dark semantic palette, many components use hardcoded `bg-white` / slate CVA tokens, glass utilities bake in light-only rgba values.
 
-| Approach | Fit for this repo | Verdict |
-|----------|-------------------|---------|
-| **Meta-only** (`react-helmet-async`, per-route tags) | Required baseline; fixes social crawlers and UX; insufficient alone for `/blog/:slug` in initial HTML | **Phase 1 — ship first** |
-| **Build-time prerender** (Vite post-build, Puppeteer or `vite-plugin-prerender`) | Matches Nginx static hosting; can call API during CI for dynamic slugs | **Phase 2 — recommended crawlability** |
-| **Express HTML injection for bots** | Possible via Nginx `map $http_user_agent` → API; adds ops complexity | **Defer** unless GSC shows index gaps after prerender |
-| **Full SSR** (Vite SSR, Remix, etc.) | Breaks monolith simplicity; second runtime on edge | **Out of scope** for v1.1 |
+**Recommended model:** A **three-tier token stack** where CMS only overrides *brand knobs* (accent, fonts, radius, shadow intensity, optional color mode preference), while Tailwind v4 owns *semantic surfaces* (bg, text, border, glass) with `@variant dark` overrides. Shared UI primitives consume semantic classes only; sections and admin preview both flow through the same `applyAppearance()` path.
 
 ---
 
 ## Standard Architecture
 
-### System Overview (Target State)
+### System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                         CDN / Nginx (reverse-proxy)                         │
-│  /  /blog/*  /events  …  → static dist (index.html + prerendered paths)    │
-│  /api/v1/*              → Express (book API)                              │
-│  /sitemap.xml /robots.txt → Express seoRoutes OR baked into dist/public   │
-└──────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                         index.css (@theme + @variant dark)                  │
+│  Semantic tokens: --color-bg, --color-text, --color-surface, --shadow-*     │
+│  Tailwind utilities: bg-bg, text-text, dark:bg-bg, section-public, …        │
+└────────────────────────────────────────────────────────────────────────────┘
+                                      ▲
+                                      │ CSS variables (build + runtime)
+┌─────────────────────────────────────┴──────────────────────────────────────┐
+│                    document.documentElement (:root)                           │
+│  CMS runtime: --color-accent, --color-accent2, --font-serif, --radius-global │
+│  Optional: data-theme="light|dark|system" on <html>                          │
+└────────────────────────────────────────────────────────────────────────────┘
+         ▲                                    ▲
          │                                    │
-         ▼                                    ▼
-┌─────────────────────┐              ┌─────────────────────┐
-│   React SPA (Vite)   │              │  Express + Prisma    │
-│                      │   fetch      │                      │
-│ WebsiteDataProvider ─┼─────────────►│ GET /content         │
-│ SeoHead (per route)  │              │ seoRoutes (sitemap)  │
-│ ThemeSynchronizer    │              │ adminRoutes (CMS)    │
-│ JsonLd components    │              │                      │
-└─────────────────────┘              └─────────────────────┘
-         ▲
-         │ vite build + prerender script (CI: API up → slug list → HTML files)
-         └──────────────────────────────────────────────────────────────────
+┌────────┴─────────┐              ┌──────────┴───────────┐
+│ ThemeSynchronizer │              │ WebsiteDataProvider   │
+│ (applyAppearance) │◄─────────────│ data = preview || db  │
+└────────┬─────────┘              └──────────┬───────────┘
+         │                                    │
+         │         ┌──────────────────────────┘
+         │         │
+┌────────┴─────────┴──────────────────────────────────────────────────────────┐
+│  Public surfaces                          │  Admin surfaces                    │
+│  ui/* (Button, Card, AppDialog)           │  DesignSystemManager (setPreview) │
+│  sections/*, pages/*                      │  LivePreview → LandingPage        │
+│  @utility btn-cta-*, glass-*              │  Admin shell: light-only OK       │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility | Implementation in this repo |
 |-----------|----------------|------------------------------|
-| **WebsiteDataProvider** | Authoritative CMS payload; admin mutations | Existing — keep as single hydration point |
-| **ThemeSynchronizer** | Runtime design tokens (CSS vars, custom CSS) | Existing in `App.tsx` — **remove SEO duties** |
-| **SeoHead** (new) | Per-route `<title>`, meta, canonical, OG, robots | `react-helmet-async` + route/entity resolver |
-| **seoConfig / usePageSeo** (new) | Merge global `settings.seo` + page/article overrides | Pure functions + hook |
-| **JsonLd** (new) | Inject `application/ld+json` (Organization, Article, Event) | React components per page type |
-| **seoRoutes** (new) | Dynamic `sitemap.xml`, optional `robots.txt` | Express module; Prisma queries published slugs |
-| **Prerender pipeline** (new) | Emit static HTML for public routes at build | Post-`vite build` script or Vite plugin; needs route list from API/seed |
-| **Design tokens** (extend) | Single source for color, type, radius, motion | Formalize `@theme` + CMS `appearance` bridge |
-| **Admin SEO UI** (extend) | Per-entity OG, noindex, snippet preview | Extend `SettingsManager`, `BlogManager` |
+| **`@theme` block** | Register design tokens as Tailwind theme keys; single source for spacing, type scale, shadows | `src/index.css` — extend with semantic `surface`, `elevated`, `glass-*` tokens |
+| **`applyAppearance()`** | Map `SiteAppearance` → CSS custom properties; derive accent2; optional dark palette | Extract from `ThemeSynchronizer` → `src/theme/applyAppearance.ts` |
+| **`ThemeSynchronizer`** | React effect: call `applyAppearance` when `data.appearance` changes | `App.tsx` — keep thin; no SEO, no business logic |
+| **`WebsiteDataProvider`** | CMS payload; `data: previewData \|\| data` for live preview | Existing — preview already drives theme |
+| **`src/components/ui/*`** | Premium primitives: variants via CVA, semantic colors only | Migrate `Button.tsx` off slate/zinc; align `AppDialog`, `Card` |
+| **`@utility` section/glass** | Composed layout + material treatments | `index.css` — refactor glass to use `color-mix` / semantic vars |
+| **`DesignSystemManager`** | Edit appearance; `setPreview({ appearance })` | Existing — add color-mode control when schema extends |
+| **Admin shell** | Editing UX; may stay light-themed | `admin/*` — use `admin-*` tokens or fixed light palette |
 
-### Current vs Target (Integration Points)
+### Current vs Target
 
-| Layer | Current | Change |
-|-------|---------|--------|
-| `index.html` | Static global meta + canonical | Minimal shell; fallbacks only; route meta from `SeoHead` |
-| `App.tsx` `ThemeSynchronizer` | Sets `document.title` + description globally | SEO → `SeoHead`; theme only in synchronizer |
-| `BlogPostPage` | No per-article meta | `usePageSeo(article)` + Article JSON-LD |
-| `Article` / `SiteSettings` types | `settings.seo` title/description/ogImage optional | Add per-route and per-article SEO fields |
-| Express `index.ts` | No SEO routes | Mount `seoRoutes`; optional static file headers |
-| `vite build` | SPA only | Add prerender step + env `PRERENDER_API_URL` |
-| `nginx.conf` | `/` → frontend, `/api/` → API | Add `location = /sitemap.xml` (and robots) if served by API |
-| Admin | Global SEO tab only | Per-blog SEO fields, snippet preview, noindex toggle |
+| Layer | Current | Target (v1.2) |
+|-------|---------|-----------------|
+| Color tokens | Light-only in `@theme`; body `background: #ffffff` hardcoded | Semantic light + `@variant dark` overrides on `:root` |
+| CMS colors | `primaryColor` → `--color-accent` only | Same + derived `--color-accent-light` / dark-surface tints |
+| Dark mode | None | System-first (`prefers-color-scheme`); optional `data-theme` for forced preview |
+| Components | Mix of `bg-off`, `bg-white`, `bg-slate-950` | Semantic: `bg-bg`, `bg-surface`, `dark:bg-surface` |
+| Glass utilities | Hardcoded `rgba(255,255,255,…)` | Token-backed: `--glass-bg`, `--glass-border` per color scheme |
+| Theme sync | Inline in `App.tsx` | `src/theme/` module + unit-testable color math |
 
 ---
 
@@ -78,372 +81,331 @@ SEO and UI polish **extend the existing layers** rather than replacing them. The
 
 ```
 src/
-├── seo/                      # NEW — head tags, JSON-LD, config resolution
-│   ├── SeoHead.tsx
-│   ├── JsonLd.tsx
-│   ├── seoConfig.ts
-│   ├── routes.ts             # public route registry for sitemap/prerender
-│   └── types.ts
-├── styles/                   # NEW or extend index.css
-│   └── tokens.css            # documented token contract (optional split from @theme)
-├── hooks/
-│   └── usePageSeo.ts         # NEW
+├── theme/
+│   ├── applyAppearance.ts      # CMS → :root CSS vars (single entry)
+│   ├── colorUtils.ts           # darkenColor, contrast, dark palette derivation
+│   ├── tokens.ts               # TypeScript mirror of semantic token names
+│   └── ThemeProvider.tsx       # ThemeSynchronizer + optional color-mode listener
 ├── components/
-│   └── WebsiteDataProvider.tsx  # MODIFIED — expose seo helpers if needed
-├── pages/
-│   ├── BlogPostPage.tsx      # MODIFIED — SeoHead + semantic article shell
-│   └── ...                   # MODIFIED — h1 hierarchy, SeoHead per route
-server/src/
-├── routes/
-│   └── seoRoutes.ts          # NEW — sitemap.xml, robots.txt
-├── lib/
-│   └── sitemapBuilder.ts     # NEW
-scripts/
-└── prerender.mts             # NEW — post-build static HTML generation
-public/
-├── robots.txt                # NEW or template
-└── (og defaults)
+│   ├── ui/
+│   │   ├── Button.tsx          # CVA → semantic + appearance.theme.buttonStyle
+│   │   ├── Card.tsx
+│   │   ├── AppDialog.tsx
+│   │   ├── Input.tsx           # NEW — studio-input token wrapper
+│   │   └── index.ts            # barrel export for pages/sections
+│   └── WebsiteDataProvider.tsx # unchanged contract; preview || data
+├── styles/
+│   └── tokens.css              # optional: @theme split from index.css for clarity
+└── index.css                   # @import tokens; @custom-variant dark; @utility *
 ```
 
 ### Structure Rationale
 
-- **`src/seo/`:** Keeps SEO out of `App.tsx` and section components; one import per page. Matches existing pattern (`lib/marketing.ts`, `lib/api.ts`).
-- **Server sitemap in Express:** Content lives in Prisma; sitemap must reflect published `Article.slug` and public routes without manual updates. Build can **also** emit sitemap for offline/CDN, but API-generated stays authoritative after CMS edits until next build.
-- **Prerender script outside Vite core:** Brownfield safety — add post-build step before committing to a specific Vite plugin; plugin can replace script later.
+- **`src/theme/`:** Isolates CMS→CSS mapping so `DesignSystemManager`, tests, and prerender can import the same logic without mounting `App`.
+- **`src/components/ui/`:** One import surface for premium craft; pages stop ad-hoc button classes.
+- **Keep `@theme` in CSS:** Tailwind v4 CSS-first config is already established; TypeScript only documents names, does not duplicate color values.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Layered SEO (Meta → Structured Data → Prerender → Crawl Files)
+### Pattern 1: Three-Tier Token Stack
 
-**What:** Four layers that stack; each layer works without the next but crawl quality improves cumulatively.
+**What:** Separate *framework*, *semantic*, and *brand* tokens so dark mode and CMS theming do not fight.
 
-**When to use:** All public marketing routes in v1.1.
+| Tier | Owner | Examples | CMS override? |
+|------|-------|----------|---------------|
+| **Framework** | `@theme` static | `--space-*`, `--text-*`, motion keyframes | No |
+| **Semantic** | `@theme` + `@variant dark` on `:root` | `--color-bg`, `--color-surface`, `--color-text`, `--color-border` | No (fixed light/dark pairs) |
+| **Brand** | `applyAppearance()` on `:root` | `--color-accent`, `--font-serif`, `--radius-global` | Yes |
 
-**Trade-offs:** Meta-only is fast but leaves empty shell for first crawl wave; prerender adds CI time and requires API during build.
+**When to use:** Every new color in UI must map to semantic tier first; only accent/brand hues come from CMS.
 
-**Data flow:**
+**Trade-offs:** Editors cannot pick arbitrary dark bg colors without new CMS fields — acceptable for Apple-minimal consistency; derive dark neutrals algorithmically.
 
-```
-Prisma (Article, SiteContent.settings)
-    ↓ GET /api/v1/content
-WebsiteDataProvider.data
-    ↓
-seoConfig.resolve({ route, article?, settings })
-    ↓
-SeoHead + JsonLd (client)  |  prerender script (build: same resolve, write HTML)
-    ↓
-sitemapBuilder ← Prisma published slugs (server) / route registry (client)
-```
+**Example (`index.css`):**
 
-**Example (conceptual):**
+```css
+@import "tailwindcss";
 
-```typescript
-// src/seo/seoConfig.ts
-export function resolvePageSeo(
-  pathname: string,
-  data: WebsiteData,
-  article?: Article,
-): PageSeo {
-  const base = data.settings.seo;
-  if (article) {
-    return {
-      title: article.seoTitle ?? `${article.title} | ${base.title}`,
-      description: article.seoDescription ?? article.excerpt,
-      canonical: `${SITE_URL}/blog/${article.slug}`,
-      ogImage: article.ogImage ?? base.ogImage,
-      noindex: !article.isPublished,
-    };
+/* System-first dark; extend later for manual toggle */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme {
+  --color-bg: #F2F2F0;
+  --color-surface: #ffffff;
+  --color-text: #000000;
+  --color-border: #D1D1CE;
+  /* accent registered; runtime override on :root */
+  --color-accent: #003E99;
+}
+
+:root {
+  color-scheme: light;
+  @variant dark {
+    color-scheme: dark;
+    --color-bg: #0a0a0b;
+    --color-surface: #141416;
+    --color-text: #f5f5f7;
+    --color-border: #2c2c2e;
+    --color-tag: #1c1c1e;
+    /* glass tokens */
+    --glass-bg: color-mix(in srgb, var(--color-surface) 70%, transparent);
   }
-  return routeDefaults[pathname] ?? base;
 }
 ```
 
-### Pattern 2: Head Management via react-helmet-async (Not document.* in ThemeSynchronizer)
+CMS still sets `--color-accent` at runtime; `dark:` utilities and semantic vars compose automatically.
 
-**What:** Declarative per-route head tags that reconcile on navigation.
+---
 
-**When to use:** All SPA routes; admin routes get `noindex`.
+### Pattern 2: Unified `applyAppearance()` Bridge
 
-**Trade-offs:** Still client-rendered until prerender runs; must not duplicate tags from `index.html`.
+**What:** One function maps `SiteAppearance` → `document.documentElement` style properties. Used by public app and admin live preview (via `previewData || data`).
+
+**When to use:** On every `appearance` change, including `DesignSystemManager` preview — already wired through context merge.
+
+**Trade-offs:** Runtime theming means tokens are not in initial HTML until JS runs — mitigated with inline critical vars for accent only if FOUC is observed.
 
 **Example:**
 
-```tsx
-// src/seo/SeoHead.tsx
-<Helmet>
-  <title>{seo.title}</title>
-  <meta name="description" content={seo.description} />
-  <link rel="canonical" href={seo.canonical} />
-  <meta property="og:title" content={seo.title} />
-  {seo.noindex && <meta name="robots" content="noindex,nofollow" />}
-</Helmet>
+```typescript
+// src/theme/applyAppearance.ts
+import type { SiteAppearance } from '../lib/websiteData'
+
+export function applyAppearance(appearance: SiteAppearance, root: HTMLElement = document.documentElement) {
+  root.style.setProperty('--color-accent', appearance.primaryColor)
+  root.style.setProperty('--color-accent2', darkenHex(appearance.primaryColor))
+  // typography, radius, shadow mappings (existing App.tsx logic)
+  // optional: root.dataset.theme = appearance.colorMode ?? 'system'
+}
 ```
 
-Mount `<HelmetProvider>` in `main.tsx` above `WebsiteDataProvider` or inside it.
-
-### Pattern 3: Build-Time Prerender with API-Backed Route Discovery
-
-**What:** After `vite build`, a Node script loads `dist/index.html`, visits each public URL (local preview server or headless Chrome), waits for content, writes `dist/blog/my-slug/index.html`.
-
-**When to use:** Public routes: `/`, `/blog`, `/blog/:slug` (published only), `/events`, `/community` (if indexed).
-
-**Trade-offs:** CI must run API + seed; content changes need rebuild or scheduled pipeline. **Do not prerender** `/admin/*`, `/dashboard`.
-
-**Integration with Docker:** `docker compose build frontend` should run prerender when `PRERENDER_API_URL` points at a reachable API (build arg or multi-stage with ephemeral API).
-
-### Pattern 4: Design Token Bridge (CMS appearance → CSS variables)
-
-**What:** Already partially implemented: `@theme` in `index.css` defines defaults; `ThemeSynchronizer` maps `appearance` to `--color-accent`, `--font-serif`, `--radius-global`, etc.
-
-**When to use:** Premium UI milestone — formalize token names, document in `tokens.css`, ensure admin preview and public site use same variable names.
-
-**Trade-offs:** Runtime injection prevents full static CSS extraction; acceptable for brand theming.
-
-**Example (existing pattern to preserve):**
-
-```tsx
-// App.tsx ThemeSynchronizer — keep theme-only
-document.documentElement.style.setProperty('--color-accent', appearance.primaryColor);
+```typescript
+// ThemeProvider.tsx — replaces inline ThemeSynchronizer body
+export function ThemeProvider({ appearance }: { appearance: SiteAppearance }) {
+  useEffect(() => { applyAppearance(appearance) }, [appearance])
+  return null
+}
 ```
 
-Add token tiers: `--space-*`, `--ease-*`, `--duration-*` for motion consistency (Framer/GSAP).
+**Extend `SiteAppearance` (schema + Prisma):**
 
-### Pattern 5: JSON-LD as Presentational SEO Components
+```typescript
+theme: {
+  borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'full'
+  buttonStyle: 'flat' | 'outline' | 'glass'
+  shadowIntensity: 'none' | 'soft' | 'heavy'
+  colorMode?: 'system' | 'light' | 'dark'  // optional v1.2; default 'system'
+}
+```
 
-**What:** Small components render `<script type="application/ld+json">` from CMS entities.
+For **admin forced dark preview**, set `data-theme="dark"` on the LivePreview iframe wrapper only — do not change global OS preference.
 
-**When to use:** Home (`Organization` + `WebSite`), blog post (`Article` or `BlogPosting`), events (`Event`).
+---
 
-**Trade-offs:** Google allows JS-generated structured data but recommends testing in Rich Results Test ([structured data JS guide](https://developers.google.com/search/docs/guides/generate-structured-data-with-javascript)).
+### Pattern 3: Semantic Primitives + CMS `buttonStyle`
+
+**What:** Shared components use CVA variants bound to semantic Tailwind classes and CMS `appearance.theme.buttonStyle` where relevant.
+
+**When to use:** Nav CTAs, modals, forms, cards — anywhere `btn-cta-*` or duplicate button markup exists today.
+
+**Trade-offs:** shadcn-style `Button` currently uses slate/zinc — must migrate or wrap with site variants (`btn-flat`, `btn-outline`, `btn-glass` already in CSS).
+
+**Example:**
+
+```typescript
+const buttonVariants = cva(
+  'btn-dynamic min-h-11 inline-flex items-center justify-center gap-2',
+  {
+    variants: {
+      style: {
+        flat: 'btn-flat',
+        outline: 'btn-outline',
+        glass: 'btn-glass',
+      },
+      size: { default: 'px-8 py-3', sm: 'px-4 py-2 text-xs', lg: 'px-10 py-4' },
+    },
+    defaultVariants: { style: 'glass', size: 'default' },
+  }
+)
+
+// Page usage
+const { data } = useWebsiteData()
+<Button style={data.appearance.theme.buttonStyle} />
+```
+
+`AppDialog` should use `bg-surface` not `bg-white`; overlays stay `bg-black/40` with `dark:bg-black/60`.
+
+---
+
+### Pattern 4: Section Utilities Stay; Surfaces Go Semantic
+
+**What:** Keep `@utility section-public`, `section-inner`, `btn-cta-primary` as composition layer; replace hardcoded `bg-white` in sections with `bg-surface` / `bg-bg`.
+
+**When to use:** All `src/components/sections/*` and page shells (`App.tsx` `min-h-screen bg-off` → `bg-bg`).
+
+**Trade-offs:** Hero gradients (`hero-aura-bg`, BookShowcase `#091b36`) may remain bespoke art direction — wrap in `dark:` adjustments or `color-mix` with `--color-accent`, not full semantic migration.
+
+---
+
+### Pattern 5: Admin vs Public Theme Scope
+
+**What:** Public site respects system dark mode + CMS brand tokens. Admin CMS shell can remain **light-only** (`bg-white` fixed) to reduce scope; **LivePreview** must render public theme including dark.
+
+**When to use:** v1.2 — polish admin chrome lightly with shared inputs (`studio-input`); full admin dark mode is deferrable.
+
+**Implementation:** `LivePreview` root gets `className="preview-root"` and inherits same `ThemeProvider` + optional `data-theme` toggle in Design panel.
 
 ---
 
 ## Data Flow
 
-### Public Page Load (unchanged core, extended head)
+### Theme Application Flow
 
 ```
-Browser GET /
+GET /api/v1/content
     ↓
-Nginx → frontend container (static file or prerendered /index.html)
+WebsiteDataProvider.fetchContent → data.appearance
     ↓
-main.tsx → WebsiteDataProvider.fetchContent()
+Admin setPreview({ appearance: form })  →  previewData.appearance (merged)
     ↓
-GET /api/v1/content → contentRoutes → Prisma
+useWebsiteData().data.appearance
     ↓
-React Router renders page
+ThemeProvider → applyAppearance(appearance)
     ↓
-SeoHead resolves meta from route + data
-ThemeSynchronizer applies appearance CSS vars
-JsonLd injects schema
-MarketingTracker logs page_view (unchanged)
+:root CSS variables + (optional) html[data-theme]
+    ↓
+Tailwind utilities (bg-bg, text-accent, dark:bg-surface, …)
+    ↓
+ui/* + sections/* + pages/*
 ```
 
-### Admin SEO Save
+### Component Consumption Flow
 
 ```
-SettingsManager / BlogManager
+SiteAppearance.theme.buttonStyle
     ↓
-updateSettings / updateArticle (existing provider methods)
+Button / section CTAs (CVA variant)
     ↓
-PUT /api/v1/admin/* → Prisma
+btn-dynamic + btn-flat|outline|glass (index.css)
     ↓
-fetchContent() refresh
-    ↓
-(Optional future) POST /api/v1/admin/rebuild-sitemap or CI webhook
+Uses --color-accent, --radius-global from applyAppearance
 ```
 
-### Build / Deploy
+### Key Data Flows
 
-```
-npm run build (tsc + vite build)
-    ↓
-node scripts/prerender.mts
-    - fetch GET /api/v1/content (or /content/site + articles list)
-    - for each public route: render HTML → dist/.../index.html
-    ↓
-Docker frontend image copies dist/
-    ↓
-Nginx serves static; /api proxied to Express
-```
-
-### State Management
-
-| State | Owner | SEO/UI notes |
-|-------|-------|----------------|
-| Site content | `WebsiteDataProvider` | Add seo fields to types + merge logic |
-| Document head | `SeoHead` + Helmet | Replaces imperative `document.title` in ThemeSynchronizer |
-| Theme tokens | `ThemeSynchronizer` + `@theme` | UI polish extends variables, not duplicate inline styles |
-| Crawl artifacts | Express and/or `dist/` | Sitemap must list only published, indexable URLs |
+1. **CMS save:** `DesignSystemManager` → `updateAppearance(form)` → API persist → `fetchContent` refresh → `applyAppearance` on new data.
+2. **Live preview:** `setPreview({ appearance: form })` → context `data` swaps → `ThemeProvider` re-runs without save.
+3. **Dark mode:** OS `prefers-color-scheme` → Tailwind `dark:` + `:root @variant dark` semantic overrides; CMS accent vars unchanged but readable on dark surfaces.
 
 ---
 
-## Suggested Build Order
+## Tailwind v4 Integration Rules
 
-Order respects dependencies: **data model → client head → semantics → structured data → crawl files → prerender → admin tools → measurement → UI polish**.
+| Concern | Recommendation | Source |
+|---------|----------------|--------|
+| Default dark | Use built-in `dark:` with `prefers-color-scheme` (no config file) | [Tailwind dark mode docs](https://tailwindcss.com/docs/dark-mode) |
+| Manual toggle later | `@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *))` + JS on `<html>` | Official docs |
+| CMS + dark | CMS sets **brand** vars on `:root`; semantic vars switch in `@variant dark` | Verified pattern (Stack Overflow + v4 `@variant` syntax) |
+| Dynamic accent in `@theme` | Keep `--color-accent` in `@theme` as default; runtime `setProperty` overrides utility resolution | Current `App.tsx` pattern works |
+| `@utility` glass | Define `--glass-bg` / `--glass-border` in `:root` and `@variant dark`; utilities reference `var()` | Avoid duplicated rgba in each utility |
+| `color-scheme` | Set `color-scheme: light` / `dark` on `:root` per variant for native inputs/scrollbars | Apple-grade polish |
 
-| Order | Workstream | New / Modified | Depends on | Delivers |
-|-------|------------|----------------|------------|----------|
-| **1** | Design token contract | **Modify** `index.css`, `ThemeSynchronizer`; optional `tokens.css` | — | Stable variables for UI polish pass |
-| **2** | SEO data model | **Modify** `websiteData.ts`, Prisma/`Article`, seed, provider merge; **Modify** admin save payloads | — | Per-article and per-route SEO fields in API |
-| **3** | `SeoHead` + route registry | **New** `src/seo/*`, `usePageSeo`; **Modify** `main.tsx`, `App.tsx` (strip SEO from ThemeSynchronizer), each public `pages/*` | 2 | Correct titles/descriptions/canonicals on navigation |
-| **4** | Semantic HTML & heading audit | **Modify** section/page components | 1 (tokens) | Accessible outline, CWV-friendly markup |
-| **5** | JSON-LD | **New** `JsonLd.tsx`; **Modify** `LandingPage`, `BlogPostPage`, `EventsPage` | 2, 3 | Rich result eligibility |
-| **6** | `robots.txt` + meta robots policy | **New** `public/robots.txt` or `seoRoutes`; **Modify** admin noindex flags | 3 | Crawl policy; block `/admin` |
-| **7** | Dynamic sitemap | **New** `seoRoutes.ts`, `sitemapBuilder.ts`; **Modify** `server/index.ts`, `nginx.conf` | 2 | Discoverable URLs for GSC |
-| **8** | Build-time prerender | **New** `scripts/prerender.mts`; **Modify** `package.json`, CI/Dockerfile, `vite.config` | 2, 3, 7 (route list) | HTML in first response for key URLs |
-| **9** | Admin SEO tools | **Modify** `SettingsManager`, `BlogManager`; **New** snippet preview component | 2, 3 | Editors control OG, noindex, previews |
-| **10** | Search Console & analytics | **Modify** `settings.scripts` injection or env-based GSC verification meta | 3 | Verification, monitoring |
-| **11** | Premium UI polish pass | **Modify** sections, motion (Framer/GSAP), responsive layouts | 1, 4 | Visual milestone completion |
-| **12** | CWV & performance | **Modify** images, lazy-load, bundle split, prerender cache headers | 8, 11 | LCP/INP targets |
-
-**Parallelizable after step 3:** Steps 4–5 (semantics + JSON-LD) and 6–7 (robots + sitemap) can run in parallel. Step 11 (UI polish) can start after step 1 and overlap with 3–7.
-
-**Do not start prerender (8) before:** route-level `SeoHead` works in dev, published slug list is stable, and CI can reach the API.
-
----
-
-## New vs Modified Checklist
-
-### New
-
-| Artifact | Purpose |
-|----------|---------|
-| `src/seo/SeoHead.tsx` | Per-route head tags |
-| `src/seo/JsonLd.tsx` | Structured data |
-| `src/seo/seoConfig.ts` | Resolve meta from CMS + route |
-| `src/seo/routes.ts` | Canonical public path list |
-| `src/hooks/usePageSeo.ts` | Page-level hook |
-| `server/src/routes/seoRoutes.ts` | Sitemap/robots HTTP |
-| `server/src/lib/sitemapBuilder.ts` | XML generation from Prisma |
-| `scripts/prerender.mts` | Post-build static HTML |
-| `public/robots.txt` | Default crawl rules |
-
-### Modified
-
-| Artifact | Change |
-|----------|--------|
-| `src/App.tsx` | Remove SEO from `ThemeSynchronizer`; wrap with `SeoHead` at router level or per page |
-| `src/main.tsx` | `HelmetProvider` |
-| `src/lib/websiteData.ts` | Extend `Article`, `SiteSettings.seo`, route SEO map |
-| `src/pages/BlogPostPage.tsx` | `SeoHead`, `<article>`, JSON-LD |
-| `src/pages/*.tsx` | Per-route SEO + semantic landmarks |
-| `src/components/admin/SettingsManager.tsx` | OG image, GSC meta, snippet preview |
-| `src/components/admin/BlogManager.tsx` | Per-article SEO fields |
-| `server/prisma/schema.prisma` | Optional `seoTitle`, `seoDescription`, `ogImage`, `noindex` on `Article` |
-| `server/src/index.ts` | Mount `/sitemap.xml`, `/robots.txt` |
-| `nginx.conf` | Proxy or alias for sitemap if API-served |
-| `vite.config.ts` / `package.json` | Prerender script, `react-helmet-async` |
-| `index.html` | Reduce duplicate static meta (keep charset, viewport, fallback) |
-| `docs/deployment.md` | Document prerender env and rebuild-on-publish |
-
-### Unchanged (explicitly)
-
-- `WebsiteDataProvider` hydration pattern (`GET /api/v1/content`)
-- React Router history API routes (already correct for Google)
-- Marketing telemetry path (`MarketingTracker` → server proxy)
-- Admin JWT auth model
-- Docker topology (static frontend + API); no SSR Node on edge
+**Do not** duplicate token values in JS except for CMS-driven brand fields. **Do not** use `@theme` inline overrides per component — use utilities.
 
 ---
 
 ## Scaling Considerations
 
-| Scale | Architecture adjustments |
-|-------|--------------------------|
-| **0–1k users** | Meta + sitemap + prerender sufficient; SQLite OK |
-| **1k–100k users** | CDN cache static assets; shorten prerender set to money pages; consider on-publish rebuild webhook |
-| **100k+** | Postgres migration (deferred v1.0); ISR-like rebuild queue; edge CDN for `dist/`; optional dedicated render worker |
+| Scale | Architecture note |
+|-------|-------------------|
+| 8 public pages | Token + primitive migration is bounded; phase by surface (ui → sections → pages) |
+| CWV | Prefer CSS variables over JS theme recalc; respect `prefers-reduced-motion` (already in `index.css`) |
+| Prerender (v1.1 SEO) | Prerendered HTML uses default light tokens; dark users get correct theme after hydration — acceptable if semantic HTML and contrast defaults are sane |
+| Many CMS editors | `applyAppearance` is O(1) DOM writes; no perf concern |
 
-### Scaling Priorities
+### First bottleneck
 
-1. **First bottleneck:** Stale prerender after CMS publish — mitigate with rebuild on admin save or nightly CI.
-2. **Second bottleneck:** Large unified content payload — split read endpoints only if LCP suffers (not required for v1.1).
+Hardcoded light colors in 40+ components — **migration churn**, not runtime. Mitigate with grep-driven phases and semantic primitives first.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Full SSR Rewrite for SEO
+### Anti-Pattern 1: Per-Component Dark Colors
 
-**What people do:** Migrate to Next.js/Remix for ranking.  
-**Why it's wrong:** Violates stack continuity; duplicates CMS hydration; new deploy model.  
-**Do this instead:** Meta layer + build-time prerender on existing Vite output.
+**What people do:** Add `dark:bg-gray-900` with different grays in every file.  
+**Why it's wrong:** Drift from CMS accent; unmaintainable across 8 pages.  
+**Do this instead:** Semantic tokens + `dark:bg-surface` only; accent from `--color-accent`.
 
-### Anti-Pattern 2: SEO Only in ThemeSynchronizer / document.*
+### Anti-Pattern 2: CMS Stores Full Dark Palette
 
-**What people do:** Keep global `useEffect` title updates (current `App.tsx`).  
-**Why it's wrong:** One title for all routes; blog posts invisible to OG; races with Helmet.  
-**Do this instead:** `SeoHead` per route; ThemeSynchronizer for CSS only.
+**What people do:** 12 color pickers for light/dark in admin.  
+**Why it's wrong:** Explodes `SiteAppearance`, preview complexity, contrast failures.  
+**Do this instead:** CMS controls brand accent + typography + radius; system derives dark neutrals.
 
-### Anti-Pattern 3: Static sitemap checked into git
+### Anti-Pattern 3: Duplicate Theme Logic in Admin
 
-**What people do:** Hand-maintained `sitemap.xml`.  
-**Why it's wrong:** Drifts from CMS slugs and `isPublished`.  
-**Do this instead:** Generate from Prisma in `seoRoutes` (and optionally bake at build).
+**What people do:** Separate preview CSS in `DesignSystemManager`.  
+**Why it's wrong:** Preview diverges from production.  
+**Do this instead:** Only `setPreview({ appearance })` + shared `applyAppearance`.
 
-### Anti-Pattern 4: Prerendering admin and community UGC
+### Anti-Pattern 4: Split Button Systems
 
-**What people do:** Prerender all routes from react-snap crawl.  
-**Why it's wrong:** Admin leaks, infinite community URLs, stale UGC.  
-**Do this instead:** Explicit allowlist in `src/seo/routes.ts`.
+**What people do:** Keep `btn-cta-primary`, `Button.tsx` (slate), and `btn-dynamic` in parallel.  
+**Why it's wrong:** Inconsistent craft pass.  
+**Do this instead:** One `Button` primitive; section utilities call it or share CVA.
 
-### Anti-Pattern 5: Duplicate canonical / robots in index.html and Helmet
+### Anti-Pattern 5: Light-Only Glass Utilities
 
-**What people do:** Static canonical in `index.html` plus JS canonical per route.  
-**Why it's wrong:** Google warns against conflicting canonicals.  
-**Do this instead:** Single canonical source per URL in `SeoHead`; minimal `index.html` shell.
-
-### Anti-Pattern 6: UI polish without token contract
-
-**What people do:** Per-component color/spacing tweaks.  
-**Why it's wrong:** Fighting CMS `appearance` and inconsistent premium feel.  
-**Do this instead:** Extend `@theme` + CSS variables first, then section pass.
+**What people do:** `glass-premium` with fixed white rgba (current `index.css`).  
+**Why it's wrong:** Broken glass on dark backgrounds.  
+**Do this instead:** Token-backed glass vars with `@variant dark` overrides.
 
 ---
 
 ## Integration Points
 
-### External Services
-
-| Service | Integration pattern | Notes |
-|---------|---------------------|-------|
-| **Google Search Console** | HTML meta verification in `settings` or env | After sitemap URL live |
-| **Analytics** | Existing `settings.scripts.header/footer` | Load after consent if required |
-| **Social crawlers** | OG/Twitter tags in `SeoHead` | Require absolute image URLs (`ogImage`) |
-| **marketing-backend** | Unchanged — no SEO coupling | Keep telemetry separate from crawl layer |
-
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| **SPA ↔ Express** | `GET /content` for hydration; `GET /sitemap.xml` for crawlers | Sitemap does not need full content payload |
-| **Build ↔ API** | Prerender script calls API during CI | Fail build if API unreachable or document contract |
-| **SeoHead ↔ WebsiteDataProvider** | Read-only `data` + route params | No second fetch for SEO |
-| **Admin ↔ SEO fields** | Same admin PUT paths | Extend JSON on `Article` / `settings` |
-| **Nginx ↔ frontend/API** | Static files vs proxy | Add explicit locations for sitemap/robots if API-served |
+| `index.css` ↔ `applyAppearance` | CSS variables | `@theme` registers names; runtime overrides brand subset |
+| `WebsiteDataProvider` ↔ `ThemeProvider` | `data.appearance` | Preview path already merged |
+| `ui/*` ↔ `sections/*` | Import primitives | Sections should not define one-off button styles |
+| `DesignSystemManager` ↔ `LivePreview` | `setPreview` | Add dark-preview toggle on preview container only |
+| Prisma `appearance` JSON | API ↔ client types | Extend schema with `colorMode` when needed |
 
-### Prerender vs SSR vs Meta-Only Decision Record
+### External / Build
 
-| Criterion | Meta-only | Prerender | SSR |
-|-----------|-----------|-----------|-----|
-| Implementation cost | Low | Medium | High |
-| Fits Docker static frontend | Yes | Yes | No (needs Node render) |
-| Dynamic CMS blog slugs | Poor initial HTML | Good | Best |
-| Admin preview | Native SPA | Native SPA | Complex |
-| **Recommendation** | **Required** | **Adopt for v1.1** | **Defer** |
+| Service | Pattern | Notes |
+|---------|---------|-------|
+| Leaflet map | Keep dedicated dark tile filter in `index.css` | Already dark-themed; isolate from semantic tokens |
+| Framer Motion | `useReducedMotion` hook in shared motion wrapper | Respect existing `@media (prefers-reduced-motion)` |
+| Custom CSS (`settings.customCss`) | Injected after tokens | Document that authors should use `var(--color-accent)` |
+
+---
+
+## Suggested Implementation Phases (Roadmap Hints)
+
+1. **Token foundation** — Semantic palette + `@variant dark` in `index.css`; fix `body` to `bg-bg`; extract `applyAppearance`.
+2. **Primitives** — `Button`, `Input`, `Card`, `AppDialog` on semantic tokens; wire `buttonStyle`.
+3. **Section sweep** — Replace `bg-white` / `#fafafa` in sections and public pages.
+4. **Glass & motion** — Token-backed glass; shared motion constants.
+5. **Admin parity** — `studio-input` everywhere; LivePreview dark toggle; optional admin shell polish.
 
 ---
 
 ## Sources
 
-- [Google Search Central — JavaScript SEO basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) (HIGH — official; recommends pre-render/SSR when possible)
-- Brownfield codebase: `.planning/codebase/ARCHITECTURE.md`, `src/App.tsx`, `server/src/index.ts`, `docs/deployment.md`, `nginx.conf` (HIGH)
-- [vite-plugin-prerender](https://www.npmjs.com/package/vite-plugin-prerender) (MEDIUM — ecosystem option; evaluate vs custom `scripts/prerender.mts`)
-- SPA delivery / indexing discussions (MEDIUM — supporting rationale for prerender; not sole authority)
+- [Tailwind CSS v4 — Dark mode](https://tailwindcss.com/docs/dark-mode) (HIGH — official)
+- Brownfield: `src/index.css`, `src/App.tsx` (`ThemeSynchronizer`), `src/lib/websiteData.ts` (`SiteAppearance`)
+- `src/components/WebsiteDataProvider.tsx` (preview merge: `previewData || data`)
+- `src/components/admin/DesignSystemManager.tsx`, `LivePreview.tsx`
+- `.planning/PROJECT.md` (v1.2 milestone goals)
+- [Tailwind v4 `@variant` + `@theme` dark overrides](https://stackoverflow.com/questions/79386725/how-variant-dark-can-be-combined-with-theme-in-a-css-first-configuration-to-ove) (MEDIUM — community, aligns with official variant model)
 
 ---
-*Architecture research for: Book Website v1.1 — Premium Presentation & SEO Dominance*  
+*Architecture research for: Apple-grade premium UI — dark mode, design tokens, CMS theming, Tailwind v4*  
 *Researched: 2026-05-19*

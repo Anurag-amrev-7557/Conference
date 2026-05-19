@@ -1,194 +1,179 @@
 # Project Research Summary
 
-**Project:** Book Website — v1.1 Premium Presentation & SEO Dominance  
-**Domain:** Brownfield author/book marketing SPA (React 19 / Vite 8 + Express/Prisma CMS) with technical SEO and premium UI polish  
+**Project:** Book Website (Superhumanly Monograph) — v1.2 Apple-Grade Premium Experience  
+**Domain:** Brownfield React/Vite/Tailwind v4 CMS book marketing SPA with Express/Prisma backend  
 **Researched:** 2026-05-19  
-**Confidence:** HIGH (stack, architecture, pitfalls — codebase-verified); MEDIUM (prerender CI path, competitive UX patterns)
+**Confidence:** HIGH overall (brownfield audit + official Tailwind/next-themes docs); MEDIUM on optional Radix scope and derived dark palettes
 
 ## Executive Summary
 
-This milestone upgrades an existing monograph marketing site from a functional CMS-driven SPA to a crawlable, shareable, premium author brand surface. Experts do **not** rewrite brownfield React/Vite apps as Next.js for SEO—they layer a **meta-first + build-time prerender** strategy on the existing static-hosting model, generate crawl artifacts from the same Prisma source of truth as the CMS, and treat Core Web Vitals as a launch gate alongside visual polish.
+v1.2 is not a greenfield UI rebuild — it is a **token, variant, and primitive** milestone on an existing React/Vite/Tailwind book site that already ships Phase 16 foundations (spacing/type tokens, Radix modals, section utilities, reduced-motion hooks). Experts deliver “Apple-minimal premium” on this stack by fixing **semantic light/dark surfaces first**, then unifying components, then sweeping public pages and admin — while keeping Framer Motion + scoped GSAP and CMS-driven accent/fonts via the existing `ThemeSynchronizer` bridge.
 
-The recommended approach is **stack continuity**: keep `BrowserRouter`, `WebsiteDataProvider`, and Docker/Nginx static frontend; add `react-helmet-async` per-route head management, Express-driven dynamic `sitemap.xml`, JSON-LD from CMS fields, and a **post-build Puppeteer prerender** for public routes only (`/`, `/blog`, `/blog/:slug`, `/events`, `/community`). Admin stays client-rendered with `noindex`. Avoid full SSR, Vike, react-snap, or framework migration unless a separate phase is explicitly budgeted.
+The recommended approach is **incremental stack extension, not replacement**: add `next-themes` + Tailwind v4 `light-dark()` / `@custom-variant dark`, extract `applyAppearance()` into `src/theme/`, migrate `ui/*` and `@utility` glass/CTA layers to semantic tokens, and extend CMS `appearance` with optional `colorScheme` — avoid shadcn CLI, second animation runtimes, or full dark palette pickers in admin. Motion stays restrained (transform/opacity only); glass blur is capped to one above-the-fold layer.
 
-The dominant risks are **shipping client-only meta** (invisible to non-JS crawlers and social bots), **duplicate canonicals** from static `index.html` plus Helmet, and **CWV regression** from uncapped GSAP/Three/Framer on the critical path. Mitigate by establishing a single head owner (`src/seo/`), locking `SITE_URL` for all absolute URLs, prerendering only an explicit route allowlist, and enforcing a motion/bundle budget before the premium UI pass.
+The dominant risks are **FOUC/FOUDT** (CMS theme and dark mode applied only after JS), **accent-only theming** (hardcoded light `bg-white` / glass rgba), and **CWV regressions** (backdrop-filter stacking, LCP hidden behind entrance animations, prerender capturing SEO head but not theme-accurate body). Mitigate with CSS-first `prefers-color-scheme`, blocking inline theme boot in `index.html`, semantic token refactor before component polish, prerender token assertions, and Playwright dark-mode snapshots.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Extend the existing stack with targeted SEO and UX packages—no framework migration. **react-helmet-async@3** (React 19) replaces imperative `document.title` in `ThemeSynchronizer`. **schema-dts** types JSON-LD at compile time. **sitemap@9** on Express generates live XML from published Prisma rows. **puppeteer@25** post-build prerenders public HTML because RR7 framework `prerender` does not apply to `BrowserRouter` without a routing restructure. **sharp** resizes OG uploads; **web-vitals** validates the SEO milestone in production.
+Keep Tailwind v4.2, Framer Motion 12, and GSAP scoped to scroll-heavy sections. Add **`next-themes@^0.4.6`** for light/dark/system + `localStorage` without FOUC; extend Radix selectively (Switch, DropdownMenu, Tabs, Tooltip, Label) — no full shadcn install. Add **`tw-animate-css`** (dev) for Radix enter/exit; optional **`@tailwindcss/forms`**. Required **CSS-first** changes in `index.css`: `@custom-variant dark`, `light-dark()` semantic neutrals, `color-scheme` on `html`, inline boot script before module load. CMS: extend `SiteAppearance` with `colorScheme: 'light' | 'dark' | 'system'`; `ThemeSynchronizer` calls `setTheme` after hydration while keeping runtime `--color-accent` overrides.
 
 **Core technologies:**
-- **react-helmet-async@3.0.0** — Per-route title, canonical, OG/Twitter; admin snippet preview parity
-- **schema-dts@2.0.0** — Typed `Book`, `Article`, `Organization`, `BreadcrumbList` JSON-LD
-- **sitemap@9.0.1** (server) — Dynamic `sitemap.xml` replacing stale `public/sitemap.xml`
-- **puppeteer@25.0.4** (dev/CI) — Post-`vite build` prerender via `scripts/prerender.mts`
-- **sharp@0.34.5** (server) — 1200×630 OG image pipeline on admin upload
-- **web-vitals@5.2.0** — RUM for LCP, INP, CLS (feeds existing marketing telemetry)
-- **@radix-ui/react-dialog@1.1.15** + **@fontsource/*** — Accessible modals and self-hosted fonts (LCP win)
+- **Tailwind CSS v4** — `@theme` + `light-dark()` + `dark:` — correct surface for token milestone without config-file churn
+- **next-themes** — class-based theme on `<html>`, system preference, storage — official Tailwind dark-mode pattern without Next.js lock-in
+- **Framer Motion (existing)** — micro-interactions, modals, section motion — consolidate; gate with `useReducedMotion`
+- **GSAP (existing, scoped)** — hero/scroll only — do not expand site-wide
+- **Selective Radix** — a11y for switch/tabs/menus — extend existing Dialog/Slot, not duplicate primitives
+- **tw-animate-css** — v4-native overlay animations — replaces legacy `tailwindcss-animate`
 
-**Critical version notes:** Align Node 20+ for puppeteer/sharp; do not use vite-react-ssg (peers RR6/Vite≤7). Standardize on Helmet everywhere—do not mix React 19 native metadata and Helmet on different pages.
+**Avoid:** Material/Chakra/DaisyUI, second motion libs, `tailwindcss-animate` plugin, shadcn full CLI, client-only theme in `useEffect` without CSS path.
 
 ### Expected Features
 
-Brownfield already has global title/description, static sitemap, blog slugs, admin CMS, and partial premium motion. v1.1 closes **gaps only**.
-
 **Must have (table stakes):**
-- Per-route meta (title, description, canonical, OG, Twitter) — especially `/blog/:slug`
-- Crawlable HTML for public routes — build-time prerender, not SPA shell alone
-- Dynamic XML sitemap + hardened `robots.txt` — blog slugs, fresh `lastmod`, block `/admin`
-- JSON-LD (`WebSite`, `Organization`, `Book`, `BlogPosting`) — from CMS fields visible on page
-- Per-article SEO fields in CMS + global OG / GSC verification
-- Core Web Vitals + mobile pass — lazy heavy assets, image dimensions, `prefers-reduced-motion`
-- Semantic HTML audit — one `h1`, landmarks, image `alt`
-- Search Console verification meta from admin
+- Semantic design tokens (light + dark neutrals, elevation ladder) — CMS-compatible
+- System dark mode + `color-scheme` meta + no FOUC
+- Two-role typography (serif display + sans UI) with optical/fluid scale site-wide
+- Generous whitespace / `section-*` consistency on all public routes + admin
+- Unified components (buttons, inputs, cards, modals, lists) on one token system
+- `prefers-reduced-motion` on all new motion; GPU-safe transform/opacity only
+- Visible `focus-visible` rings; 44px touch targets on mobile CTAs
+- Imagery baseline — aspect ratios, dimensions, LCP-safe hero, meaningful `alt`
+- Admin visual parity with public tokens (not a separate gray admin design system)
 
-**Should have (competitive):**
-- Admin SERP/social snippet preview — after per-entity SEO is stable
-- `BreadcrumbList` JSON-LD — low effort once meta pipeline exists
-- Event structured data — after machine-readable dates on `Event` model
-- Premium editorial UX — reading progress, typography, restrained motion system
+**Should have (differentiators):**
+- Manual theme toggle (light/dark/system) with persistence — after system tokens stable
+- CMS-driven theme tokens in both modes (accent/fonts; optional dark overrides later)
+- Scroll-triggered section reveals (restrained, once-only, not on LCP hero)
+- Blur-up below-fold on card grids only
+- Refined glass/nav blur with dark variants
 
-**Defer (v2+):**
-- hreflang / multi-locale
-- Full SSR or React Router framework migration
-- Author profile pages (`/author`) with Person schema
-- IndexNow — optional after dynamic sitemap is reliable
+**Defer (v1.2.x / v3+):**
+- CMS full dark palette pickers (12 color fields) — derive neutrals algorithmically first
+- Cinematic video hero, per-section motion in CMS, PWA install splash
+- Heavy image pipelines (plaiceholder) unless LCP still fails after native optimizations
+- Full admin shell dark mode — LivePreview dark parity is enough for v1.2
 
-**Anti-features to reject:** keyword meta fields, auto tag archives, indexing all community UGC, heavy 3D on every page, client-only sitemap in JS, duplicate global meta on every URL.
+**Anti-features to reject:** custom cursor/magnetic everywhere, scrolljacking, glass on every card, theme cross-fades, third display font, auto-playing hero video with sound.
 
 ### Architecture Approach
 
-SEO and UI polish **extend existing layers**—`WebsiteDataProvider` remains the single content source. Add a parallel **`src/seo/`** module (`SeoHead`, `seoConfig`, `JsonLd`, route registry) and server **`seoRoutes`** for crawl files. Remove SEO duties from `ThemeSynchronizer` (theme/CSS only). Build order: data model → client head → semantics + JSON-LD → robots/sitemap → prerender → admin tools → measurement → UI polish.
+Extend the existing **three-tier token stack**: framework tokens (`@theme` static spacing/type), semantic tokens (`@theme` + `@variant dark` / `light-dark()` for bg/surface/text/border/glass), brand tokens (`applyAppearance()` from CMS for accent, fonts, radius, shadow). Extract `ThemeSynchronizer` logic to `src/theme/applyAppearance.ts` + thin `ThemeProvider`; migrate `ui/Button`, `Card`, `AppDialog`, new `Input` to semantic classes; keep section `@utility` layer but replace hardcoded `bg-white` with `bg-surface`. Admin shell may stay light-only; **LivePreview** must inherit public theme including dark.
 
 **Major components:**
-1. **SeoHead + seoConfig** — Declarative per-route head; fallback chain entity → route default → site `settings.seo`
-2. **seoRoutes + sitemapBuilder** (Express) — Authoritative sitemap from published Prisma rows; `SITE_URL` env
-3. **Prerender pipeline** (`scripts/prerender.mts`) — CI calls API for slug list; writes `dist/blog/:slug/index.html`; never prerender `/admin`
-4. **JsonLd components** — Presentational structured data from same CMS fields rendered on page
-5. **Design token bridge** — Formalize `@theme` + `appearance` CSS variables before section-level UI pass
+1. **`index.css` `@theme` + variants** — semantic palette, glass vars, section utilities
+2. **`src/theme/applyAppearance`** — single CMS → `:root` bridge for public + preview
+3. **`WebsiteDataProvider`** — unchanged; `previewData || data` drives preview
+4. **`components/ui/*`** — CVA primitives consuming semantic + `buttonStyle`
+5. **`DesignSystemManager`** — appearance editor + `setPreview`; add `colorScheme` when ready
 
 ### Critical Pitfalls
 
-1. **Client-only meta is insufficient** — `ThemeSynchronizer` global title/description is invisible to many crawlers; prerender must bake Helmet output into static HTML. Verify with View Source, not DevTools Elements.
-2. **Duplicate/conflicting canonical and OG tags** — Static `index.html` already has homepage canonical; strip to minimal shell; one head owner per URL via `SeoHead`.
-3. **Global SEO masking per-page needs** — Extend `Article` with `seoTitle`, `seoDescription`, `ogImage`, `noindex`; per-entity admin tab with fallback chain.
-4. **Soft 404s on SPA catch-all** — Unknown slugs return HTTP 200; add `noindex` before redirect, real 404 at hosting layer, or prerender 404 for bad slugs.
-5. **CWV regression from premium motion** — Cap GSAP/Three/Framer on critical path; `prefers-reduced-motion`; lazy-load below fold; LCP element must not start at `opacity: 0`.
+1. **CMS theme only after JS (FOUC + prerender drift)** — inline critical `:root` tokens at build/prerender; extend `prerender.mjs` to wait for theme-ready; don’t rely on `useEffect` alone
+2. **Dark mode in React only (FOUDT)** — CSS-first `prefers-color-scheme` + blocking `index.html` script; `next-themes` with `attribute="class"`; set `color-scheme` on `html`
+3. **Accent-only CMS mapping** — refactor `glass-*`, `btn-cta-*`, `body` off hardcoded `#fff` / white rgba; paired contrast-safe accent tokens
+4. **Backdrop-filter stacking (INP jank)** — one above-the-fold blur (nav); solid fallbacks; drop or gate `CustomCursor` global listeners on mobile
+5. **LCP hidden by entrance animations** — never `opacity: 0` on LCP; use `motionInitial()` / reduced-motion everywhere; explicit image dimensions
 
 ## Implications for Roadmap
 
-Based on combined research, use **dependency-ordered phases** that separate crawl infrastructure from visual polish. Do not start prerender until per-route `SeoHead` works in dev and `SITE_URL` is locked.
+Based on research, **dark mode and semantic tokens block everything else**. Component craft on light-only hex creates rework. Recommended phase order for v1.2:
 
-### Phase 1: SEO Data Model & Site URL Contract
-**Rationale:** Prisma/types and `SITE_URL` block every downstream SEO artifact; domain drift (`monograph.superhumanly.ai` vs `api.superhumanly-thoughts.com`) must be fixed first.  
-**Delivers:** `Article` SEO columns (`seoTitle`, `seoDescription`, `ogImage`, `noindex`), extended `settings.seo` (OG image, GSC verification), `SITE_URL` env, API merge logic in `websiteData.ts`.  
-**Addresses:** Per-article SEO in CMS (P1), canonical absolute URLs.  
-**Avoids:** Pitfall 10 (domain inconsistency), Pitfall 3 (global-only SEO).
+### Phase 1: Token Foundation & Theme Architecture
+**Rationale:** FEATURES dependency graph and PITFALLS 1–3 — semantic tokens must exist before unified components or dark mode polish.  
+**Delivers:** `src/theme/` (`applyAppearance`, color utils), `index.css` semantic palette + `@custom-variant dark` + `light-dark()`, `body` → `bg-bg`, `next-themes` + inline boot script, extend `SiteAppearance`/`ThemeSynchronizer` for `colorScheme`.  
+**Addresses:** Semantic tokens, system dark mode (CSS path), FOUC prevention, CMS compatibility.  
+**Avoids:** Client-only theme, accent-only mapping, per-component `.dark:bg-gray-*` sprawl.
 
-### Phase 2: Per-Route Head Management
-**Rationale:** Meta layer is required baseline for navigation UX, admin preview, and prerender input; must exist before crawl files and prerender.  
-**Delivers:** `HelmetProvider`, `src/seo/` (`SeoHead`, `seoConfig`, `usePageSeo`), route registry; SEO removed from `ThemeSynchronizer`; `index.html` reduced to shell fallbacks.  
-**Uses:** react-helmet-async@3, schema-dts (types only).  
-**Addresses:** Per-route meta tags (P1), Search Console verification injection.  
-**Avoids:** Pitfalls 1–2 (client-only meta, duplicate tags).
+### Phase 2: Shared UI Primitives
+**Rationale:** ARCHITECTURE Pattern 3 — one `Button`/`Input`/`Card`/`AppDialog` on semantic tokens before sweeping 40+ section files.  
+**Delivers:** Migrated `ui/*`, selective Radix installs, `tw-animate-css` on dialogs, CVA wired to `appearance.theme.buttonStyle`.  
+**Addresses:** Unified components (table stakes).  
+**Uses:** Existing CVA/clsx/tailwind-merge; Radix Switch for future theme toggle.  
+**Avoids:** Split button systems (`btn-cta-*` vs slate `Button.tsx`).
 
-### Phase 3: Structured Data & Semantic HTML
-**Rationale:** JSON-LD depends on resolved canonical URLs and article fields from Phase 1–2; semantic audit is low-cost parallel work.  
-**Delivers:** `JsonLd` components on landing (`WebSite`, `Organization`, `Book`), blog post (`BlogPosting`), events stub; heading/`h1`/alt audit on public pages.  
-**Addresses:** JSON-LD (P1), semantic HTML (P1).  
-**Avoids:** Pitfall 6 (late/duplicated JSON-LD).
+### Phase 3: Public Surface Polish
+**Rationale:** Depends on primitives; bounded migration landing → blog → events → community → 404.  
+**Delivers:** Section sweep (`bg-surface`), optical type scale, imagery (aspect-ratio, LCP hero), mobile nav/CTAs, 404 brand moment.  
+**Addresses:** Full public polish, imagery CLS, whitespace consistency.  
+**Avoids:** LCP motion regression; blur-up on hero (below-fold only if added here).
 
-### Phase 4: Crawl Policy & Dynamic Sitemap
-**Rationale:** Sitemap requires published slugs from Phase 1; robots policy before prerender route discovery.  
-**Delivers:** `seoRoutes.ts`, `sitemapBuilder.ts`, `GET /sitemap.xml`, `robots.txt` (disallow `/admin`, `/dashboard`); optional `GET /api/v1/seo/prerender-paths`; nginx location for sitemap.  
-**Uses:** sitemap@9 on Express.  
-**Addresses:** Dynamic sitemap (P1), robots hardening (P1).  
-**Avoids:** Pitfalls 5, 9 (stale sitemap, indexed admin).
+### Phase 4: Motion, Glass & Performance Guardrails
+**Rationale:** PITFALLS 4 & 6 — audit after surfaces exist; cap blur and gate Framer/GSAP.  
+**Delivers:** Token-backed glass, shared motion constants, `useReducedMotion` on all entrances, tame/remove `CustomCursor`, Playwright + Lighthouse CWV checks.  
+**Addresses:** Motion pass, reduced-motion, elevation discipline.  
+**Avoids:** INP regression, vestibular issues.
 
-### Phase 5: Build-Time Prerender
-**Rationale:** Highest implementation cost; depends on working `SeoHead`, route list API, and CI API access.  
-**Delivers:** `scripts/prerender.mts`, `package.json` build hook, Docker/CI `PRERENDER_API_URL`, CDN rewrite rules for prerendered paths; exclude admin/community if product says noindex.  
-**Uses:** puppeteer@25 post-build.  
-**Addresses:** Crawlable HTML (P1), social sharing cards.  
-**Avoids:** Pitfalls 1, 4, 8 (empty shell, soft 404, API waterfall in first HTML).
+### Phase 5: Admin Parity & Preview
+**Rationale:** Admin trust depends on same tokens; LivePreview must match production dark/light.  
+**Delivers:** `studio-input` on forms, managers on shared primitives, `DesignSystemManager` colorScheme UI, LivePreview theme sync, optional manual nav toggle (P2).  
+**Addresses:** Admin visual parity, CMS preview accuracy.  
+**Avoids:** Duplicate theme logic in admin; preview diverging from `applyAppearance`.
 
-### Phase 6: Admin SEO Tools & Measurement
-**Rationale:** Editors need per-entity controls and preview after live meta pipeline is stable.  
-**Delivers:** `BlogManager` / `SettingsManager` SEO tabs, snippet preview component, sharp OG upload route, `web-vitals` RUM to marketing events, GSC verification field.  
-**Uses:** sharp@0.34.5, web-vitals@5.2.0.  
-**Addresses:** Per-article CMS (P1), admin SERP preview (P2), Search Console (P1).  
-**Avoids:** Pitfall 3 (editors think global SEO is enough).
-
-### Phase 7: Premium UI & Core Web Vitals
-**Rationale:** Visual polish and performance budget last—motion/fonts must not undo SEO work; tokens from Phase 1 enable consistent pass.  
-**Delivers:** Design token contract (`tokens.css` / `@theme`), Radix dialog upgrades for modals, fontsource self-hosting, `prefers-reduced-motion` guards, lazy Three/GSAP, `vite-plugin-compression`, image dimensions/`fetchpriority`, mobile touch targets.  
-**Uses:** @radix-ui/react-dialog, @fontsource/*, vite-plugin-compression.  
-**Addresses:** CWV + mobile polish (P1), premium motion system (differentiator).  
-**Avoids:** Pitfall 7 (CWV regression).
+### Phase 6: Prerender & Infra Hardening
+**Rationale:** PITFALLS 1 & 5 — can run parallel late but must complete before v1.2 exit.  
+**Delivers:** Prerender inline `:root` from API fixture, `data-theme-ready` wait, CI token diff, deploy doc for rebuild-on-CMS-change.  
+**Addresses:** Static HTML vs hydrated parity for brand/SEO stakeholders.
 
 ### Phase Ordering Rationale
 
-- **Data before head before crawl artifacts before prerender** — Feature dependency graph and architecture build order agree; prerender without per-route meta wastes CI time.
-- **JSON-LD and sitemap parallelize after Phase 2** — Both need canonical URLs and published flags but not each other.
-- **UI polish last** — Prevents GSAP/Three/font changes from invalidating CWV validation done for SEO milestone sign-off.
-- **Admin preview after live pipeline** — Preview component reuses same `PageSeo` props as production routes.
+- **Tokens → primitives → pages** matches FEATURES dependency: dark mode blocks component pass; unified components block admin parity.
+- **Motion/glass after surfaces** prevents painting over hardcoded light utilities and catches INP issues on real DOM.
+- **Prerender last** still early in planning flags — needs token contract from Phase 1 but implementation fits after theme API is stable.
+- Grouping avoids “looks done” dark mode that fails with JS disabled or View Source mismatch.
 
 ### Research Flags
 
-Phases likely needing `/gsd:plan-phase --research-phase <N>` during planning:
+Phases likely needing `/gsd:plan-phase --research-phase`:
+- **Phase 1:** `light-dark()` + LightningCSS production behavior; prerender inline token injection pattern
+- **Phase 6:** Puppeteer `prefers-color-scheme` emulation + CI assertion design
 
-- **Phase 5 (Prerender):** CI/Docker integration, CDN rewrite rules, Puppeteer on Alpine vs Debian, fallback if headless Chrome blocked in CI
-- **Phase 4 (Sitemap/nginx):** Exact production proxy path for `/sitemap.xml` (API vs baked `dist/`)
-- **Phase 7 (CWV):** Bundle budget for `three`/`gsap` on landing—may need route-level code splitting spike
-
-Phases with standard patterns (lighter research):
-
-- **Phase 2 (Helmet):** react-helmet-async@3 + Google JS SEO docs—well documented
-- **Phase 3 (JSON-LD):** Google Book/Article structured data guides—schema-dts patterns established
-- **Phase 6 (Admin SEO UI):** Extends existing `SettingsManager` / `BlogManager` patterns
+Phases with standard patterns (skip research-phase):
+- **Phase 2:** CVA + Radix — established in repo; follow existing `Button.tsx` / `AppDialog`
+- **Phase 3:** Section utilities already documented in `index.css`
+- **Phase 4:** `src/lib/motion.ts` and global `prefers-reduced-motion` exist
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | npm versions verified; brownfield constraints explicit; RR7 prerender ruled out without migration |
-| Features | HIGH | Google Search Central + codebase audit; MVP checklist clear |
-| Architecture | HIGH | Verified against `App.tsx`, Express, nginx, provider pattern |
-| Pitfalls | HIGH | Codebase-specific (index.html, ThemeSynchronizer, static sitemap) + official Google docs |
+| Stack | HIGH | Brownfield `package.json` + Tailwind v4 official dark-mode docs |
+| Features | HIGH | MDN/web.dev a11y/motion; brownfield gap analysis (dark mode, split buttons) |
+| Architecture | HIGH | Verified `ThemeSynchronizer`, `WebsiteDataProvider`, `index.css` |
+| Pitfalls | HIGH | Codebase-specific FOUC/prerender/glass paths traced |
 
-**Overall confidence:** HIGH for phase structure and stack choices; MEDIUM for prerender CI ergonomics and exact deploy rewrite config.
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Prerender CI without DB access:** Use `GET /api/v1/seo/prerender-paths` vs direct Prisma in build—decide in Phase 5 planning.
-- **Community indexing policy:** Default `noindex` for `/community` unless product explicitly wants UGC indexed—confirm before Phase 4–5.
-- **Event schema dates:** `Event` model may need ISO `startDate` migration before Event JSON-LD (defer to v1.1.x per FEATURES.md).
-- **Cloudflare/prerender vendor fallback:** If CI cannot run Puppeteer, document infra-only phase (no npm dep)—per STACK variant.
-- **React Router framework migration:** Optional mid-milestone cost spike—only if prerender maintenance exceeds budget; treat as separate milestone, not v1.1 default.
+- **Derived dark palette quality:** Auto neutrals from CMS accent may fail WCAG on edge colors — validate with contrast check in Design System save flow during Phase 1/5.
+- **`light-dark()` production build:** Spike `vite build` preview for dark token rendering (LightningCSS optimize edge cases).
+- **Manual toggle vs CMS `colorScheme` precedence:** Document UX when editor forces `dark` but user has `localStorage` override — decide in Phase 5 planning.
+- **Prerender dual-theme static HTML:** Product default is light-canonical static snapshot; confirm with stakeholders before two-variant prerender.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Google Search Central — JavaScript SEO basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)
-- [Google Search Central — Article/BlogPosting](https://developers.google.com/search/docs/appearance/structured-data/article)
-- [Google Search Central — Book structured data](https://developers.google.com/search/docs/appearance/structured-data/book)
-- [Google Search Central — Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals)
-- [Google Search Central — Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)
-- [React Router Pre-Rendering](https://reactrouter.com/how-to/pre-rendering) — framework mode only; not current SPA
-- [react-helmet-async v3 on npm](https://www.npmjs.com/package/react-helmet-async)
-- Brownfield codebase: `package.json`, `src/App.tsx`, `index.html`, `public/sitemap.xml`, `server/prisma/schema.prisma`, `.planning/codebase/*`
+- [Tailwind CSS — Dark mode](https://tailwindcss.com/docs/dark-mode) — `@custom-variant`, manual toggle, `localStorage`
+- [Tailwind CSS — color-scheme](https://tailwindcss.com/docs/color-scheme)
+- [next-themes npm](https://www.npmjs.com/package/next-themes) — v0.4.6, Vite SPA pattern
+- [Apple Design Tips](https://developer.apple.com/design/tips/) — spacing, contrast, touch targets
+- [MDN prefers-color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+- [web.dev prefers-reduced-motion](https://web.dev/articles/prefers-reduced-motion)
+- Brownfield: `package.json`, `src/index.css`, `src/App.tsx`, `scripts/prerender.mjs`, `.planning/PROJECT.md`
 
 ### Secondary (MEDIUM confidence)
-- [Chapter — author website design](https://blog.chapter.pub/author-website-design/) — competitive UX patterns
-- [Guided Web Design — high-converting author layouts](https://guidedwebdesign.com/blog/high-converting-author-website-layouts)
-- SPA prerender ecosystem articles — supports prerender rationale; cross-checked with Google docs
-- [web.dev — Core Web Vitals](https://web.dev/articles/vitals)
+- [tw-animate-css npm](https://www.npmjs.com/package/tw-animate-css) — verify import path in milestone spike
+- [web.dev backdrop-filter](https://web.dev/articles/backdrop-filter) — performance caution
+- [design.dev dark mode CSS guide](https://design.dev/guides/dark-mode-css/) — FOUC patterns
+- [Radix Primitives](https://www.radix-ui.com/primitives/docs)
 
-### Tertiary (needs validation during execution)
-- Exact nginx/CDN rewrite rules for prerendered `dist/blog/:slug/index.html` on production host
-- Lighthouse CI in GitHub Actions — optional, not blocking stack choice
+### Detailed research files
+- [STACK.md](./STACK.md) — versions, install commands, motion strategy
+- [FEATURES.md](./FEATURES.md) — table stakes, MVP, anti-features, dependency graph
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — three-tier tokens, data flow, anti-patterns
+- [PITFALLS.md](./PITFALLS.md) — phase mapping, recovery strategies, verification checklist
 
 ---
 *Research completed: 2026-05-19*  
