@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { sanitizeArticleHtml } from '../lib/sanitize';
+import { getSiteUrl } from '../lib/siteUrl';
 
 const router = Router();
 
@@ -74,6 +75,7 @@ function mapCommunityPost(p: {
 async function fetchSitePayload() {
   const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
   return {
+    siteUrl: getSiteUrl(),
     hero: safeParse(content?.hero),
     stats: safeParse(content?.stats, []),
     pillars: safeParse(content?.pillars, []),

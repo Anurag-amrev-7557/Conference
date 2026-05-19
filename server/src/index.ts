@@ -7,10 +7,12 @@ import adminRoutes from './routes/adminRoutes';
 import communityRoutes from './routes/communityRoutes';
 import marketingRoutes from './routes/marketingRoutes';
 import { getJwtSecret } from './lib/jwtSecret';
+import { getSiteUrl } from './lib/siteUrl';
 import { createCorsMiddleware } from './lib/corsPolicy';
 
 dotenv.config();
 getJwtSecret();
+getSiteUrl();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,7 +50,11 @@ app.use('/api/v1/marketing', marketingRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.json({
+    service: 'book-website-api',
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.listen(PORT, () => {

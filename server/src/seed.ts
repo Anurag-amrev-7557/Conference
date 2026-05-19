@@ -30,7 +30,9 @@ async function main() {
     settings: {
       seo: {
         title: "Superhumanly Playbook — Master Agentic AI Automation",
-        description: "Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today."
+        description: "Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today.",
+        ogImage: "",
+        googleSiteVerification: "",
       },
       navigation: {
         links: [

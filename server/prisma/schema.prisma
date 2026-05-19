@@ -15,32 +15,36 @@ model Admin {
 }
 
 model SiteContent {
-  id        String   @id @default("global")
-  hero      String   // JSON string of HeroContent
-  settings  String   // JSON string of SiteSettings
-  appearance String  // JSON string of SiteAppearance
-  stats     String   // JSON string of stats array
-  pillars   String   // JSON string of pillars array
-  perks     String   // JSON string of perks array
-  updatedAt DateTime @updatedAt
+  id         String   @id @default("global")
+  hero       String
+  settings   String
+  appearance String
+  stats      String
+  pillars    String
+  perks      String
+  updatedAt  DateTime @updatedAt
 }
 
 model Article {
-  id          String   @id @default(uuid())
-  slug        String   @unique
-  title       String
-  category    String
-  time        String
-  excerpt     String
-  content     String
-  thumbnail   String
-  isPublished Boolean  @default(true)
-  authorName  String
-  authorRole  String
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  title        String
+  category     String
+  time         String
+  excerpt      String
+  content      String
+  thumbnail    String
+  isPublished  Boolean  @default(true)
+  authorName   String
+  authorRole   String
   authorAvatar String
-  publishedAt String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  publishedAt  String
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noindex        Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Event {
@@ -52,10 +56,10 @@ model Event {
   title       String
   host        String
   location    String
-  tags        String   // JSON string of tags array
+  tags        String
   price       String
   thumbnail   String
-  status      String   // Upcoming | Past
+  status      String
   isPublished Boolean  @default(true)
   lat         Float?
   lng         Float?
@@ -64,26 +68,37 @@ model Event {
 }
 
 model CommunityPost {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  authorName String
+  id           String    @id @default(uuid())
+  title        String
+  content      String
+  authorName   String
   authorAvatar String
-  authorRole String?
-  category  String
-  votes     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isPinned  Boolean  @default(false)
-  comments  Comment[]
+  authorRole   String?
+  category     String
+  votes        Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  isPinned     Boolean   @default(false)
+  comments     Comment[]
+  postVotes    PostVote[]
+}
+
+model PostVote {
+  id        String        @id @default(uuid())
+  postId    String
+  visitorId String
+  createdAt DateTime      @default(now())
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, visitorId])
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  authorName String
+  id           String        @id @default(uuid())
+  authorName   String
   authorAvatar String
-  content   String
-  createdAt DateTime @default(now())
-  postId    String
-  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  content      String
+  createdAt    DateTime      @default(now())
+  postId       String
+  post         CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
 }

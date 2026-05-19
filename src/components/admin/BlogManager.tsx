@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
+import { LivePreview } from './LivePreview';
 import type { Article } from '../../lib/websiteData';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { 
+  Plus, 
+  Edit2, 
+  Trash2, 
+  Save, 
+  Loader2, 
+  ChevronLeft, 
+  BookOpen, 
+  FileText,
+  Globe,
+  Search,
+  EyeOff
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../../lib/utils';
 
 export const BlogManager: React.FC = () => {
-  const { data, createArticle, updateArticle, deleteArticle } = useWebsiteData();
+  const { data, createArticle, updateArticle, deleteArticle, setPreview, isPreviewVisible } = useWebsiteData();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Article>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Sync with live preview
+  useEffect(() => {
+    if (editingId && editForm) {
+      const updatedArticles = data.articles.map(a => 
+        a.id === editingId ? { ...a, ...editForm } : a
+      );
+      setPreview({ articles: updatedArticles });
+    } else {
+      setPreview(null);
+    }
+    return () => setPreview(null);
+  }, [editingId, editForm, data.articles]);
 
   const handleEdit = (article: Article) => {
     setEditingId(article.id);
@@ -17,266 +46,416 @@ export const BlogManager: React.FC = () => {
   const handleAddNew = async () => {
     const newArticle: Partial<Article> = {
       slug: 'new-article-' + Math.random().toString(36).substring(2, 7),
-      title: 'New Article Title',
+      title: 'New Editorial Piece',
       category: 'RESEARCH',
       time: '5 MIN',
-      excerpt: 'Short summary of the article...',
-      content: '# New Article\n\nWrite your content here in Markdown.',
+      excerpt: 'A brief summary of the architectural insights discussed in this piece.',
+      content: '# New Article\n\nStart writing your architectural narrative here...',
       thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2000',
       isPublished: false,
-      authorName: 'Admin',
-      authorRole: 'Editor',
+      authorName: 'Systems Architect',
+      authorRole: 'Lead',
       authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
-      publishedAt: new Date().toISOString().split('T')[0]
+      publishedAt: new Date().toISOString().split('T')[0],
+      seoTitle: '',
+      seoDescription: '',
+      ogImage: '',
+      noindex: false,
     };
     
     try {
       await createArticle(newArticle);
-      // The provider will refresh the data and we can find the new article by slug if needed
-      // For now, we just let the list refresh
     } catch (err) {
-      alert('Failed to create article');
+      console.error(err);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this article?')) {
+    if (window.confirm('Terminate this asset?')) {
       try {
         await deleteArticle(id);
+        if (editingId === id) setEditingId(null);
       } catch (err) {
-        alert('Failed to delete article');
+        console.error(err);
       }
     }
   };
 
   const handleSave = async () => {
     if (editingId) {
+      setIsSaving(true);
       try {
         await updateArticle(editingId, editForm);
         setEditingId(null);
       } catch (err) {
-        alert('Failed to save article');
+        console.error(err);
+      } finally {
+        setIsSaving(false);
       }
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-xl font-serif italic text-text">Manage Articles</h3>
-          <p className="text-sm text-muted">Create and edit automation guides for the Superhumanly Playbook.</p>
-        </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold shadow-lg shadow-accent/20 hover:-translate-y-0.5 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          Add Article
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-6">
-        {data.articles.map((article) => (
-          <motion.div
-            key={article.id}
-            layoutId={article.id}
-            className="bg-white rounded-[24px] overflow-hidden border border-border/40 shadow-sm hover:shadow-md transition-shadow"
-          >
-            {editingId === article.id ? (
-              <div className="p-8 space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left Column: Metadata */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Title & URL</label>
-                      <input
-                        type="text"
-                        placeholder="Article Title"
-                        value={editForm.title || ''}
-                        onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-border focus:border-accent focus:ring-1 focus:ring-accent outline-none mb-3 transition-all font-serif text-lg"
-                      />
-                      <div className="flex items-center gap-2 px-4 py-2 bg-off rounded-lg border border-border/50">
-                    <span className="text-[11px] text-muted">Author Details</span>
-                    <input
-                      type="text"
-                      value={editForm.slug || ''}
-                      onChange={e => setEditForm({ ...editForm, slug: e.target.value })}
-                      className="flex-1 bg-transparent text-xs font-mono outline-none"
-                    />
-                  </div>
+    <div className="flex h-full w-full overflow-hidden bg-white relative font-sans text-text">
+       {/* Sidebar Controls */}
+       <motion.div 
+        layout
+        animate={{ 
+          width: !isPreviewVisible ? '100%' : (isSidebarCollapsed ? 0 : 520), 
+          opacity: (isSidebarCollapsed && isPreviewVisible) ? 0 : 1 
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={cn(
+          "bg-white flex flex-col shrink-0 relative z-10 shadow-premium overflow-hidden",
+          isPreviewVisible ? "border-r border-border/40" : "w-full"
+        )}
+      >
+        <div className={cn(
+          "flex flex-col h-full bg-white",
+          !isPreviewVisible ? "max-w-4xl mx-auto w-full border-x border-border/40" : "w-[520px]"
+        )}>
+          <div className="p-5 border-b border-border/40">
+             <div className="flex items-center gap-4 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-off flex items-center justify-center border border-border/40">
+                   <BookOpen className="w-5 h-5 text-accent" />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Category</label>
-                    <select
-                      value={editForm.category || ''}
-                      onChange={e => setEditForm({ ...editForm, category: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-border outline-none transition-all"
-                    >
-                      {['RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'].map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Read Time</label>
-                    <input
-                      type="text"
-                      value={editForm.time || ''}
-                      onChange={e => setEditForm({ ...editForm, time: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-border outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Excerpt</label>
-                  <textarea
-                    rows={3}
-                    value={editForm.excerpt || ''}
-                    onChange={e => setEditForm({ ...editForm, excerpt: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-border outline-none transition-all resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Thumbnail URL</label>
-                  <input
-                    type="text"
-                    value={editForm.thumbnail || ''}
-                    onChange={e => setEditForm({ ...editForm, thumbnail: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-border outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Right Column: Author & Content */}
-              <div className="space-y-6">
-                <div className="p-6 bg-off/50 rounded-2xl border border-border/50">
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-4 block">Author Details</label>
-                  <div className="flex gap-4 mb-4">
-                     <div className="w-16 h-16 rounded-xl overflow-hidden border border-border">
-                       <img src={editForm.authorAvatar} alt="" className="w-full h-full object-cover" />
-                     </div>
-                     <div className="flex-1 space-y-3">
-                       <input
-                         type="text"
-                         placeholder="Author Name"
-                         value={editForm.authorName || ''}
-                         onChange={e => setEditForm({ ...editForm, authorName: e.target.value })}
-                         className="w-full px-3 py-2 rounded-lg border border-border text-sm outline-none"
-                       />
-                       <input
-                         type="text"
-                         placeholder="Author Role"
-                         value={editForm.authorRole || ''}
-                         onChange={e => setEditForm({ ...editForm, authorRole: e.target.value })}
-                         className="w-full px-3 py-2 rounded-lg border border-border text-sm outline-none"
-                       />
-                     </div>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Avatar URL"
-                    value={editForm.authorAvatar || ''}
-                    onChange={e => setEditForm({ ...editForm, authorAvatar: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-border text-sm outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3 p-4 bg-off/50 rounded-xl border border-border/40">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={editForm.isPublished || false}
-                      onChange={e => setEditForm({ ...editForm, isPublished: e.target.checked })}
-                    />
-                    <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                    <span className="ms-3 text-sm font-bold text-text uppercase tracking-widest">Article Live</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Full Width content editor */}
-            <div>
-              <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Content (Markdown)</label>
-              <textarea
-                rows={15}
-                value={editForm.content || ''}
-                onChange={e => setEditForm({ ...editForm, content: e.target.value })}
-                className="w-full px-6 py-6 rounded-2xl border border-border focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all font-mono text-sm leading-relaxed"
-              />
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <button
-                onClick={handleSave}
-                className="flex-1 py-4 bg-accent text-white rounded-xl font-bold transition-all hover:bg-accent2 shadow-lg shadow-accent/10"
-              >
-                Save Article
-              </button>
-              <button
-                onClick={() => setEditingId(null)}
-                className="flex-1 py-4 border border-border text-text rounded-xl font-bold transition-all hover:bg-off"
-              >
-                Discard Changes
-              </button>
-            </div>
+                <span className="text-[11px] font-bold text-accent uppercase tracking-widest">Architectural Press</span>
+             </div>
+             
+             <AnimatePresence mode="wait">
+                {editingId ? (
+                   <motion.div 
+                     key="edit-header"
+                     initial={{ opacity: 0, x: -10 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     exit={{ opacity: 0, x: 10 }}
+                     className="flex items-center justify-between"
+                   >
+                      <button 
+                        onClick={() => setEditingId(null)}
+                        className="flex items-center gap-2 text-muted hover:text-text transition-colors group"
+                      >
+                         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                         <span className="text-[10px] font-bold uppercase tracking-widest">Repository Archive</span>
+                      </button>
+                      <h3 className="text-2xl font-serif italic text-text tracking-tight shrink-0">Edit Article</h3>
+                   </motion.div>
+                ) : (
+                   <motion.div 
+                     key="list-header"
+                     initial={{ opacity: 0, x: 10 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     exit={{ opacity: 0, x: -10 }}
+                   >
+                      <h3 className="text-4xl font-serif italic text-text mb-4">Blog Articles</h3>
+                      <p className="text-text2 text-base leading-relaxed opacity-60">Manage your stories, insights, and technical narratives.</p>
+                   </motion.div>
+                )}
+             </AnimatePresence>
           </div>
-        ) : (
-          <div className="flex h-full min-h-[160px]">
-            <div className="w-48 relative shrink-0">
-              <img src={article.thumbnail} alt="" className="w-full h-full object-cover" />
-              <div className="absolute top-4 left-4">
-                 <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-tighter shadow-sm ${article.isPublished ? 'bg-emerald-500 text-white' : 'bg-white text-zinc-500'}`}>
-                  {article.isPublished ? 'Live' : 'Draft'}
-                </span>
-              </div>
-            </div>
-            <div className="flex-1 p-6 flex flex-col">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-[10px] font-bold text-accent uppercase tracking-widest">{article.category}</span>
-                <div className="w-1 h-1 rounded-full bg-border" />
-                <span className="text-[10px] font-medium text-muted uppercase tracking-widest">{article.time} Read</span>
-                <div className="w-1 h-1 rounded-full bg-border" />
-                <span className="text-[10px] font-medium text-muted uppercase tracking-widest">{article.slug}</span>
-              </div>
-              <h4 className="text-2xl font-serif mb-2 text-text line-clamp-1">{article.title}</h4>
-              <p className="text-sm text-muted mb-6 line-clamp-2 font-light">{article.excerpt}</p>
-              
-              <div className="mt-auto flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img src={article.authorAvatar} alt="" className="w-6 h-6 rounded-full border border-border" />
-                  <span className="text-[10px] font-bold text-text uppercase tracking-widest">{article.authorName}</span>
-                </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(article)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-muted hover:text-accent hover:bg-accent/5 rounded-lg transition-all border border-border/50 hover:border-accent/20"
+
+          <div className="flex-1 overflow-y-auto">
+             <AnimatePresence mode="wait">
+                {editingId ? (
+                   <motion.div
+                     key="editor"
+                     initial={{ opacity: 0, y: 10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, y: -10 }}
+                     className="p-8 space-y-10"
+                   >
+                          <div className="space-y-12">
+                             {/* Core Info */}
+                             <div className="space-y-8">
+                                <div className="space-y-4">
+                                   <h4 className="text-xl font-bold text-text">Article Title</h4>
+                                   <input 
+                                     type="text"
+                                     value={editForm.title || ''}
+                                     onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                                     placeholder="The Future of AI Systems"
+                                     className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-2xl focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                   />
+                                </div>
+                                <div className="space-y-4">
+                                   <h4 className="text-xl font-bold text-text">URL Slug</h4>
+                                   <input 
+                                     type="text"
+                                     value={editForm.slug || ''}
+                                     onChange={e => setEditForm({ ...editForm, slug: e.target.value })}
+                                     placeholder="future-ai-systems"
+                                     className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                   />
+                                </div>
+                             </div>
+
+                             {/* Metadata */}
+                             <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                   <h4 className="text-xl font-bold text-text">Category</h4>
+                                   <select 
+                                     value={editForm.category || ''}
+                                     onChange={e => setEditForm({ ...editForm, category: e.target.value })}
+                                     className="w-full bg-[#fafafa] border border-border/40 p-5 text-sm font-semibold focus:bg-white transition-all outline-none rounded-xl shadow-sm appearance-none"
+                                   >
+                                      {['RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'].map(c => (
+                                         <option key={c} value={c}>{c}</option>
+                                      ))}
+                                   </select>
+                                </div>
+                                <div className="space-y-4">
+                                   <h4 className="text-xl font-bold text-text">Reading Time</h4>
+                                   <input 
+                                     type="text"
+                                     value={editForm.time || ''}
+                                     onChange={e => setEditForm({ ...editForm, time: e.target.value })}
+                                     placeholder="5 MIN"
+                                     className="w-full bg-[#fafafa] border border-border/40 p-5 text-sm font-semibold focus:bg-white transition-all outline-none rounded-xl shadow-sm"
+                                   />
+                                </div>
+                             </div>
+
+                             {/* Summary */}
+                             <div className="space-y-4">
+                                <h4 className="text-xl font-bold text-text">Short Summary</h4>
+                                <textarea 
+                                  value={editForm.excerpt || ''}
+                                  onChange={e => setEditForm({ ...editForm, excerpt: e.target.value })}
+                                  rows={3}
+                                  className="w-full bg-[#fafafa] border border-border/40 p-6 text-[14px] leading-relaxed italic resize-none focus:bg-white transition-all outline-none rounded-xl shadow-sm"
+                                />
+                             </div>
+
+                             {/* Search & Social */}
+                             <div className="space-y-8 pt-4 border-t border-border/40">
+                                <div className="flex items-center gap-3">
+                                   <Search className="w-4 h-4 text-accent" />
+                                   <h4 className="text-xl font-bold text-text">Search & Social</h4>
+                                </div>
+                                <div className="space-y-4">
+                                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">SEO Title</label>
+                                   <input
+                                     type="text"
+                                     value={editForm.seoTitle || ''}
+                                     onChange={e => setEditForm({ ...editForm, seoTitle: e.target.value })}
+                                     placeholder="Override title for search results"
+                                     className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-lg focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                   />
+                                </div>
+                                <div className="space-y-4">
+                                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">SEO Description</label>
+                                   <textarea
+                                     value={editForm.seoDescription || ''}
+                                     onChange={e => setEditForm({ ...editForm, seoDescription: e.target.value })}
+                                     rows={3}
+                                     placeholder="Override meta description for search and social"
+                                     className="w-full bg-[#fafafa] border border-border/40 p-6 text-sm leading-relaxed italic resize-none focus:bg-white transition-all outline-none rounded-xl shadow-sm"
+                                   />
+                                </div>
+                                <div className="space-y-4">
+                                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">Open Graph Image URL</label>
+                                   <input
+                                     type="text"
+                                     value={editForm.ogImage || ''}
+                                     onChange={e => setEditForm({ ...editForm, ogImage: e.target.value })}
+                                     placeholder="https://..."
+                                     className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                   />
+                                   {editForm.ogImage ? (
+                                     <div className="aspect-[1.91/1] max-w-xs rounded-xl overflow-hidden border border-border/40">
+                                        <img src={editForm.ogImage} alt="" className="w-full h-full object-cover" />
+                                     </div>
+                                   ) : null}
+                                </div>
+                                <div className="p-8 border border-border/40 rounded-2xl bg-[#fafafa] flex items-center justify-between shadow-sm">
+                                   <div className="flex items-center gap-6">
+                                      <div className={cn(
+                                        "w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shadow-sm",
+                                        editForm.noindex ? "bg-accent/5 border-accent/20 text-accent" : "bg-white border-border/40 text-muted/40"
+                                      )}>
+                                         <EyeOff className="w-5 h-5" />
+                                      </div>
+                                      <div>
+                                         <p className="text-[14px] font-bold text-text uppercase tracking-widest">{editForm.noindex ? 'Hidden from Search' : 'Indexable'}</p>
+                                         <p className="text-[11px] font-bold text-muted uppercase tracking-tighter mt-1">Exclude this article from search engine indexing</p>
+                                      </div>
+                                   </div>
+                                   <button
+                                     type="button"
+                                     onClick={() => setEditForm({ ...editForm, noindex: !editForm.noindex })}
+                                     className={cn(
+                                       "w-12 h-6 rounded-full relative transition-all duration-500 p-1 border shadow-inner",
+                                       editForm.noindex ? "bg-accent border-accent" : "bg-white border-border/40"
+                                     )}
+                                   >
+                                      <motion.div
+                                        animate={{ x: editForm.noindex ? 24 : 0 }}
+                                        className="w-4 h-4 bg-white rounded-full shadow-md"
+                                      />
+                                   </button>
+                                </div>
+                             </div>
+
+                             {/* Cover */}
+
+                             <div className="space-y-4">
+                                <h4 className="text-xl font-bold text-text">Cover Image</h4>
+                                <div className="relative group/cover">
+                                   <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-off relative shadow-sm">
+                                      <img src={editForm.thumbnail} alt="" className="w-full h-full object-cover group-hover/cover:scale-105 transition-all duration-700" />
+                                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/cover:opacity-100 transition-opacity" />
+                                   </div>
+                                   <input 
+                                     type="text"
+                                     value={editForm.thumbnail || ''}
+                                     onChange={e => setEditForm({ ...editForm, thumbnail: e.target.value })}
+                                     className="mt-4 w-full bg-[#fafafa] border border-border/40 p-4 text-[10px] font-mono text-muted focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                     placeholder="Cover Image URL"
+                                   />
+                                </div>
+                             </div>
+
+                             {/* Content */}
+                             <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                   <h4 className="text-xl font-bold text-text">Markdown Content</h4>
+                                   <FileText className="w-4 h-4 text-accent/40" />
+                                </div>
+                                <textarea 
+                                  value={editForm.content || ''}
+                                  onChange={e => setEditForm({ ...editForm, content: e.target.value })}
+                                  rows={15}
+                                  className="w-full bg-[#1E1E1E] text-emerald-400 p-8 font-mono text-xs leading-relaxed min-h-[400px] resize-y transition-all outline-none rounded-2xl shadow-xl border border-white/5"
+                                />
+                             </div>
+
+                             {/* Status */}
+                             <div className="p-8 border border-border/40 rounded-2xl bg-[#fafafa] flex items-center justify-between shadow-sm">
+                                <div className="flex items-center gap-6">
+                                   <div className={cn(
+                                     "w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shadow-sm",
+                                     editForm.isPublished ? "bg-accent/5 border-accent/20 text-accent" : "bg-white border-border/40 text-muted/40"
+                                   )}>
+                                      <Globe className="w-5 h-5" />
+                                   </div>
+                                   <div>
+                                      <p className="text-[14px] font-bold text-text uppercase tracking-widest">{editForm.isPublished ? 'Live on Network' : 'Draft Mode'}</p>
+                                      <p className="text-[11px] font-bold text-muted uppercase tracking-tighter mt-1">{editForm.isPublished ? 'Visible to all users' : 'Hidden from the public'}</p>
+                                   </div>
+                                </div>
+                                <button 
+                                  onClick={() => setEditForm({ ...editForm, isPublished: !editForm.isPublished })}
+                                  className={cn(
+                                    "w-12 h-6 rounded-full relative transition-all duration-500 p-1 border shadow-inner",
+                                    editForm.isPublished ? "bg-accent border-accent" : "bg-white border-border/40"
+                                   )}
+                                >
+                                   <motion.div 
+                                     animate={{ x: editForm.isPublished ? 24 : 0 }}
+                                     className="w-4 h-4 bg-white rounded-full shadow-md" 
+                                   />
+                                </button>
+                             </div>
+                          </div>
+
+                      <div className="pt-8 sticky bottom-0 bg-white pb-8">
+                         <button 
+                           onClick={handleSave}
+                           disabled={isSaving}
+                           className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
+                         >
+                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                           Synchronize Manuscript
+                         </button>
+                      </div>
+                   </motion.div>
+                ) : (
+                   <motion.div
+                     key="list"
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     exit={{ opacity: 0 }}
+                     className="p-8 space-y-12"
+                   >
+                      <button 
+                        onClick={handleAddNew}
+                        className="w-full py-8 border-2 border-dashed border-border/40 rounded-[2rem] flex flex-col items-center gap-4 text-muted hover:text-accent hover:border-accent hover:bg-accent/[0.02] transition-all group"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        Edit
+                         <div className="w-12 h-12 rounded-full bg-off flex items-center justify-center border border-border/40 group-hover:scale-110 group-hover:rotate-90 transition-all">
+                            <Plus className="w-5 h-5" />
+                          </div>
+                         <span className="text-[11px] font-bold uppercase tracking-[0.3em]">Initialize New Article</span>
                       </button>
-                      <button
-                        onClick={() => handleDelete(article.id)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-muted hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all border border-border/50 hover:border-rose-100"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+
+                      <div className="space-y-4">
+                         <h4 className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.3em] mb-6">Article Repository</h4>
+                         <div className="space-y-3">
+                            {data.articles.map((article) => (
+                               <div 
+                                 key={article.id}
+                                 className="group/item flex items-center gap-6 p-6 border border-border/40 rounded-2xl hover:bg-[#fafafa] hover:border-accent/20 transition-all bg-white"
+                               >
+                                  <div className="w-14 h-14 rounded-xl overflow-hidden border border-border/40 bg-off shrink-0">
+                                     <img src={article.thumbnail} alt="" className="w-full h-full object-cover grayscale opacity-40 group-hover/item:opacity-100 transition-all" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                     <div className="flex items-center gap-3 mb-1.5">
+                                        <span className="text-[9px] font-bold text-accent uppercase tracking-widest">{article.category}</span>
+                                        <div className="w-1 h-1 rounded-full bg-border/40" />
+                                        <div className={cn(
+                                          "w-1.5 h-1.5 rounded-full",
+                                          article.isPublished ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" : "bg-amber-500"
+                                        )} />
+                                     </div>
+                                     <h5 className="font-serif italic text-lg text-text truncate group-hover/item:text-accent transition-colors">{article.title}</h5>
+                                  </div>
+                                  <div className="flex gap-2">
+                                     <button 
+                                       onClick={() => handleEdit(article)}
+                                       className="w-10 h-10 rounded-xl bg-white border border-border/40 flex items-center justify-center text-muted hover:text-accent hover:border-accent hover:bg-white shadow-sm transition-all"
+                                     >
+                                        <Edit2 className="w-4 h-4" />
+                                     </button>
+                                     <button 
+                                       onClick={() => handleDelete(article.id)}
+                                       className="w-10 h-10 rounded-xl bg-white border border-border/40 flex items-center justify-center text-muted hover:text-rose-500 hover:border-rose-200 shadow-sm transition-all"
+                                     >
+                                        <Trash2 className="w-4 h-4" />
+                                     </button>
+                                  </div>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                   </motion.div>
+                )}
+             </AnimatePresence>
+          </div>
+        </div>
+       </motion.div>
+
+       {/* Main Studio View */}
+       <AnimatePresence>
+          {isPreviewVisible && (
+             <motion.div 
+               initial={{ opacity: 0, x: 20 }}
+               animate={{ opacity: 1, x: 0 }}
+               exit={{ opacity: 0, x: 20 }}
+               className="flex-1 overflow-hidden flex flex-col relative bg-white"
+             >
+                <div className="absolute inset-0 bg-off/5 pointer-events-none" />
+                
+                <div className="flex-1 relative group">
+                   <div className="h-full w-full overflow-hidden relative z-10">
+                      <LivePreview 
+                        onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        isSidebarCollapsed={isSidebarCollapsed}
+                      />
+                   </div>
                 </div>
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
+             </motion.div>
+          )}
+       </AnimatePresence>
     </div>
   );
 };

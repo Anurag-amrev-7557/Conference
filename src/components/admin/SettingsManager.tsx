@@ -1,180 +1,430 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
-import { Globe, Settings2, Plus, Trash2, Save, Eye, EyeOff } from 'lucide-react';
+import { LivePreview } from './LivePreview';
+import { 
+  Globe, 
+  Settings2, 
+  Plus, 
+  Trash2, 
+  Save, 
+  Loader2, 
+  Search,
+  Navigation,
+  FileCode
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../../lib/utils';
 
 export const SettingsManager: React.FC = () => {
-  const { data, updateSettings } = useWebsiteData();
+  const { data, updateSettings, updateAppearance, setPreview, isPreviewVisible } = useWebsiteData();
+  const [activeTab, setActiveTab] = useState<'seo' | 'identity' | 'navigation' | 'advanced'>('seo');
   const [form, setForm] = useState(data.settings);
+  const [appearanceForm, setAppearanceForm] = useState(data.appearance);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const handleSave = () => {
-    updateSettings(form);
-    alert('Settings saved successfully!');
+  // Sync with live preview (specifically for navigation changes)
+  useEffect(() => {
+    setPreview({ 
+      settings: form,
+      appearance: appearanceForm
+    });
+    return () => setPreview(null);
+  }, [form, appearanceForm]);
+
+  const handleSave = async (type: 'settings' | 'appearance') => {
+    setIsSaving(true);
+    try {
+      if (type === 'settings') await updateSettings(form);
+      if (type === 'appearance') await updateAppearance(appearanceForm);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const addNavLink = () => {
-    const id = Date.now().toString();
+  const updateSocialLink = (id: string, href: string) => {
     setForm({
       ...form,
       navigation: {
         ...form.navigation,
-        links: [...form.navigation.links, { id, name: 'New Link', href: '#' }]
+        socials: form.navigation.socials.map(s => s.id === id ? { ...s, href } : s)
       }
     });
   };
 
-  const removeNavLink = (id: string) => {
-    setForm({
-      ...form,
-      navigation: {
-        ...form.navigation,
-        links: form.navigation.links.filter(l => l.id !== id)
-      }
-    });
-  };
-
-  const updateNavLink = (id: string, field: 'name' | 'href', value: string) => {
-    setForm({
-      ...form,
-      navigation: {
-        ...form.navigation,
-        links: form.navigation.links.map(l => l.id === id ? { ...l, [field]: value } : l)
-      }
-    });
-  };
-
-  const toggleVisibility = (key: keyof typeof form.visibility) => {
-    setForm({
-      ...form,
-      visibility: {
-        ...form.visibility,
-        [key]: !form.visibility[key]
-      }
-    });
-  };
+  const tabs = [
+    { id: 'seo', label: 'SEO', icon: Search },
+    { id: 'identity', label: 'Identity', icon: Globe },
+    { id: 'navigation', label: 'Navigation', icon: Navigation },
+    { id: 'advanced', label: 'Advanced', icon: FileCode },
+  ];
 
   return (
-    <div className="space-y-12 pb-20">
-      {/* SEO SETTINGS */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-            <Globe className="w-4 h-4 text-accent" />
-          </div>
-          <h3 className="text-xl font-serif italic text-text">SEO & Meta Tags</h3>
-        </div>
-
-        <div className="bg-white p-8 rounded-[24px] border border-border/40 shadow-sm space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Site Browser Title</label>
-              <input
-                type="text"
-                value={form.seo.title}
-                onChange={e => setForm({ ...form, seo: { ...form.seo, title: e.target.value } })}
-                className="w-full px-4 py-3 rounded-xl border border-border focus:border-accent outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Meta Description</label>
-              <textarea
-                rows={3}
-                value={form.seo.description}
-                onChange={e => setForm({ ...form, seo: { ...form.seo, description: e.target.value } })}
-                className="w-full px-4 py-3 rounded-xl border border-border focus:border-accent outline-none leading-relaxed"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* NAVIGATION SETTINGS */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-            <Settings2 className="w-4 h-4 text-accent" />
-          </div>
-          <h3 className="text-xl font-serif italic text-text">Navigation Menu</h3>
-        </div>
-
-        <div className="bg-white p-8 rounded-[24px] border border-border/40 shadow-sm space-y-6">
-          <div className="space-y-4">
-            {form.navigation.links.map((link) => (
-              <div key={link.id} className="flex gap-4 items-center p-4 rounded-xl bg-off/50 border border-border/40">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={link.name}
-                    onChange={e => updateNavLink(link.id, 'name', e.target.value)}
-                    placeholder="Link Name"
-                    className="w-full px-3 py-2 rounded-lg border border-border focus:border-accent outline-none text-sm bg-white"
-                  />
+    <div className="flex h-full w-full overflow-hidden bg-white relative font-sans text-text">
+       {/* Sidebar Controls */}
+       <motion.div 
+        layout
+        animate={{ 
+          width: !isPreviewVisible ? '100%' : (isSidebarCollapsed ? 0 : 520), 
+          opacity: (isSidebarCollapsed && isPreviewVisible) ? 0 : 1 
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={cn(
+          "bg-white flex flex-col shrink-0 relative z-10 shadow-premium overflow-hidden",
+          isPreviewVisible ? "border-r border-border/40" : "w-full"
+        )}
+      >
+        <div className={cn(
+          "flex flex-col h-full bg-white",
+          !isPreviewVisible ? "max-w-4xl mx-auto w-full border-x border-border/40" : "w-[520px]"
+        )}>
+          <div className="p-5 border-b border-border/40">
+             <div className="flex items-center gap-4 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-off flex items-center justify-center border border-border/40">
+                   <Settings2 className="w-5 h-5 text-accent" />
                 </div>
-                <div className="flex-[2]">
-                  <input
-                    type="text"
-                    value={link.href}
-                    onChange={e => updateNavLink(link.id, 'href', e.target.value)}
-                    placeholder="URL (e.g. #blog or /about)"
-                    className="w-full px-3 py-2 rounded-lg border border-border focus:border-accent outline-none text-sm bg-white"
-                  />
+                <span className="text-[11px] font-bold text-accent uppercase tracking-widest">Global Configuration</span>
+             </div>
+             <h3 className="text-4xl font-serif italic text-text mb-4">Settings</h3>
+             <p className="text-text2 text-base leading-relaxed opacity-60">Architectural controls for SEO, site-wide navigation, and custom scripts.</p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+             {/* Tab Navigation */}
+             <div className="flex border-b border-border/40 w-full sticky top-0 bg-white z-20">
+                {tabs.map((tab) => (
+                  <button
+                     key={tab.id}
+                     onClick={() => setActiveTab(tab.id as any)}
+                     className={cn(
+                       "flex-1 flex flex-col items-center gap-2 py-4 transition-all duration-300 relative",
+                       activeTab === tab.id 
+                       ? "text-accent bg-accent/[0.02]" 
+                       : "text-muted hover:text-text hover:bg-off/30"
+                     )}
+                  >
+                    <tab.icon className={cn("w-4 h-4 transition-transform", activeTab === tab.id ? "scale-110" : "opacity-40")} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{tab.label}</span>
+                    
+                    {activeTab === tab.id && (
+                      <motion.div 
+                        layoutId="activeTabSettings"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
+                      />
+                    )}
+                  </button>
+                ))}
+             </div>
+
+             <div className="p-8 space-y-12">
+               <AnimatePresence mode="wait">
+                 <motion.div
+                   key={activeTab}
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   exit={{ opacity: 0, y: -10 }}
+                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                 >
+                   {activeTab === 'seo' && (
+                     <div className="space-y-10 animate-fadeInUp">
+                        <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Search Engine Title</h4>
+                           <input 
+                             type="text"
+                             value={form.seo.title}
+                             onChange={e => setForm({ ...form, seo: { ...form.seo, title: e.target.value } })}
+                             className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-lg focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                             placeholder="Superhumanly AI | The Agentic Playbook"
+                           />
+                        </div>
+                        <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Meta Description</h4>
+                           <textarea 
+                             rows={4}
+                             value={form.seo.description}
+                             onChange={e => setForm({ ...form, seo: { ...form.seo, description: e.target.value } })}
+                             className="w-full bg-[#fafafa] border border-border/40 p-6 text-sm leading-relaxed italic resize-none focus:bg-white transition-all outline-none rounded-xl shadow-sm"
+                             placeholder="A deep-dive into the future of autonomous agent architecture..."
+                           />
+                        </div>
+                                                <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Default Open Graph Image</h4>
+                           <input type="text" value={form.seo.ogImage || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })} placeholder="https://..." className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                        </div>
+                        <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Google Search Console Verification</h4>
+                           <input type="text" value={form.seo.googleSiteVerification || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, googleSiteVerification: e.target.value } })} placeholder="google-site-verification token" className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs focus:bg-white transition-all outline-none rounded-xl shadow-sm" />
+                        </div>
+                        <button 
+                          onClick={() => handleSave('settings')}
+                          className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
+                        >
+                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                           Save SEO Strategy
+                        </button>
+                     </div>
+                   )}
+
+                   {activeTab === 'identity' && (
+                     <div className="space-y-10 animate-fadeInUp">
+                        <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Brand Name</h4>
+                           <input 
+                             type="text"
+                             value={appearanceForm.brandName}
+                             onChange={e => setAppearanceForm({ ...appearanceForm, brandName: e.target.value })}
+                             className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-2xl focus:bg-white transition-all outline-none rounded-xl shadow-sm"
+                           />
+                        </div>
+                        <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Logo Text (Initial)</h4>
+                           <input 
+                             type="text"
+                             maxLength={2}
+                             value={appearanceForm.brandLogoText}
+                             onChange={e => setAppearanceForm({ ...appearanceForm, brandLogoText: e.target.value })}
+                             className="w-24 bg-[#fafafa] border border-border/40 p-5 text-center font-bold text-2xl focus:bg-white transition-all outline-none rounded-xl shadow-sm"
+                           />
+                        </div>
+                        <button 
+                          onClick={() => handleSave('appearance')}
+                          className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
+                        >
+                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                           Update Visual Identity
+                        </button>
+                     </div>
+                   )}
+
+                   {activeTab === 'navigation' && (
+                     <div className="space-y-12 animate-fadeInUp">
+                        <div className="space-y-10">
+                           <div className="flex items-center justify-between">
+                              <h4 className="text-xl font-bold text-text">Universal Header Links</h4>
+                              <button 
+                                onClick={() => setForm({
+                                  ...form,
+                                  navigation: {
+                                    ...form.navigation,
+                                    links: [...form.navigation.links, { id: Date.now().toString(), name: 'New Link', href: '#' }]
+                                  }
+                                })}
+                                className="p-2 bg-accent/5 text-accent border border-accent/20 rounded-lg hover:bg-accent/10 transition-all"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                           </div>
+
+                           <div className="space-y-4">
+                              {form.navigation.links.map((link, idx) => (
+                                <div key={link.id} className="p-6 border border-border/40 rounded-2xl bg-white hover:bg-[#fafafa] transition-all flex items-center gap-6 group">
+                                   <div className="flex-1 grid grid-cols-2 gap-6">
+                                      <div className="space-y-2">
+                                         <label className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">Label</label>
+                                         <input 
+                                           type="text"
+                                           value={link.name}
+                                           onChange={e => {
+                                             const newLinks = [...form.navigation.links];
+                                             newLinks[idx].name = e.target.value;
+                                             setForm({ ...form, navigation: { ...form.navigation, links: newLinks } });
+                                           }}
+                                           className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-accent"
+                                         />
+                                      </div>
+                                      <div className="space-y-2">
+                                         <label className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">URL PATH</label>
+                                         <input 
+                                           type="text"
+                                           value={link.href}
+                                           onChange={e => {
+                                             const newLinks = [...form.navigation.links];
+                                             newLinks[idx].href = e.target.value;
+                                             setForm({ ...form, navigation: { ...form.navigation, links: newLinks } });
+                                           }}
+                                           className="w-full bg-transparent font-mono text-[11px] text-accent outline-none border-b border-transparent focus:border-accent"
+                                         />
+                                      </div>
+                                   </div>
+                                   <button 
+                                     onClick={() => setForm({
+                                       ...form,
+                                       navigation: {
+                                         ...form.navigation,
+                                         links: form.navigation.links.filter(l => l.id !== link.id)
+                                       }
+                                     })}
+                                     className="p-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                   >
+                                      <Trash2 className="w-4 h-4" />
+                                   </button>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+
+                         <div className="pt-12 border-t border-border/20 space-y-10">
+                            <div className="flex items-center justify-between">
+                               <h4 className="text-xl font-bold text-text">Global Footer Links</h4>
+                               <button 
+                                 onClick={() => setForm({
+                                   ...form,
+                                   navigation: {
+                                     ...form.navigation,
+                                     footerLinks: [...(form.navigation.footerLinks || []), { id: Date.now().toString(), name: 'New Link', href: '#' }]
+                                   }
+                                 })}
+                                 className="p-2 bg-accent/5 text-accent border border-accent/20 rounded-lg hover:bg-accent/10 transition-all"
+                               >
+                                 <Plus className="w-4 h-4" />
+                               </button>
+                            </div>
+
+                            <div className="space-y-4">
+                               {(form.navigation.footerLinks || []).map((link, idx) => (
+                                 <div key={link.id} className="p-6 border border-border/40 rounded-2xl bg-white hover:bg-[#fafafa] transition-all flex items-center gap-6 group">
+                                    <div className="flex-1 grid grid-cols-2 gap-6">
+                                       <div className="space-y-2">
+                                          <label className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">Label</label>
+                                          <input 
+                                            type="text"
+                                            value={link.name}
+                                            onChange={e => {
+                                              const newLinks = [...(form.navigation.footerLinks || [])];
+                                              newLinks[idx].name = e.target.value;
+                                              setForm({ ...form, navigation: { ...form.navigation, footerLinks: newLinks } });
+                                            }}
+                                            className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-accent"
+                                          />
+                                       </div>
+                                       <div className="space-y-2">
+                                          <label className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">URL PATH</label>
+                                          <input 
+                                            type="text"
+                                            value={link.href}
+                                            onChange={e => {
+                                              const newLinks = [...(form.navigation.footerLinks || [])];
+                                              newLinks[idx].href = e.target.value;
+                                              setForm({ ...form, navigation: { ...form.navigation, footerLinks: newLinks } });
+                                            }}
+                                            className="w-full bg-transparent font-mono text-[11px] text-accent outline-none border-b border-transparent focus:border-accent"
+                                          />
+                                       </div>
+                                    </div>
+                                    <button 
+                                      onClick={() => setForm({
+                                        ...form,
+                                        navigation: {
+                                          ...form.navigation,
+                                          footerLinks: (form.navigation.footerLinks || []).filter(l => l.id !== link.id)
+                                        }
+                                      })}
+                                      className="p-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                       <Trash2 className="w-4 h-4" />
+                                    </button>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+
+                        <div className="pt-12 border-t border-border/20">
+                           <h4 className="text-xl font-bold text-text mb-6">Social Networks</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {form.navigation.socials.map((social) => (
+                                <div key={social.id} className="space-y-2">
+                                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider">{social.platform}</label>
+                                  <input 
+                                    type="text"
+                                    value={social.href}
+                                    onChange={e => updateSocialLink(social.id, e.target.value)}
+                                    className="w-full bg-off border border-border/40 p-4 rounded-xl text-xs font-mono focus:bg-white outline-none"
+                                  />
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+
+                        <button 
+                          onClick={() => handleSave('settings')}
+                          className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
+                        >
+                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                           Sync Navigation Architecture
+                        </button>
+                     </div>
+                   )}
+
+                   {activeTab === 'advanced' && (
+                     <div className="space-y-10 animate-fadeInUp">
+                        <div className="space-y-4">
+                           <h4 className="text-xl font-bold text-text">Custom CSS Injection</h4>
+                           <textarea 
+                             rows={8}
+                             value={form.customCss}
+                             onChange={e => setForm({ ...form, customCss: e.target.value })}
+                             className="w-full bg-[#1E1E1E] text-emerald-400 p-8 font-mono text-xs leading-relaxed min-h-[240px] border-none outline-none rounded-2xl shadow-xl"
+                             placeholder="/* Global Overrides */"
+                           />
+                        </div>
+                        <div className="grid grid-cols-1 gap-8">
+                           <div className="space-y-4">
+                              <h4 className="text-xl font-bold text-text">Header Scripts</h4>
+                              <textarea 
+                                rows={3}
+                                value={form.scripts.header}
+                                onChange={e => setForm({ ...form, scripts: { ...form.scripts, header: e.target.value } })}
+                                className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-muted focus:bg-white outline-none rounded-xl"
+                              />
+                           </div>
+                           <div className="space-y-4">
+                              <h4 className="text-xl font-bold text-text">Footer Scripts</h4>
+                              <textarea 
+                                rows={3}
+                                value={form.scripts.footer}
+                                onChange={e => setForm({ ...form, scripts: { ...form.scripts, footer: e.target.value } })}
+                                className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-muted focus:bg-white outline-none rounded-xl"
+                              />
+                           </div>
+                        </div>
+                        <button 
+                          onClick={() => handleSave('settings')}
+                          className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
+                        >
+                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                           Inject Code Fragments
+                        </button>
+                     </div>
+                   )}
+                 </motion.div>
+               </AnimatePresence>
+               </div>
+            </div>
+         </div>
+       </motion.div>
+
+       {/* Main Studio View */}
+       <AnimatePresence>
+          {isPreviewVisible && (
+             <motion.div 
+               initial={{ opacity: 0, x: 20 }}
+               animate={{ opacity: 1, x: 0 }}
+               exit={{ opacity: 0, x: 20 }}
+               className="flex-1 overflow-hidden flex flex-col relative bg-white"
+             >
+                <div className="absolute inset-0 bg-off/5 pointer-events-none" />
+                
+                <div className="flex-1 relative group">
+                   <div className="h-full w-full overflow-hidden relative z-10">
+                      <LivePreview 
+                        onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        isSidebarCollapsed={isSidebarCollapsed}
+                      />
+                   </div>
                 </div>
-                <button
-                  onClick={() => removeNavLink(link.id)}
-                  className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={addNavLink}
-            className="flex items-center gap-2 px-6 py-2 border border-dashed border-border hover:border-accent hover:text-accent rounded-xl text-sm font-bold transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Add Menu Item
-          </button>
-        </div>
-      </section>
-
-      {/* VISIBILITY SETTINGS */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-            <Eye className="w-4 h-4 text-accent" />
-          </div>
-          <h3 className="text-xl font-serif italic text-text">Section Visibility</h3>
-        </div>
-
-        <div className="bg-white p-8 rounded-[24px] border border-border/40 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(form.visibility).map(([key, isVisible]) => (
-              <button
-                key={key}
-                onClick={() => toggleVisibility(key as any)}
-                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                  isVisible 
-                    ? 'bg-accent/5 border-accent/20 text-accent font-bold' 
-                    : 'bg-white border-border text-muted'
-                }`}
-              >
-                <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                {isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-2 px-10 py-4 bg-accent text-white rounded-2xl font-bold hover:bg-accent2 transition-all shadow-xl shadow-accent/20"
-        >
-          <Save className="w-5 h-5" />
-          Save All Settings
-        </button>
-      </div>
+             </motion.div>
+          )}
+       </AnimatePresence>
     </div>
   );
 };
