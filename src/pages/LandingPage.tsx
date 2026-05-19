@@ -9,13 +9,18 @@ import { Footer } from "../components/Footer"
 import { useWebsiteData } from "../components/WebsiteDataProvider"
 import { LeadCaptureModal } from "../components/LeadCaptureModal"
 import { useState } from "react"
+import { SeoHead } from "../seo/SeoHead"
+import { usePageSeo } from "../seo/usePageSeo"
 
 export function LandingPage() {
   const { data } = useWebsiteData();
   const { visibility } = data.settings;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const seo = usePageSeo();
 
   return (
+    <>
+    <SeoHead seo={seo} />
     <main className="relative bg-white min-h-screen overflow-x-hidden">
       <div className="noise-texture" />
 
@@ -23,7 +28,7 @@ export function LandingPage() {
       {visibility.hero && <HeroSection onBookDemo={() => setIsModalOpen(true)} />}
 
       {/* Book Showcase */}
-      <BookShowcase />
+      {visibility.showcase && <BookShowcase />}
 
       {/* Community */}
       {visibility.community && <CommunitySection />}
@@ -48,5 +53,6 @@ export function LandingPage() {
         onClose={() => setIsModalOpen(false)} 
       />
     </main>
+    </>
   )
 }

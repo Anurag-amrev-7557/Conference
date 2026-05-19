@@ -4,9 +4,14 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card"
 import { Button } from "../components/ui/Button"
+import { SeoHead } from "../seo/SeoHead"
+import { usePageSeo } from "../seo/usePageSeo"
 
 export function DashboardPage() {
+  const seo = usePageSeo()
   return (
+    <>
+    <SeoHead seo={seo} />
     <div className="min-h-screen bg-slate-50/50 flex">
       {/* Sidebar */}
       <aside className="w-64 border-r bg-white hidden md:block">
@@ -138,5 +143,6 @@ export function DashboardPage() {
         </div>
       </main>
     </div>
+    </>
   )
 }

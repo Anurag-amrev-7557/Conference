@@ -8,9 +8,12 @@ import { Navbar } from "../components/Navbar"
 import { EventsCalendar } from "../components/events/EventsCalendar"
 import { EventsMap } from "../components/events/EventsMap"
 import { EventDetailsDrawer } from "../components/events/EventDetailsDrawer"
+import { SeoHead } from "../seo/SeoHead"
+import { usePageSeo } from "../seo/usePageSeo"
 
 export function EventsPage() {
   const { data } = useWebsiteData()
+  const seo = usePageSeo()
   const [activeTab, setActiveTab] = useState<'Upcoming' | 'Past'>('Upcoming')
   const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -41,6 +44,8 @@ export function EventsPage() {
   }
 
   return (
+    <>
+    <SeoHead seo={seo} />
     <div className="h-screen flex flex-col bg-white text-text selection:bg-accent/20 overflow-hidden">
       <Navbar />
       
@@ -206,6 +211,7 @@ export function EventsPage() {
         <Footer />
       </div>
     </div>
+    </>
   )
 }
 

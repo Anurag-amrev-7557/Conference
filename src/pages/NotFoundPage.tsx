@@ -2,9 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, BookX } from 'lucide-react';
+import { SeoHead } from '../seo/SeoHead';
+import { usePageSeo } from '../seo/usePageSeo';
 
 export const NotFoundPage: React.FC = () => {
+  const seo = usePageSeo();
   return (
+    <>
+    <SeoHead seo={seo} />
     <div className="min-h-screen flex items-center justify-center bg-off p-6 relative">
       <div className="absolute inset-0 bg-grid-studio opacity-40 pointer-events-none" />
       
@@ -43,5 +48,6 @@ export const NotFoundPage: React.FC = () => {
         </div>
       </motion.div>
     </div>
+    </>
   );
 };

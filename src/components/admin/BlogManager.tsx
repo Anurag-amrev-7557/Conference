@@ -239,8 +239,12 @@ export const BlogManager: React.FC = () => {
                                      value={editForm.seoTitle || ''}
                                      onChange={e => setEditForm({ ...editForm, seoTitle: e.target.value })}
                                      placeholder="Override title for search results"
+                                     aria-describedby="blog-seo-title-help"
                                      className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-lg focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
                                    />
+                                   <p id="blog-seo-title-help" className="text-[11px] text-muted leading-relaxed">
+                                     Leave blank to use the article title and short summary on the live site.
+                                   </p>
                                 </div>
                                 <div className="space-y-4">
                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted">SEO Description</label>
@@ -277,7 +281,11 @@ export const BlogManager: React.FC = () => {
                                       </div>
                                       <div>
                                          <p className="text-[14px] font-bold text-text uppercase tracking-widest">{editForm.noindex ? 'Hidden from Search' : 'Indexable'}</p>
-                                         <p className="text-[11px] font-bold text-muted uppercase tracking-tighter mt-1">Exclude this article from search engine indexing</p>
+                                         <p className="text-[11px] text-muted leading-relaxed mt-1">
+                                           {editForm.noindex
+                                             ? 'Adds noindex when this article is published. Unpublished drafts are also excluded from indexing.'
+                                             : 'Article may be indexed when published and this toggle is off.'}
+                                         </p>
                                       </div>
                                    </div>
                                    <button

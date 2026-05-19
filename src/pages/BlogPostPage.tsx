@@ -6,6 +6,8 @@ import { useWebsiteData } from '../components/WebsiteDataProvider';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { ArrowLeft, Link as LinkIcon, ChevronRight, Bookmark } from 'lucide-react';
+import { SeoHead } from '../seo/SeoHead';
+import { usePageSeo } from '../seo/usePageSeo';
 
 // Custom icons for the professional monograph feel
 const XIcon = (props: any) => (
@@ -29,6 +31,7 @@ export const BlogPostPage: React.FC = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   
   const article = data.articles.find(a => a.slug === slug);
+  const seo = usePageSeo({ article });
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -43,20 +46,18 @@ export const BlogPostPage: React.FC = () => {
     window.scrollTo(0, 0);
   }, [article, navigate]);
 
-  if (!article) return null;
-
   const handleCopyLink = () => {
+    if (!article) return;
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const relatedArticles = data.articles
-    .filter(a => a.id !== article.id && a.isPublished)
-    .slice(0, 2);
-
   return (
-    <div className="min-h-screen bg-white">
+    <>
+    <SeoHead seo={seo} />
+    {article ? (
+    <motion.div className="min-h-screen bg-white">
       <Navbar />
       
       {/* Cinematic Reading Progress */}
@@ -103,11 +104,11 @@ export const BlogPostPage: React.FC = () => {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full overflow-hidden border border-border/50">
-                    <img src={article.author?.avatar} alt="" className="w-full h-full object-cover" />
+                    <img src={article.authorAvatar} alt="" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-text">{article.author?.name}</p>
-                    <p className="text-[11px] font-medium uppercase tracking-widest text-muted">{article.author?.role}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-text">{article.authorName}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-widest text-muted">{article.authorRole}</p>
                   </div>
                 </div>
 
@@ -213,10 +214,10 @@ export const BlogPostPage: React.FC = () => {
                 
                 <div className="flex flex-col gap-8">
                   <div className="flex items-center gap-6">
-                    <img src={article.author?.avatar} alt="" className="w-24 h-24 rounded-3xl object-cover ring-8 ring-white shadow-xl" />
+                    <img src={article.authorAvatar} alt="" className="w-24 h-24 rounded-3xl object-cover ring-8 ring-white shadow-xl" />
                     <div>
-                      <h4 className="text-3xl font-serif italic mb-1">{article.author?.name}</h4>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">{article.author?.role}</p>
+                      <h4 className="text-3xl font-serif italic mb-1">{article.authorName}</h4>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">{article.authorRole}</p>
                     </div>
                   </div>
                   <p className="text-sm text-muted leading-relaxed font-light">
@@ -262,7 +263,10 @@ export const BlogPostPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24">
-            {relatedArticles.map((rel) => (
+            {data.articles
+              .filter((a) => a.id !== article.id && a.isPublished)
+              .slice(0, 2)
+              .map((rel) => (
               <Link key={rel.id} to={`/blog/${rel.slug}`} className="group block">
                 <div className="flex flex-col gap-10">
                   <div className="relative aspect-[16/10] rounded-[40px] overflow-hidden shadow-alabaster group-hover:shadow-2xl transition-all duration-700">
@@ -310,6 +314,8 @@ export const BlogPostPage: React.FC = () => {
           margin-top: 0.5rem;
         }
       `}} />
-    </div>
+    </motion.div>
+    ) : null}
+    </>
   );
 };

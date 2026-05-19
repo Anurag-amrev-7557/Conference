@@ -121,4 +121,45 @@ describe('resolvePageSeo', () => {
     expect(seo.ogImage).toMatch(/^https:\/\/example\.com\//)
     expect(seo.googleSiteVerification).toBeUndefined()
   })
+
+  it('META-01: home and blog listing use distinct titles', () => {
+    const home = resolvePageSeo({ pathname: '/', data: testData() })
+    const blog = resolvePageSeo({ pathname: '/blog', data: testData() })
+    expect(home.title).not.toBe(blog.title)
+    expect(home.description).not.toBe(blog.description)
+  })
+
+  it('META-02: blog listing canonical has no trailing slash', () => {
+    const seo = resolvePageSeo({ pathname: '/blog', data: testData() })
+    expect(seo.canonical).toBe('https://example.com/blog')
+  })
+
+  it('META-03: home uses website og:type', () => {
+    const seo = resolvePageSeo({ pathname: '/', data: testData() })
+    expect(seo.ogType).toBe('website')
+  })
+
+  it('META-04: fallback ogImage is absolute https URL', () => {
+    const seo = resolvePageSeo({ pathname: '/events', data: testData() })
+    expect(seo.ogImage).toMatch(/^https:\/\/example\.com\/og-image\.jpg/)
+  })
+
+  it('META-05: dashboard is noindex,nofollow', () => {
+    const seo = resolvePageSeo({ pathname: '/dashboard', data: testData() })
+    expect(seo.robots).toBe('noindex,nofollow')
+    expect(seo.googleSiteVerification).toBeUndefined()
+  })
+
+  it('noindexes unmatched paths (404)', () => {
+    const seo = resolvePageSeo({ pathname: '/does-not-exist', data: testData() })
+    expect(seo.robots).toBe('noindex,nofollow')
+  })
+
+  it('uses global default og when settings.seo.ogImage set', () => {
+    const seo = resolvePageSeo({
+      pathname: '/',
+      data: testData({ ogImage: 'https://cdn.example.com/default.jpg' }),
+    })
+    expect(seo.ogImage).toBe('https://cdn.example.com/default.jpg')
+  })
 })

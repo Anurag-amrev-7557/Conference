@@ -5,11 +5,14 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { ArrowRight, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SeoHead } from '../seo/SeoHead';
+import { usePageSeo } from '../seo/usePageSeo';
 
 const categories = ['ALL', 'RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'];
 
 export const BlogPage: React.FC = () => {
   const { data } = useWebsiteData();
+  const seo = usePageSeo();
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   
   const articles = data.articles.filter(a => a.isPublished);
@@ -21,7 +24,9 @@ export const BlogPage: React.FC = () => {
     : remainingArticles.filter(a => a.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-off">
+    <>
+    <SeoHead seo={seo} />
+    <motion.div className="min-h-screen bg-off">
       <Navbar />
       
       <main className="pt-32 pb-24 px-6 sm:px-10 max-w-7xl mx-auto">
@@ -207,6 +212,7 @@ export const BlogPage: React.FC = () => {
       </main>
       
       <Footer />
-    </div>
+    </motion.div>
+    </>
   );
 };

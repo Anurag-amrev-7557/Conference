@@ -7,8 +7,15 @@ import { CommunityFeed } from '../components/community/CommunityFeed';
 import { CreatePostModal } from '../components/community/CreatePostModal';
 import { CommentSection } from '../components/community/CommentSection';
 import { ArrowLeft, Plus, TrendingUp } from 'lucide-react';
+import { SeoHead } from '../seo/SeoHead';
+import { usePageSeo } from '../seo/usePageSeo';
+const COMMUNITY_AUTHOR_KEY = 'book_community_author_name';
+const DEFAULT_AVATAR =
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop';
+
 export const CommunityPage: React.FC = () => {
-  const { data, createPost, addComment } = useWebsiteData();
+  const { data, createPost, addComment, votePost } = useWebsiteData();
+  const seo = usePageSeo();
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -30,19 +37,30 @@ export const CommunityPage: React.FC = () => {
     [data.communityPosts, activeCategory]
   );
 
-  const handleVote = () => {
-    // Votes logic can stay local for now or be moved to backend if needed
-    // For now we just implement the UI side
+  const getAuthorName = () =>
+    localStorage.getItem(COMMUNITY_AUTHOR_KEY)?.trim() || 'Community Member';
+
+  const handleVote = async (postId: string, _delta?: number) => {
+    try {
+      await votePost(postId);
+    } catch {
+      alert('Failed to register vote');
+    }
   };
 
   const handleAddPost = async (title: string, content: string, category: string) => {
+    const savedName = localStorage.getItem(COMMUNITY_AUTHOR_KEY)?.trim();
+    const authorName = savedName || 'Community Member';
+    if (!savedName) {
+      localStorage.setItem(COMMUNITY_AUTHOR_KEY, authorName);
+    }
     const newPost: any = {
       title,
       content,
       category,
-      authorName: "Community Member",
-      authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop",
-      authorRole: "New Contributor"
+      authorName,
+      authorAvatar: DEFAULT_AVATAR,
+      authorRole: 'New Contributor',
     };
     try {
       await createPost(newPost);
@@ -52,10 +70,11 @@ export const CommunityPage: React.FC = () => {
   };
 
   const handleAddComment = async (postId: string, content: string) => {
+    const authorName = getAuthorName();
     const newComment: any = {
       content,
-      authorName: "Community Member",
-      authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop"
+      authorName,
+      authorAvatar: DEFAULT_AVATAR,
     };
     try {
       await addComment(postId, newComment);
@@ -65,6 +84,8 @@ export const CommunityPage: React.FC = () => {
   };
 
   return (
+    <>
+    <SeoHead seo={seo} />
     <div className="min-h-screen bg-off selection:bg-accent/20">
       <Navbar />
       
@@ -222,5 +243,6 @@ export const CommunityPage: React.FC = () => {
       
       <Footer />
     </div>
+    </>
   );
 };

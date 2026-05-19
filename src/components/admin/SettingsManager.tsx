@@ -149,11 +149,17 @@ export const SettingsManager: React.FC = () => {
                         </div>
                                                 <div className="space-y-4">
                            <h4 className="text-xl font-bold text-text">Default Open Graph Image</h4>
-                           <input type="text" value={form.seo.ogImage || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })} placeholder="https://..." className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.seo.ogImage || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })} placeholder="https://..." aria-describedby="settings-og-help" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <p id="settings-og-help" className="text-[11px] text-muted leading-relaxed">
+                             Used when a page has no specific share image. Enter a full HTTPS URL. Social preview in admin arrives in a later release.
+                           </p>
                         </div>
                         <div className="space-y-4">
                            <h4 className="text-xl font-bold text-text">Google Search Console Verification</h4>
-                           <input type="text" value={form.seo.googleSiteVerification || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, googleSiteVerification: e.target.value } })} placeholder="google-site-verification token" className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs focus:bg-white transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.seo.googleSiteVerification || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, googleSiteVerification: e.target.value } })} placeholder="google-site-verification token" aria-describedby="settings-gsc-help" className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs focus:bg-white transition-all outline-none rounded-xl shadow-sm" />
+                           <p id="settings-gsc-help" className="text-[11px] text-muted leading-relaxed">
+                             Adds a verification meta tag on every public page. Paste only the content value from Search Console, not the full &lt;meta&gt; tag.
+                           </p>
                         </div>
                         <button 
                           onClick={() => handleSave('settings')}
