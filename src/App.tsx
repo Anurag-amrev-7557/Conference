@@ -65,13 +65,7 @@ function ThemeSynchronizer() {
       document.documentElement.style.setProperty('--shadow-dynamic', shadowMapping[appearance.theme.shadowIntensity as keyof typeof shadowMapping]);
     }
 
-    // 4. Update SEO
-    if (settings?.seo?.title) document.title = settings.seo.title;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc && settings?.seo?.description) {
-      metaDesc.setAttribute('content', settings.seo.description);
-    }
-    // 5. Inject Custom CSS
+    // 4. Inject Custom CSS
     let styleTag = document.getElementById('custom-css-runtime');
     if (!styleTag) {
       styleTag = document.createElement('style');
