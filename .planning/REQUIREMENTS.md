@@ -8,11 +8,11 @@
 
 ### Per-Route Meta & Head Management
 
-- [ ] **META-01**: Each public route (`/`, `/blog`, `/blog/:slug`, `/events`, `/community`) renders unique title and meta description in document head
-- [ ] **META-02**: Each public route renders a canonical link matching `SITE_URL` and the current path
-- [ ] **META-03**: Each public route renders Open Graph tags (type, title, description, image, url) appropriate to page content
-- [ ] **META-04**: Each public route renders Twitter card tags consistent with Open Graph data
-- [ ] **META-05**: Admin and dashboard routes include `noindex` robots directive and are excluded from sitemap
+- [x] **META-01**: Each public route (`/`, `/blog`, `/blog/:slug`, `/events`, `/community`) renders unique title and meta description in document head
+- [x] **META-02**: Each public route renders a canonical link matching `SITE_URL` and the current path
+- [x] **META-03**: Each public route renders Open Graph tags (type, title, description, image, url) appropriate to page content
+- [x] **META-04**: Each public route renders Twitter card tags consistent with Open Graph data
+- [x] **META-05**: Admin and dashboard routes include `noindex` robots directive and are excluded from sitemap
 - [x] **META-06**: Static `index.html` contains only minimal shell fallbacks; no duplicate canonical/OG that conflict with per-route head
 
 ### Crawl Infrastructure
@@ -96,11 +96,11 @@ Deferred enhancements beyond v1.1 roadmap scope.
 | CRAWL-01 | Phase 10 | Pending |
 | CMS-01 | Phase 10 | Pending |
 | CMS-02 | Phase 10 | Pending |
-| META-01 | Phase 11 | Pending |
-| META-02 | Phase 11 | Pending |
-| META-03 | Phase 11 | Pending |
-| META-04 | Phase 11 | Pending |
-| META-05 | Phase 11 | Pending |
+| META-01 | Phase 11 | Complete |
+| META-02 | Phase 11 | Complete |
+| META-03 | Phase 11 | Complete |
+| META-04 | Phase 11 | Complete |
+| META-05 | Phase 11 | Complete |
 | META-06 | Phase 11 | Complete |
 | SCHEMA-01 | Phase 12 | Pending |
 | SCHEMA-02 | Phase 12 | Pending |
