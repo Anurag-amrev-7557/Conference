@@ -9,8 +9,7 @@ import { BlogPage } from './pages/BlogPage'
 import { BlogPostPage } from './pages/BlogPostPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { Navbar } from './components/Navbar'
-import { WebsiteDataProvider, useWebsiteData } from './components/WebsiteDataProvider'
-import { SplashScreen } from './components/ui/SplashScreen'
+import { useWebsiteData } from './components/WebsiteDataProvider'
 import { ScrollToHash } from './components/ScrollToHash'
 import { MarketingService } from './lib/marketing'
 import { useLocation } from 'react-router-dom'
@@ -20,10 +19,9 @@ function ThemeSynchronizer() {
   const { appearance, settings } = data;
 
   useEffect(() => {
-    // Update CSS Variables for Primary Color
+    // 1. Update Colors
     document.documentElement.style.setProperty('--color-accent', appearance.primaryColor);
     
-    // Simple helper to darken hex color for hover states (approximate)
     const darkenColor = (hex: string) => {
       const num = parseInt(hex.replace('#', ''), 16);
       const amt = Math.round(2.55 * 10);
@@ -32,19 +30,59 @@ function ThemeSynchronizer() {
       const g = Math.max(0, (num & 0x0000FF) - amt);
       return '#' + (0x1000000 + r * 0x10000 + b * 0x100 + g).toString(16).slice(1);
     };
-    
     document.documentElement.style.setProperty('--color-accent2', darkenColor(appearance.primaryColor));
     
-    // Update SEO Title
-    if (settings.seo.title) {
-      document.title = settings.seo.title;
+    // 2. Update Typography
+    const fontMapping = {
+      serif: "'Instrument Serif', serif",
+      sans: "'Plus Jakarta Sans', sans-serif",
+      mono: "'JetBrains Mono', monospace"
+    };
+    if (appearance?.typography?.headingFont) {
+      document.documentElement.style.setProperty('--font-serif', fontMapping[appearance.typography.headingFont as keyof typeof fontMapping]);
+    }
+    if (appearance?.typography?.bodyFont) {
+      document.documentElement.style.setProperty('--font-sans', fontMapping[appearance.typography.bodyFont as keyof typeof fontMapping]);
     }
     
-    // Update Meta Description
+    if (appearance?.typography?.baseSize) {
+      const sizeMapping = { small: '14px', medium: '15px', large: '17px' };
+      document.documentElement.style.setProperty('--base-font-size', sizeMapping[appearance.typography.baseSize as keyof typeof sizeMapping]);
+    }
+    
+    // 3. Update Theme Styles
+    if (appearance?.theme?.borderRadius) {
+      const radiusMapping = { none: '0px', sm: '8px', md: '16px', lg: '32px', full: '999px' };
+      document.documentElement.style.setProperty('--radius-global', radiusMapping[appearance.theme.borderRadius as keyof typeof radiusMapping]);
+    }
+    
+    if (appearance?.theme?.shadowIntensity) {
+      const shadowMapping = {
+        none: 'none',
+        soft: '0 10px 30px -5px rgba(0,0,0,0.05)',
+        heavy: '0 20px 50px -10px rgba(0,0,0,0.15)'
+      };
+      document.documentElement.style.setProperty('--shadow-dynamic', shadowMapping[appearance.theme.shadowIntensity as keyof typeof shadowMapping]);
+    }
+
+    // 4. Update SEO
+    if (settings?.seo?.title) document.title = settings.seo.title;
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc && settings.seo.description) {
+    if (metaDesc && settings?.seo?.description) {
       metaDesc.setAttribute('content', settings.seo.description);
     }
+    // 5. Inject Custom CSS
+    let styleTag = document.getElementById('custom-css-runtime');
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'custom-css-runtime';
+      document.head.appendChild(styleTag);
+    }
+    styleTag.innerHTML = settings.customCss;
+
+    // 6. Inject Scripts (Simple implementation for SPA)
+    // Note: Re-injecting scripts on every change might be problematic, 
+    // ideally this is done only on initial load or with careful cleanup.
   }, [appearance, settings]);
 
   return null;
@@ -67,8 +105,7 @@ function MarketingTracker() {
 
 function App() {
   return (
-    <WebsiteDataProvider>
-      <SplashScreen />
+    <>
       <ThemeSynchronizer />
       <Router>
         <ScrollToHash />
@@ -87,7 +124,7 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </WebsiteDataProvider>
+    </>
   )
 }
 
