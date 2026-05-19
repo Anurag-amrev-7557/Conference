@@ -93,7 +93,14 @@ Plans:
   5. Published events expose `Event` JSON-LD with machine-readable ISO start dates.
   6. Public pages pass semantic audit: one `h1`, logical heading order, landmark regions, and non-empty `alt` on key images.
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — settings.book CMS + Event startDate/endDate migration
+- [ ] 12-02-PLAN.md — JSON-LD builders, JsonLd.tsx, vitest
+- [ ] 12-03-PLAN.md — Wire JsonLd on landing, blog, events pages
+- [ ] 12-04-PLAN.md — Semantic audit (h1, alt, landmarks) + verify script
+
 **UI hint**: yes
 
 ### Phase 13: Crawl Policy & Dynamic Sitemap
