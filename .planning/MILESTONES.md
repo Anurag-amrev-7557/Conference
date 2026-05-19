@@ -17,16 +17,27 @@
 
 ## v1.1 — Premium Presentation & SEO Dominance
 
-**Status:** In progress (roadmap defined, execution not started)  
+**Status:** Complete  
 **Started:** 2026-05-19  
+**Completed:** 2026-05-19  
 **Goal:** Polished, conversion-ready author brand surface with best-in-class technical SEO (per-route meta, JSON-LD, dynamic sitemap, prerender, admin SEO tools, Core Web Vitals).
 
-**Phases:** 7 (Phases 10–16 in ROADMAP.md)
+**Phases:** 7 (Phases 10–16 in ROADMAP.md) — all complete
 
 **Builds on:** v1.0 Phases 1–2 (backend completeness, security hardening). Does not require v1.0 Phases 3–9.
 
-**Phase order:** 10 SEO data model → 11 per-route head → 12 structured data → 13 crawl policy → 14 prerender → 15 admin SEO & measurement → 16 premium UI & CWV
+---
+
+## v1.2 — Apple-Grade Premium Experience
+
+**Status:** In progress (requirements & roadmap)  
+**Started:** 2026-05-19  
+**Goal:** Apple-minimal premium UI/UX on every page and component — public site plus admin — including dark mode, without CWV or CMS theming regressions.
+
+**Scope:** Typography, whitespace, motion, components, imagery, dark mode; surfaces: landing, blog, events, community, 404, `/admin`.
+
+**Builds on:** v1.1 Phase 16 foundation (design tokens, self-hosted fonts, Radix modals, section utilities).
 
 ---
 
-*Last updated: 2026-05-19 — v1.1 roadmap created; v1.0 paused at Phase 3*
+*Last updated: 2026-05-19 — v1.2 milestone started; v1.1 complete*

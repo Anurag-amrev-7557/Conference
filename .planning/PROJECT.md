@@ -78,19 +78,20 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v1.1 Premium Presentation & SEO Dominance
+## Current Milestone: v1.2 Apple-Grade Premium Experience
 
-**Goal:** Transform the book website into a polished, modern, conversion-ready experience with best-in-class technical SEO so the site ranks competitively on Google for brand and topic queries.
+**Goal:** Elevate every public page and the admin CMS to Apple-minimal premium quality — refined typography, whitespace, motion, components, imagery, and system-aware dark mode — without regressing Core Web Vitals or CMS-driven theming.
 
 **Target features:**
-- Technical SEO foundation (per-route meta, JSON-LD, dynamic sitemap, robots tuning)
-- Crawlability & Core Web Vitals (prerender/SSR strategy, performance, semantic HTML)
-- Content SEO (slug URLs, heading hierarchy, internal linking, per-page admin SEO)
-- Search Console readiness (verification, analytics, indexability audit)
-- Premium UI/UX polish (design system, responsive layouts, stable motion, premium flows)
-- Admin SEO tools (per-page OG images, noindex, snippet preview)
+- Apple-minimal design system (neutral palette, subtler shadows, optical typography scale)
+- Full public surface polish (landing, blog, events, community, 404)
+- Admin CMS visual parity with public quality bar
+- Dark mode / `prefers-color-scheme` with CMS token compatibility
+- Component craft pass (nav, buttons, inputs, cards, modals, forms, lists)
+- Motion & micro-interactions (scroll/hover/focus, respects reduced motion)
+- Imagery & media treatments (hero, cards, blur-up, consistent aspect ratios)
 
-**Prior milestone (v1.0) — paused at Phase 3:** Backend completeness and security hardening shipped (Phases 1–2). Marketing integration, infra, RBAC, chat, payments, and mobile deferred.
+**Prior milestone (v1.1) — complete:** SEO foundation (Phases 10–15) and foundational premium UI/CWV (Phase 16: tokens, fonts, Radix modals, section utilities). v1.0 Phases 3–9 remain deferred.
 
 ---
-*Last updated: 2026-05-19 after milestone v1.1 initialization*
+*Last updated: 2026-05-19 after milestone v1.2 initialization*
