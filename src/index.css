@@ -1,47 +1,82 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 @import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-@theme {
-  --color-off: #fafafa;
-  --color-bg: #f5f5f3;
-  --color-border: #e8e8e4;
-  --color-accent: #0052cc;
-  --color-accent2: #0041a3;
-  --color-accent-light: #eef3ff;
-  --color-text: #111111;
-  --color-text2: #444444;
-  --color-muted: #555555;
-  --color-green: #146331;
-  --color-green-bg: #edf7f1;
-  --color-tag: #f0f0ee;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --font-serif: 'Instrument Serif', serif;
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
+@theme {
+  --color-off: #EBEBE8;
+  --color-bg: #F5F5F7;
+  --color-border: #D1D1CE;
+  --color-accent: #003E99;
+  --color-accent2: #002D70;
+  --color-accent-light: #E0E9FF;
+  --color-text: #1D1D1F;
+  --color-text2: #2D2D2D;
+  --color-muted: #333333;
+  --color-green: #0E4F25;
+  --color-green-bg: #E8F5EE;
+  --color-tag: #E2E2DF;
+
+  --font-serif: var(--font-serif-dynamic, 'Instrument Serif', serif);
+  --font-sans: var(--font-sans-dynamic, 'Plus Jakarta Sans', sans-serif);
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-global: var(--radius-global, 32px);
+  --shadow-dynamic: var(--shadow-dynamic, 0 10px 30px -5px rgba(0,0,0,0.05));
 
   --shadow-nav: 0 12px 40px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9);
   --shadow-nav-hover: 0 16px 50px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,1);
   --shadow-elite: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
   --shadow-alabaster: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 40px 80px -20px rgba(0, 0, 0, 0.08);
+  --shadow-premium: 0 1px 2px rgba(0,0,0,0.01), 0 4px 12px rgba(0,0,0,0.02), 0 12px 32px rgba(0,0,0,0.04), 0 20px 48px rgba(0,0,0,0.02);
 
   --animate-blink: blink 2s infinite;
   --animate-marquee: marquee 22s linear infinite;
   --animate-fadeInUp: fadeInUp 0.5s ease-out forwards;
   --animate-float: float 6s ease-in-out infinite;
+  --animate-spin-slow: spin 12s linear infinite;
 
   --tracking-playbook: -0.05em;
+
+  /* UX-01 design tokens */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+  --radius-full: 9999px;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
 }
 
 /* === GLOBAL RESETS === */
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { 
+    scroll-behavior: smooth; 
+    color-scheme: light dark;
+    --font-serif-dynamic: 'Instrument Serif', serif;
+    --font-sans-dynamic: 'Plus Jakarta Sans', sans-serif;
+  }
   body { 
     font-family: var(--font-sans); 
-    background: #ffffff; 
+    background: var(--color-bg);
     color: var(--color-text); 
-    font-size: 15px; 
+    font-size: var(--base-font-size, 15px); 
     line-height: 1.6; 
     -webkit-font-smoothing: antialiased; 
   }
@@ -60,6 +95,28 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif tracking-tight leading-tight text-text mb-6;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Phase 17 — dark semantic tokens when `html.dark` (next-themes) */
+html.dark {
+  --color-bg: #1c1c1e;
+  --color-off: #2c2c2e;
+  --color-text: #f2f2f7;
+  --color-text2: #d1d1d6;
+  --color-muted: #8e8e93;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-tag: #3a3a3c;
 }
 
 /* === KEYFRAMES === */
@@ -124,15 +181,116 @@
     @apply rounded-[32px] shadow-2xl border border-border/40 my-16 w-full;
   }
 
-  .drop-cap p:first-of-type::first-letter {
-    @apply float-left text-[7rem] font-serif italic text-accent leading-[0.8] pr-6 pt-2 font-light select-none;
+  /* Dynamic Customization Classes */
+  .rounded-dynamic {
+    border-radius: var(--radius-global) !important;
   }
+  
+}
 
-  .transition-studio {
+@utility transition-studio {
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* UX-04 — public section rhythm */
+@utility section-public {
+  @apply relative py-16 md:py-24 border-b border-border/20;
+}
+
+@utility section-inner {
+  @apply container mx-auto px-6 sm:px-10 max-w-[1600px] relative z-10;
+}
+
+@utility section-eyebrow {
+  @apply text-[11px] font-bold text-accent uppercase tracking-[0.35em] mb-4 block;
+}
+
+@utility section-heading {
+  @apply text-[clamp(2rem,5vw,3.25rem)] font-serif leading-tight text-text;
+}
+
+@utility btn-cta-primary {
+  @apply inline-flex items-center justify-center gap-2 min-h-11 px-8 py-3 text-[11px] font-bold uppercase tracking-widest rounded-full bg-text text-white hover:bg-accent transition-all shadow-lg;
+}
+
+@utility btn-cta-secondary {
+  @apply inline-flex items-center justify-center gap-2 min-h-11 px-8 py-3 text-[11px] font-bold uppercase tracking-widest rounded-full border border-border bg-white hover:border-accent hover:bg-accent/5 transition-all;
+}
+
+@utility glass-pill {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 
+    0 4px 24px -1px rgba(0, 0, 0, 0.03),
+    0 1px 2px -1px rgba(0, 0, 0, 0.02),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+@utility glass-premium {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.8),
+    0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+/* Dark-mode glass (D-17-17 / D-17-18): lower blur, stronger hairline */
+html.dark .glass-pill {
+  background: rgba(44, 44, 46, 0.72);
+  backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 24px -1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html.dark .glass-premium {
+  background: rgba(44, 44, 46, 0.65);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+html.dark .btn-cta-secondary {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--color-text);
+}
+
+html.dark .hero-aura-bg {
+  background: #0a0a0a;
+}
+
+@utility studio-glass-card {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 1px 2px rgba(0,0,0,0.02),
+    0 8px 16px rgba(0,0,0,0.03),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+@layer utilities {
+  .btn-dynamic {
     transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    @apply font-bold inline-flex items-center justify-center;
+    border-radius: var(--radius-global);
   }
 
-  .glass-pill {
+  .btn-flat {
+    @apply bg-accent text-white hover:bg-accent2;
+  }
+
+  .btn-outline {
+    @apply border-2 border-accent text-accent hover:bg-accent hover:text-white bg-transparent;
+  }
+
+  .btn-glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(24px);
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -140,6 +298,62 @@
       0 4px 24px -1px rgba(0, 0, 0, 0.03),
       0 1px 2px -1px rgba(0, 0, 0, 0.02),
       inset 0 1px 1px rgba(255, 255, 255, 0.9);
+    @apply text-accent hover:bg-white;
+  }
+
+  /* === PREMIUM STUDIO UTILITIES === */
+
+  .border-sophisticated {
+    border-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .border-museum {
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .bg-alabaster {
+    background-color: #F8F8F6;
+  }
+
+  .shadow-workstation {
+    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  }
+
+  .glass-workstation {
+    @apply bg-white/60 backdrop-blur-3xl;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 50;
+    transition: background-color 0.2s;
+  }
+
+  .resize-handle:hover, .resize-handle.active {
+    background-color: var(--color-accent);
+    opacity: 0.3;
+  }
+
+  .studio-card {
+    @apply bg-white border border-border rounded-[32px] overflow-hidden transition-all duration-700;
+  }
+
+  .studio-card:hover {
+    @apply shadow-premium border-accent/20;
+  }
+
+  .studio-input {
+    @apply w-full px-5 py-4 rounded-2xl bg-off/50 border border-border/40 focus:bg-white focus:border-accent focus:ring-4 focus:ring-accent/5 outline-none transition-all;
+  }
+
+  .studio-label {
+    @apply text-[16px] font-bold block mb-2 px-1 opacity-70;
   }
 
   .perspective-1000 {

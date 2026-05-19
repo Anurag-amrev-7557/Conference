@@ -77,7 +77,11 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const merged = { ...initialData, ...remoteData };
         // Ensure nested objects are also merged if they exist in remoteData
         if (remoteData.appearance) {
-          merged.appearance = { ...initialData.appearance, ...remoteData.appearance };
+          merged.appearance = {
+            ...initialData.appearance,
+            ...remoteData.appearance,
+            colorScheme: remoteData.appearance.colorScheme ?? 'system',
+          };
           if (remoteData.appearance.typography) {
             merged.appearance.typography = { ...initialData.appearance.typography, ...remoteData.appearance.typography };
           }

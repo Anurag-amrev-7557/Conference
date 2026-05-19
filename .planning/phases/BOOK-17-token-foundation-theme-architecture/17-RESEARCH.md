@@ -31,3 +31,14 @@
 
 - `scripts/prerender.mjs` theme parity → Phase 22.
 - Section/page visual polish → Phase 19.
+
+## Validation Architecture
+
+Nyquist / plan execution will verify theme behavior with **Vitest** (existing suite) plus **manual** checks:
+
+1. **Automated:** `npm test` after each plan wave; extend with a small pure-function test for `normalizeAppearance` / `mergeAppearanceDefaults` if extracted to a shared server+client module.
+2. **Manual — FOUC:** Hard refresh with OS dark + CMS `system`; document `html` class before hydration; no prolonged white full-viewport flash.
+3. **Manual — CMS authority:** Set CMS to `dark`, OS light; confirm `html` has `dark` after content load.
+4. **Manual — Admin:** Design System saves `colorScheme` and survives reload (`GET /api/v1/content/site` includes field).
+
+This section exists so Step 5.5 of plan-phase can emit `17-VALIDATION.md`.

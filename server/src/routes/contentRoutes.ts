@@ -33,6 +33,8 @@ function mapEvent(e: {
   thumbnail: string;
   status: string;
   isPublished: boolean;
+  startDate: Date | null;
+  endDate: Date | null;
   lat: number | null;
   lng: number | null;
   createdAt: Date;
@@ -40,6 +42,8 @@ function mapEvent(e: {
 }) {
   return {
     ...e,
+    startDate: e.startDate?.toISOString() ?? null,
+    endDate: e.endDate?.toISOString() ?? null,
     tags: safeParse(e.tags, []),
     coordinates: e.lat != null && e.lng != null ? { lat: e.lat, lng: e.lng } : undefined,
   };
@@ -74,6 +78,13 @@ function mapCommunityPost(p: {
 
 async function fetchSitePayload() {
   const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
+  const rawAppearance = safeParse(content?.appearance) as Record<string, unknown>;
+  const colorScheme =
+    rawAppearance.colorScheme === 'light' ||
+    rawAppearance.colorScheme === 'dark' ||
+    rawAppearance.colorScheme === 'system'
+      ? rawAppearance.colorScheme
+      : 'system';
   return {
     siteUrl: getSiteUrl(),
     hero: safeParse(content?.hero),
@@ -81,7 +92,7 @@ async function fetchSitePayload() {
     pillars: safeParse(content?.pillars, []),
     perks: safeParse(content?.perks, []),
     settings: safeParse(content?.settings),
-    appearance: safeParse(content?.appearance),
+    appearance: { ...rawAppearance, colorScheme },
   };
 }
 

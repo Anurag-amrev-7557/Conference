@@ -43,8 +43,20 @@ export interface AppEvent {
   thumbnail: string;
   status: 'Upcoming' | 'Past';
   isPublished: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
   lat?: number;
   lng?: number;
+}
+
+export interface SiteBookSettings {
+  title?: string;
+  authorName?: string;
+  authorUrl?: string;
+  isbn?: string;
+  coverImageUrl?: string;
+  publisherName?: string;
+  publisherUrl?: string;
 }
 
 export interface Stat {
@@ -97,6 +109,7 @@ export interface SiteSettings {
     ogImage?: string;
     googleSiteVerification?: string;
   };
+  book?: SiteBookSettings;
   navigation: {
     links: NavLink[];
     socials: SocialLink[];
@@ -124,6 +137,8 @@ export interface SiteAppearance {
   primaryColor: string;
   brandName: string;
   brandLogoText: string;
+  /** Light / dark / system — default `system` when omitted in stored JSON */
+  colorScheme?: 'light' | 'dark' | 'system';
   typography: {
     headingFont: 'serif' | 'sans' | 'mono';
     bodyFont: 'serif' | 'sans' | 'mono';
@@ -227,6 +242,7 @@ export const initialData: WebsiteData = {
     primaryColor: "#0052cc",
     brandName: "Superhumanly -Thoughts",
     brandLogoText: "S",
+    colorScheme: "system",
     typography: {
       headingFont: 'serif',
       bodyFont: 'sans',

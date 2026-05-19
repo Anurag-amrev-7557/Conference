@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (function () {
+        var k = 'book-site-theme';
+        var pref = null;
+        try {
+          pref = localStorage.getItem(k);
+        } catch (e) {}
+        var isDark = false;
+        if (pref === 'dark') isDark = true;
+        else if (pref === 'light') isDark = false;
+        else {
+          try {
+            isDark =
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches;
+          } catch (e2) {}
+        }
+        if (isDark) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
