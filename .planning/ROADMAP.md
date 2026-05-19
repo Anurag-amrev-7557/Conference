@@ -54,7 +54,7 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
   2. Editor can set global default OG image and Google Search Console verification token in site settings.
   3. Canonical, OG, sitemap, and JSON-LD builders all resolve URLs from `SITE_URL` (no hardcoded production host drift).
 
-**Plans**: TBD
+**Plans**: 3 plans (10-01 SITE_URL, 10-02 data layer, 10-03 admin UI)
 **UI hint**: yes
 
 ### Phase 11: Per-Route Head Management
@@ -70,7 +70,13 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
   4. `/admin` and `/dashboard` include `noindex` and are excluded from sitemap generation.
   5. Root `index.html` contains only minimal shell fallbacks—no duplicate canonical/OG conflicting with route head.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — react-helmet-async, src/seo core, provider shell, index.html trim, og-image.jpg
+- [ ] 11-02-PLAN.md — Wire all routes + admin SEO help microcopy
+- [ ] 11-03-PLAN.md — Vitest unit tests for resolvePageSeo
+
 **UI hint**: yes
 
 ### Phase 12: Structured Data & Semantic HTML
@@ -155,7 +161,7 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 10. SEO Data Model & Site URL Contract | v1.1 | 0/TBD | Not started | - |
-| 11. Per-Route Head Management | v1.1 | 0/TBD | Not started | - |
+| 11. Per-Route Head Management | v1.1 | 0/3 | Not started | - |
 | 12. Structured Data & Semantic HTML | v1.1 | 0/TBD | Not started | - |
 | 13. Crawl Policy & Dynamic Sitemap | v1.1 | 0/TBD | Not started | - |
 | 14. Build-Time Prerender | v1.1 | 0/TBD | Not started | - |
