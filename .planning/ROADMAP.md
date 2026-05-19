@@ -15,9 +15,9 @@
 
 - [ ] **Phase 10: SEO Data Model & Site URL Contract** — Prisma/CMS SEO fields and `SITE_URL` as single source of truth for absolute URLs.
 - [ ] **Phase 11: Per-Route Head Management** — `react-helmet-async` per-route title, canonical, OG/Twitter; admin `noindex`; shell-only `index.html`.
-- [ ] **Phase 12: Structured Data & Semantic HTML** — JSON-LD on landing, blog, events; semantic heading/landmark/alt audit.
-- [ ] **Phase 13: Crawl Policy & Dynamic Sitemap** — Live `sitemap.xml` from published content; hardened `robots.txt`.
-- [ ] **Phase 14: Build-Time Prerender** — Post-build Puppeteer prerender bakes meta into static HTML for public routes.
+- [x] **Phase 12: Structured Data & Semantic HTML** — JSON-LD on landing, blog, events; semantic heading/landmark/alt audit.
+- [x] **Phase 13: Crawl Policy & Dynamic Sitemap** — Live `sitemap.xml` from published content; hardened `robots.txt`.
+- [x] **Phase 14: Build-Time Prerender** — Post-build Puppeteer prerender bakes meta into static HTML for public routes.
 - [ ] **Phase 15: Admin SEO Tools & Measurement** — Per-article SEO tab, snippet preview, OG upload pipeline, GSC verification, web-vitals RUM.
 - [ ] **Phase 16: Premium UI & Core Web Vitals** — Design tokens, self-hosted fonts, accessible modals, motion/CWV budget, mobile polish.
 
@@ -96,10 +96,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — settings.book CMS + Event startDate/endDate migration
-- [ ] 12-02-PLAN.md — JSON-LD builders, JsonLd.tsx, vitest
-- [ ] 12-03-PLAN.md — Wire JsonLd on landing, blog, events pages
-- [ ] 12-04-PLAN.md — Semantic audit (h1, alt, landmarks) + verify script
+- [x] 12-01-PLAN.md — settings.book CMS + Event startDate/endDate migration
+- [x] 12-02-PLAN.md — JSON-LD builders, JsonLd.tsx, vitest
+- [x] 12-03-PLAN.md — Wire JsonLd on landing, blog, events pages
+- [x] 12-04-PLAN.md — Semantic audit (h1, alt, landmarks) + verify script
 
 **UI hint**: yes
 
@@ -113,7 +113,12 @@ Plans:
   1. `GET /sitemap.xml` returns XML listing published articles and events with accurate `lastmod` dates.
   2. `robots.txt` allows public marketing paths, disallows `/admin` and `/dashboard`, and references the dynamic sitemap URL at `SITE_URL`.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [x] 13-01-PLAN.md — crawlPolicy + sitemapBuilder + GET /sitemap.xml
+- [x] 13-02-PLAN.md — GET /robots.txt + remove static files + nginx/vite proxy
+- [x] 13-03-PLAN.md — prerender-paths API + verify-phase13-crawl.mjs
 
 ### Phase 14: Build-Time Prerender
 
@@ -126,7 +131,11 @@ Plans:
   2. Prerendered HTML matches the meta Helmet renders in development for the same URL.
   3. Build pipeline produces static HTML files for the public route allowlist (community only if product confirms indexing).
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 14-01-PLAN.md — prerender.mjs + puppeteer + build script
+- [x] 14-02-PLAN.md — verify-phase14-prerender.mjs
 
 ### Phase 15: Admin SEO Tools & Measurement
 
@@ -141,8 +150,14 @@ Plans:
   4. Google Search Console verification meta from admin settings appears in production HTML, including prerendered pages.
   5. Production telemetry receives LCP, INP, and CLS from `web-vitals`.
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — SEO tab, resolvePageSeo previews, SERP/social mocks (CMS-03, CMS-04)
+- [ ] 15-02-PLAN.md — POST /admin/og-image sharp pipeline + OgImageUpload (CMS-05)
+- [ ] 15-03-PLAN.md — web-vitals RUM + GSC help + verify-phase15-gsc.mjs (MSMT-01, PERF-04)
+
+**UI hint**: yes — UI spec embedded in 15-CONTEXT.md + plan task actions (no separate 15-UI-SPEC.md required; optional via `/gsd:ui-phase` before Phase 16 polish)
 
 ### Phase 16: Premium UI & Core Web Vitals
 
