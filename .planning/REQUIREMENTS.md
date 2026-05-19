@@ -107,51 +107,51 @@ Deferred beyond v1.2.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DSM-01 | TBD | Pending |
-| DSM-02 | TBD | Pending |
-| DSM-03 | TBD | Pending |
-| DSM-04 | TBD | Pending |
-| DSM-05 | TBD | Pending |
-| DSM-06 | TBD | Pending |
-| DSM-07 | TBD | Pending |
-| TYPE-01 | TBD | Pending |
-| TYPE-02 | TBD | Pending |
-| TYPE-03 | TBD | Pending |
-| TYPE-04 | TBD | Pending |
-| TYPE-05 | TBD | Pending |
-| COMP-01 | TBD | Pending |
-| COMP-02 | TBD | Pending |
-| COMP-03 | TBD | Pending |
-| COMP-04 | TBD | Pending |
-| COMP-05 | TBD | Pending |
-| COMP-06 | TBD | Pending |
-| PAGE-01 | TBD | Pending |
-| PAGE-02 | TBD | Pending |
-| PAGE-03 | TBD | Pending |
-| PAGE-04 | TBD | Pending |
-| PAGE-05 | TBD | Pending |
-| ADM-01 | TBD | Pending |
-| ADM-02 | TBD | Pending |
-| ADM-03 | TBD | Pending |
-| ADM-04 | TBD | Pending |
-| MOT-01 | TBD | Pending |
-| MOT-02 | TBD | Pending |
-| MOT-03 | TBD | Pending |
-| MOT-04 | TBD | Pending |
-| IMG-01 | TBD | Pending |
-| IMG-02 | TBD | Pending |
-| IMG-03 | TBD | Pending |
-| IMG-04 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
+| DSM-01 | Phase 17 | Pending |
+| DSM-02 | Phase 17 | Pending |
+| DSM-03 | Phase 17 | Pending |
+| DSM-04 | Phase 17 | Pending |
+| DSM-05 | Phase 17 | Pending |
+| DSM-06 | Phase 17 | Pending |
+| DSM-07 | Phase 17 | Pending |
+| TYPE-01 | Phase 18 | Pending |
+| TYPE-02 | Phase 18 | Pending |
+| TYPE-03 | Phase 19 | Pending |
+| TYPE-04 | Phase 19 | Pending |
+| TYPE-05 | Phase 21 | Pending |
+| COMP-01 | Phase 18 | Pending |
+| COMP-02 | Phase 18 | Pending |
+| COMP-03 | Phase 18 | Pending |
+| COMP-04 | Phase 18 | Pending |
+| COMP-05 | Phase 18 | Pending |
+| COMP-06 | Phase 21 | Pending |
+| PAGE-01 | Phase 19 | Pending |
+| PAGE-02 | Phase 19 | Pending |
+| PAGE-03 | Phase 19 | Pending |
+| PAGE-04 | Phase 19 | Pending |
+| PAGE-05 | Phase 19 | Pending |
+| ADM-01 | Phase 21 | Pending |
+| ADM-02 | Phase 21 | Pending |
+| ADM-03 | Phase 21 | Pending |
+| ADM-04 | Phase 21 | Pending |
+| MOT-01 | Phase 20 | Pending |
+| MOT-02 | Phase 20 | Pending |
+| MOT-03 | Phase 20 | Pending |
+| MOT-04 | Phase 20 | Pending |
+| IMG-01 | Phase 19 | Pending |
+| IMG-02 | Phase 19 | Pending |
+| IMG-03 | Phase 19 | Pending |
+| IMG-04 | Phase 19 | Pending |
+| PERF-01 | Phase 20 | Pending |
+| PERF-02 | Phase 20 | Pending |
+| PERF-03 | Phase 20 | Pending |
+| INFRA-01 | Phase 22 | Pending |
+| INFRA-02 | Phase 22 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 38 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 38
+- Mapped to phases: 38/38 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-19 — milestone v1.2*

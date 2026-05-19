@@ -3,23 +3,40 @@
 ## Milestones
 
 - ⏸️ **v1.0 Production-Ready** — Phases 1–9 (paused at Phase 3; Phases 1–2 complete) — see [MILESTONES.md](./MILESTONES.md)
-- 🚧 **v1.1 Premium Presentation & SEO Dominance** — Phases 10–16 (in progress)
+- ✅ **v1.1 Premium Presentation & SEO Dominance** — Phases 10–16 (complete 2026-05-19)
+- 🚧 **v1.2 Apple-Grade Premium Experience** — Phases 17–22 (in progress)
 
 ## Overview
 
-**v1.1** transforms the existing React/Vite monograph site into a crawlable, shareable, premium author brand surface without a framework migration. Work follows dependency order: SEO data model and `SITE_URL` contract → per-route head management → structured data and semantics → crawl policy and dynamic sitemap → build-time prerender → admin SEO tools and measurement → premium UI and Core Web Vitals polish.
+**v1.2** elevates every public page and the admin CMS to Apple-minimal premium quality — semantic light/dark tokens, unified primitives, full surface polish, restrained motion, imagery discipline, and prerender parity — without regressing Core Web Vitals or CMS-driven theming. Work follows dependency order: token foundation → shared primitives → public surfaces → motion/CWV guardrails → admin parity → prerender hardening.
 
-**v1.0** foundation (backend APIs, security) remains shipped; marketing integration, infra, RBAC, chat, payments, and mobile stay deferred until v1.0 resumes or a later milestone.
+**v1.1** (complete) delivered crawlable SEO, prerender, admin SEO tools, and Phase 16 foundation (spacing/type tokens, fonts, Radix modals). **v1.0** marketing integration, infra, RBAC, chat, payments, and mobile remain deferred.
 
-## Phases (v1.1 — active)
+## Phases (v1.2 — active)
 
-- [ ] **Phase 10: SEO Data Model & Site URL Contract** — Prisma/CMS SEO fields and `SITE_URL` as single source of truth for absolute URLs.
-- [ ] **Phase 11: Per-Route Head Management** — `react-helmet-async` per-route title, canonical, OG/Twitter; admin `noindex`; shell-only `index.html`.
-- [x] **Phase 12: Structured Data & Semantic HTML** — JSON-LD on landing, blog, events; semantic heading/landmark/alt audit.
-- [x] **Phase 13: Crawl Policy & Dynamic Sitemap** — Live `sitemap.xml` from published content; hardened `robots.txt`.
-- [x] **Phase 14: Build-Time Prerender** — Post-build Puppeteer prerender bakes meta into static HTML for public routes.
-- [ ] **Phase 15: Admin SEO Tools & Measurement** — Per-article SEO tab, snippet preview, OG upload pipeline, GSC verification, web-vitals RUM.
-- [ ] **Phase 16: Premium UI & Core Web Vitals** — Design tokens, self-hosted fonts, accessible modals, motion/CWV budget, mobile polish.
+- [ ] **Phase 17: Token Foundation & Theme Architecture** — Semantic light/dark tokens, `next-themes`, CMS `colorScheme`, FOUC-free boot.
+- [ ] **Phase 18: Shared UI Primitives** — Unified Button, Input, Card, Dialog, and navigation on semantic tokens.
+- [ ] **Phase 19: Public Surface Polish** — Landing, blog, events, community, 404; typography rhythm, prose, imagery.
+- [ ] **Phase 20: Motion, Glass & CWV Guardrails** — Restrained motion, blur caps, reduced-motion, Lighthouse and Playwright gates.
+- [ ] **Phase 21: Admin Parity & Preview** — Admin on public tokens; Design System light/dark preview; optional theme toggle.
+- [ ] **Phase 22: Prerender & Infra Hardening** — Theme-ready static HTML and CI token assertions.
+
+<details>
+<summary>✅ v1.1 Premium Presentation & SEO Dominance (Phases 10–16) — COMPLETE 2026-05-19</summary>
+
+## Phases (v1.1 — shipped)
+
+- [x] **Phase 10: SEO Data Model & Site URL Contract**
+- [x] **Phase 11: Per-Route Head Management**
+- [x] **Phase 12: Structured Data & Semantic HTML**
+- [x] **Phase 13: Crawl Policy & Dynamic Sitemap**
+- [x] **Phase 14: Build-Time Prerender**
+- [x] **Phase 15: Admin SEO Tools & Measurement**
+- [x] **Phase 16: Premium UI & Core Web Vitals**
+
+See phase details below under **Phase Details (v1.1)**.
+
+</details>
 
 <details>
 <summary>⏸️ v1.0 Production-Ready (Phases 1–9) — PAUSED at Phase 3</summary>
@@ -37,9 +54,107 @@
 **Requirements**: MKT-01–MKT-06 | **Status**: Not started
 
 ### Phases 4–9
-Production infrastructure, quality/testing, RBAC, chat, payments, mobile — deferred. Full detail in git history and prior ROADMAP revisions.
+Production infrastructure, quality/testing, RBAC, chat, payments, mobile — deferred.
 
 </details>
+
+## Phase Details (v1.2)
+
+### Phase 17: Token Foundation & Theme Architecture
+
+**Goal**: Visitors and editors experience consistent light, dark, and system themes with no flash of wrong theme and CMS-compatible semantic surfaces.
+**Depends on**: v1.1 Phase 16 (design tokens, fonts, section utilities)
+**Requirements**: DSM-01, DSM-02, DSM-03, DSM-04, DSM-05, DSM-06, DSM-07
+**Success Criteria** (what must be TRUE):
+
+  1. Visitor with OS dark preference sees dark neutrals on first paint (no full-screen flash of light theme before hydration).
+  2. Visitor can persist light, dark, or system preference; choice survives reload without conflicting with CMS appearance accent/fonts.
+  3. Editor can set site `colorScheme` (light | dark | system) in Design System admin; published site reflects the choice via `applyAppearance()`.
+  4. Public pages use semantic surfaces (`bg-bg`, `bg-surface`, `text-text`, borders, accent) — not hardcoded `bg-white` or light-only glass rgba on body and section utilities.
+  5. Glass, CTA, and section `@utility` styles read from semantic tokens in both light and dark variants.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 18: Shared UI Primitives
+
+**Goal**: Every interactive control on public and admin routes shares one token-driven primitive set with accessible focus and touch targets.
+**Depends on**: Phase 17
+**Requirements**: COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, TYPE-01, TYPE-02
+**Success Criteria** (what must be TRUE):
+
+  1. Visitor sees consistent button styles (primary, secondary, ghost) on landing CTAs, modals, and forms — one CVA `Button`, not split `btn-cta-*` vs slate variants.
+  2. Visitor using keyboard or screen reader gets visible `focus-visible` rings on inputs, selects, textareas, and buttons; mobile tap targets are at least 44px tall on primary actions.
+  3. Visitor sees cards, lists, chips, and badges with a clear 3-level elevation ladder that respects dark mode surfaces.
+  4. Visitor opening a modal sees theme-aware overlay and panel with enter/exit motion; with reduced motion preferred, the dialog closes instantly without animation.
+  5. Visitor on mobile and desktop gets premium navigation: readable glass/blur per theme, thumb-zone CTAs, and no hover-only critical affordances.
+  6. Site-wide typography uses one optical scale (fluid display, fixed UI steps) and only Instrument Serif + Plus Jakarta Sans — no third display face.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 19: Public Surface Polish
+
+**Goal**: Every public marketing route feels Apple-minimal premium with unified rhythm, reading experience, and stable imagery in both themes.
+**Depends on**: Phase 18
+**Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, TYPE-03, TYPE-04, IMG-01, IMG-02, IMG-03, IMG-04
+**Success Criteria** (what must be TRUE):
+
+  1. Visitor on `/` sees cohesive sections (hero, content blocks, CTAs) using shared tokens, typography, and imagery; LCP hero is visible on first paint (never opacity-zero).
+  2. Visitor on `/blog` and `/blog/:slug` gets premium cards, hero, comfortable prose (~65ch), and related/CTA blocks with logical heading hierarchy.
+  3. Visitor on `/events` sees map, cards, and detail views matching premium visual and dark-mode standards.
+  4. Visitor on `/community` sees feed, posts, modals, and create flow matching the same quality bar in light and dark.
+  5. Visitor hitting an unknown URL sees an on-brand minimal 404 with a clear escape CTA built from shared primitives.
+  6. Visitor scrolling public routes sees consistent `section-public` / `section-inner` rhythm, eyebrows, and headings; card and hero images do not cause layout shift; book cover and OG imagery remain legible in dark mode.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 20: Motion, Glass & CWV Guardrails
+
+**Goal**: Motion and glass enhance the brand without hurting vestibular comfort, INP, or Lighthouse scores established in v1.1.
+**Depends on**: Phase 19
+**Requirements**: MOT-01, MOT-02, MOT-03, MOT-04, PERF-01, PERF-02, PERF-03
+**Success Criteria** (what must be TRUE):
+
+  1. Visitor with `prefers-reduced-motion: reduce` sees no scroll-triggered reveals, instant modal dismiss, and no custom cursor or magnetic effects.
+  2. Visitor with motion allowed sees scroll reveals only once, below the fold, using transform/opacity — never on the LCP hero.
+  3. Visitor experiences backdrop blur on navigation and at most one above-the-fold layer; low-end or reduced-motion users get solid fallbacks.
+  4. Visitor on mobile is not burdened by default custom cursor or magnetic hover effects.
+  5. Lighthouse performance and accessibility on landing and blog do not regress vs v1.1 Phase 16 baseline; production still reports LCP, INP, CLS via `web-vitals`.
+  6. CI or local verify captures Playwright snapshots for landing, blog, and admin preview in both light and dark.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 21: Admin Parity & Preview
+
+**Goal**: Editors work in a CMS that looks and previews like the public premium experience, including accurate light/dark/system preview.
+**Depends on**: Phase 20
+**Requirements**: ADM-01, ADM-02, ADM-03, ADM-04, TYPE-05, COMP-06
+**Success Criteria** (what must be TRUE):
+
+  1. Editor sees admin layout, sidebar, and chrome using the same semantic tokens as the public site (density utilities allowed; no separate gray admin theme).
+  2. Editor uses blog, events, pages, and community managers with shared `Input`, `Button`, and card primitives aligned to public spacing and type scale.
+  3. Editor in Design System manager previews light, dark, and system appearances accurately via `previewData || data` and `applyAppearance()` before publish.
+  4. Editor in LivePreview sees theme changes in the iframe without duplicate theme logic diverging from production.
+  5. Visitor can optionally switch light / dark / system from public nav or footer after system tokens are stable.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 22: Prerender & Infra Hardening
+
+**Goal**: View Source and crawlers receive theme-accurate static HTML aligned with hydrated React output.
+**Depends on**: Phase 17 (token contract); best completed after Phase 21 (stable theme API)
+**Requirements**: INFRA-01, INFRA-02
+**Success Criteria** (what must be TRUE):
+
+  1. Visitor viewing View Source on prerendered public routes sees critical `:root` semantic tokens and correct `color-scheme` without executing client JS.
+  2. Prerender pipeline waits for theme-ready state or inlines tokens so static HTML matches hydrated light/dark appearance for the configured site default.
+  3. CI or verify script fails the build when expected semantic token classes are missing from prerendered public HTML.
+
+**Plans**: TBD
 
 ## Phase Details (v1.1)
 
@@ -153,11 +268,11 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — SEO tab, resolvePageSeo previews, SERP/social mocks (CMS-03, CMS-04)
-- [ ] 15-02-PLAN.md — POST /admin/og-image sharp pipeline + OgImageUpload (CMS-05)
-- [ ] 15-03-PLAN.md — web-vitals RUM + GSC help + verify-phase15-gsc.mjs (MSMT-01, PERF-04)
+- [x] 15-01-PLAN.md — SEO tab, resolvePageSeo previews, SERP/social mocks (CMS-03, CMS-04)
+- [x] 15-02-PLAN.md — POST /admin/og-image sharp pipeline + OgImageUpload (CMS-05)
+- [x] 15-03-PLAN.md — web-vitals RUM + GSC help + verify-phase15-gsc.mjs (MSMT-01, PERF-04)
 
-**UI hint**: yes — UI spec embedded in 15-CONTEXT.md + plan task actions (no separate 15-UI-SPEC.md required; optional via `/gsd:ui-phase` before Phase 16 polish)
+**UI hint**: yes
 
 ### Phase 16: Premium UI & Core Web Vitals
 
@@ -172,25 +287,43 @@ Plans:
   4. Mobile viewports pass review: no horizontal scroll, 44px touch targets, readable type scale.
   5. Three.js and heavy GSAP are lazy-loaded or limited to below-fold/landing contexts; above-fold images have dimensions to prevent CLS.
 
-**Plans**: TBD
+**Plans**: 1 plan (inline execution)
+
+Plans:
+- [x] 16-SUMMARY.md — tokens, fontsource, motion, lazy GSAP, CLS, Radix modals
+
 **UI hint**: yes
 
 ## Progress
 
-**Execution order (v1.1):** 10 → 11 → 12 → 13 → 14 → 15 → 16  
-*(Phase 12 can overlap Phase 13 after Phase 11; Phase 13 must precede Phase 14.)*
+**Execution order (v1.2):** 17 → 18 → 19 → 20 → 21 → 22  
+*(Phase 22 planning can start after Phase 17 token contract is stable; execution fits after admin preview is verified.)*
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 10. SEO Data Model & Site URL Contract | v1.1 | 3/3 | Complete    | 2026-05-19 |
-| 11. Per-Route Head Management | v1.1 | 3/3 | Complete    | 2026-05-19 |
-| 12. Structured Data & Semantic HTML | v1.1 | 0/TBD | Not started | - |
-| 13. Crawl Policy & Dynamic Sitemap | v1.1 | 0/TBD | Not started | - |
-| 14. Build-Time Prerender | v1.1 | 0/TBD | Not started | - |
-| 15. Admin SEO Tools & Measurement | v1.1 | 0/TBD | Not started | - |
-| 16. Premium UI & Core Web Vitals | v1.1 | 0/TBD | Not started | - |
+| 17. Token Foundation & Theme Architecture | v1.2 | 0/TBD | Not started | - |
+| 18. Shared UI Primitives | v1.2 | 0/TBD | Not started | - |
+| 19. Public Surface Polish | v1.2 | 0/TBD | Not started | - |
+| 20. Motion, Glass & CWV Guardrails | v1.2 | 0/TBD | Not started | - |
+| 21. Admin Parity & Preview | v1.2 | 0/TBD | Not started | - |
+| 22. Prerender & Infra Hardening | v1.2 | 0/TBD | Not started | - |
 
-**v1.1 requirement coverage:** 33/33 mapped ✓
+**v1.2 requirement coverage:** 38/38 mapped ✓
+
+<details>
+<summary>v1.1 Progress (complete)</summary>
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 10. SEO Data Model & Site URL Contract | v1.1 | 3/3 | Complete | 2026-05-19 |
+| 11. Per-Route Head Management | v1.1 | 3/3 | Complete | 2026-05-19 |
+| 12. Structured Data & Semantic HTML | v1.1 | 4/4 | Complete | 2026-05-19 |
+| 13. Crawl Policy & Dynamic Sitemap | v1.1 | 3/3 | Complete | 2026-05-19 |
+| 14. Build-Time Prerender | v1.1 | 2/2 | Complete | 2026-05-19 |
+| 15. Admin SEO Tools & Measurement | v1.1 | 3/3 | Complete | 2026-05-19 |
+| 16. Premium UI & Core Web Vitals | v1.1 | 1/1 | Complete | 2026-05-19 |
+
+</details>
 
 ---
-*Roadmap updated: 2026-05-19 — Milestone v1.1 Phases 10–16*
+*Roadmap updated: 2026-05-19 — Milestone v1.2 Phases 17–22; v1.1 marked complete*
