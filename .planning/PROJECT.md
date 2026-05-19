@@ -80,18 +80,18 @@ This document evolves at phase transitions and milestone boundaries.
 
 ## Current Milestone: v1.2 Apple-Grade Premium Experience
 
-**Goal:** Elevate every public page and the admin CMS to Apple-minimal premium quality — refined typography, whitespace, motion, components, imagery, and system-aware dark mode — without regressing Core Web Vitals or CMS-driven theming.
+**Goal:** Bring every public and admin surface to Apple-minimal premium quality—clear hierarchy, confident spacing, restrained motion, disciplined imagery, and flawless responsiveness from phone to ultra-wide—without regressing technical SEO or Core Web Vitals.
+
+**Execution order (product):** Ship **navbar and landing hero** first as the visible quality bar, then semantic light/dark theme architecture, shared primitives, remaining pages, motion and glass guardrails, admin parity, and prerender hardening.
 
 **Target features:**
-- Apple-minimal design system (neutral palette, subtler shadows, optical typography scale)
-- Full public surface polish (landing, blog, events, community, 404)
-- Admin CMS visual parity with public quality bar
-- Dark mode / `prefers-color-scheme` with CMS token compatibility
-- Component craft pass (nav, buttons, inputs, cards, modals, forms, lists)
-- Motion & micro-interactions (scroll/hover/focus, respects reduced motion)
-- Imagery & media treatments (hero, cards, blur-up, consistent aspect ratios)
+- **First:** Premium global navbar and landing hero (all breakpoints, touch and keyboard, LCP-safe hero, CMS-driven content stable on load)
+- Semantic light/dark/system themes with FOUC-free boot and CMS `colorScheme` alignment
+- Unified UI primitives (buttons, inputs, cards, dialogs, navigation chrome) on design tokens
+- Full public route polish (blog, events, community, 404) plus admin experience matching the same bar
+- Motion, blur, and CWV guardrails; theme-accurate static HTML for prerender
 
-**Prior milestone (v1.1) — complete:** SEO foundation (Phases 10–15) and foundational premium UI/CWV (Phase 16: tokens, fonts, Radix modals, section utilities). v1.0 Phases 3–9 remain deferred.
+**Shipped prior:** v1.1 (Phases 10–16) — SEO, crawl, prerender, admin SEO tools, and Phase 16 UI/CWV foundation. v1.0 remains paused at Phase 3 for marketing/infra expansion tracks.
 
 ---
-*Last updated: 2026-05-19 after milestone v1.2 initialization*
+*Last updated: 2026-05-19 after v1.2 milestone focus — navbar & hero first*

@@ -22,22 +22,22 @@
 **Completed:** 2026-05-19  
 **Goal:** Polished, conversion-ready author brand surface with best-in-class technical SEO (per-route meta, JSON-LD, dynamic sitemap, prerender, admin SEO tools, Core Web Vitals).
 
-**Phases:** 7 (Phases 10–16 in ROADMAP.md) — all complete
-
-**Builds on:** v1.0 Phases 1–2 (backend completeness, security hardening). Does not require v1.0 Phases 3–9.
+**Phases:** 7 (Phases 10–16 in ROADMAP.md)
 
 ---
 
 ## v1.2 — Apple-Grade Premium Experience
 
-**Status:** In progress (requirements & roadmap)  
+**Status:** In progress (requirements + roadmap defined)  
 **Started:** 2026-05-19  
-**Goal:** Apple-minimal premium UI/UX on every page and component — public site plus admin — including dark mode, without CWV or CMS theming regressions.
+**Goal:** Sitewide Apple-minimal premium UI/UX and responsiveness on every surface without regressing SEO or Core Web Vitals.
 
-**Scope:** Typography, whitespace, motion, components, imagery, dark mode; surfaces: landing, blog, events, community, 404, `/admin`.
+**Phases:** 7 (Phases 17–23 in ROADMAP.md)
 
-**Builds on:** v1.1 Phase 16 foundation (design tokens, self-hosted fonts, Radix modals, section utilities).
+**Product order:** **17 navbar + landing hero first** → 18 theme tokens → 19 primitives → 20 public surfaces → 21 motion/CWV → 22 admin parity → 23 prerender
+
+**Builds on:** v1.1 Phases 10–16 (SEO + Phase 16 UI foundation).
 
 ---
 
-*Last updated: 2026-05-19 — v1.2 milestone started; v1.1 complete*
+*Last updated: 2026-05-19 — v1.2 active; navbar/hero Phase 17 first*

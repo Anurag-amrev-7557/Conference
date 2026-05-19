@@ -4,22 +4,25 @@
 
 - ⏸️ **v1.0 Production-Ready** — Phases 1–9 (paused at Phase 3; Phases 1–2 complete) — see [MILESTONES.md](./MILESTONES.md)
 - ✅ **v1.1 Premium Presentation & SEO Dominance** — Phases 10–16 (complete 2026-05-19)
-- 🚧 **v1.2 Apple-Grade Premium Experience** — Phases 17–22 (in progress)
+- 🚧 **v1.2 Apple-Grade Premium Experience** — Phases 17–23 (in progress; **start with Phase 17 navbar + hero**)
 
 ## Overview
 
-**v1.2** elevates every public page and the admin CMS to Apple-minimal premium quality — semantic light/dark tokens, unified primitives, full surface polish, restrained motion, imagery discipline, and prerender parity — without regressing Core Web Vitals or CMS-driven theming. Work follows dependency order: token foundation → shared primitives → public surfaces → motion/CWV guardrails → admin parity → prerender hardening.
+**v1.2** elevates every public page and the admin CMS to Apple-minimal premium quality — clear hierarchy, confident spacing, restrained motion, disciplined imagery, and flawless responsiveness — without regressing technical SEO or Core Web Vitals.
+
+**Product order:** **Phase 17** ships the global **navbar** and landing **hero** as the visible quality bar across all breakpoints, then **Phase 18** semantic light/dark tokens, **Phase 19** shared primitives, **Phase 20** remaining public surfaces, **Phase 21** motion/CWV guardrails, **Phase 22** admin parity, **Phase 23** prerender hardening.
 
 **v1.1** (complete) delivered crawlable SEO, prerender, admin SEO tools, and Phase 16 foundation (spacing/type tokens, fonts, Radix modals). **v1.0** marketing integration, infra, RBAC, chat, payments, and mobile remain deferred.
 
 ## Phases (v1.2 — active)
 
-- [ ] **Phase 17: Token Foundation & Theme Architecture** — Semantic light/dark tokens, `next-themes`, CMS `colorScheme`, FOUC-free boot.
-- [ ] **Phase 18: Shared UI Primitives** — Unified Button, Input, Card, Dialog, and navigation on semantic tokens.
-- [ ] **Phase 19: Public Surface Polish** — Landing, blog, events, community, 404; typography rhythm, prose, imagery.
-- [ ] **Phase 20: Motion, Glass & CWV Guardrails** — Restrained motion, blur caps, reduced-motion, Lighthouse and Playwright gates.
-- [ ] **Phase 21: Admin Parity & Preview** — Admin on public tokens; Design System light/dark preview; optional theme toggle.
-- [ ] **Phase 22: Prerender & Infra Hardening** — Theme-ready static HTML and CI token assertions.
+- [ ] **Phase 17: Navbar & Landing Hero (First)** — Apple-grade header and hero on `/`; responsive 320px–ultra-wide; LCP-safe; keyboard and touch.
+- [ ] **Phase 18: Token Foundation & Theme Architecture** — Semantic light/dark tokens, `next-themes`, CMS `colorScheme`, FOUC-free boot; align navbar/hero to tokens.
+- [ ] **Phase 19: Shared UI Primitives** — Unified Button, Input, Card, Dialog on semantic tokens.
+- [ ] **Phase 20: Public Surface Polish** — Remaining landing sections, blog, events, community, 404; typography rhythm, prose, imagery.
+- [ ] **Phase 21: Motion, Glass & CWV Guardrails** — Restrained motion, blur caps, reduced-motion, Lighthouse and Playwright gates.
+- [ ] **Phase 22: Admin Parity & Preview** — Admin on public tokens; Design System light/dark preview; optional theme toggle.
+- [ ] **Phase 23: Prerender & Infra Hardening** — Theme-ready static HTML and CI token assertions.
 
 <details>
 <summary>✅ v1.1 Premium Presentation & SEO Dominance (Phases 10–16) — COMPLETE 2026-05-19</summary>
@@ -60,10 +63,27 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 
 ## Phase Details (v1.2)
 
-### Phase 17: Token Foundation & Theme Architecture
+### Phase 17: Navbar & Landing Hero (First)
 
-**Goal**: Visitors and editors experience consistent light, dark, and system themes with no flash of wrong theme and CMS-compatible semantic surfaces.
-**Depends on**: v1.1 Phase 16 (design tokens, fonts, section utilities)
+**Goal**: The first impression on `/` matches Apple-minimal premium quality — global navigation and hero are polished, accessible, and responsive on every breakpoint before sitewide token and page work continues.
+**Depends on**: v1.1 Phase 16 (spacing/type tokens, fontsource, section utilities, Radix modals baseline)
+**Requirements**: NAV-01, NAV-02, NAV-03, NAV-04, NAV-05, NAV-06, HERO-01, HERO-02, HERO-03, HERO-04, HERO-05, HERO-06
+**Success Criteria** (what must be TRUE):
+
+  1. Visitor on desktop sees a calm, premium header (logo, primary nav, optional CTA) with clear hierarchy and no clutter at `xl` widths.
+  2. Visitor on phone/tablet opens navigation with ≥44px controls; no horizontal page scroll; sticky header does not permanently hide in-page anchor targets.
+  3. Visitor using keyboard or screen reader can reach all header actions with visible `focus-visible` rings and logical tab order (including mobile menu).
+  4. Visitor with `prefers-reduced-motion: reduce` sees minimal menu animation; visitor with motion allowed still avoids layout-thrashing header transitions.
+  5. Visitor’s LCP in the hero is visible on first paint; hero media does not cause CLS; primary CTAs meet touch size and contrast requirements.
+  6. Visitor sees CMS-driven hero copy and imagery without layout thrash on hydration; decorative layers do not obscure the message.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 18: Token Foundation & Theme Architecture
+
+**Goal**: Visitors and editors experience consistent light, dark, and system themes with no flash of wrong theme and CMS-compatible semantic surfaces; navbar and hero align to semantic tokens.
+**Depends on**: Phase 17 (navbar/hero structure stable)
 **Requirements**: DSM-01, DSM-02, DSM-03, DSM-04, DSM-05, DSM-06, DSM-07
 **Success Criteria** (what must be TRUE):
 
@@ -72,14 +92,15 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
   3. Editor can set site `colorScheme` (light | dark | system) in Design System admin; published site reflects the choice via `applyAppearance()`.
   4. Public pages use semantic surfaces (`bg-bg`, `bg-surface`, `text-text`, borders, accent) — not hardcoded `bg-white` or light-only glass rgba on body and section utilities.
   5. Glass, CTA, and section `@utility` styles read from semantic tokens in both light and dark variants.
+  6. Navbar and hero from Phase 17 use semantic tokens in both themes without regressing layout or contrast.
 
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 18: Shared UI Primitives
+### Phase 19: Shared UI Primitives
 
 **Goal**: Every interactive control on public and admin routes shares one token-driven primitive set with accessible focus and touch targets.
-**Depends on**: Phase 17
+**Depends on**: Phase 18
 **Requirements**: COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, TYPE-01, TYPE-02
 **Success Criteria** (what must be TRUE):
 
@@ -93,14 +114,14 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 19: Public Surface Polish
+### Phase 20: Public Surface Polish
 
 **Goal**: Every public marketing route feels Apple-minimal premium with unified rhythm, reading experience, and stable imagery in both themes.
-**Depends on**: Phase 18
+**Depends on**: Phase 19
 **Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, TYPE-03, TYPE-04, IMG-01, IMG-02, IMG-03, IMG-04
 **Success Criteria** (what must be TRUE):
 
-  1. Visitor on `/` sees cohesive sections (hero, content blocks, CTAs) using shared tokens, typography, and imagery; LCP hero is visible on first paint (never opacity-zero).
+  1. Visitor on `/` sees cohesive sections below the hero using shared tokens, typography, and imagery (hero quality bar from Phase 17 maintained).
   2. Visitor on `/blog` and `/blog/:slug` gets premium cards, hero, comfortable prose (~65ch), and related/CTA blocks with logical heading hierarchy.
   3. Visitor on `/events` sees map, cards, and detail views matching premium visual and dark-mode standards.
   4. Visitor on `/community` sees feed, posts, modals, and create flow matching the same quality bar in light and dark.
@@ -110,11 +131,11 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 20: Motion, Glass & CWV Guardrails
+### Phase 21: Motion, Glass & CWV Guardrails
 
 **Goal**: Motion and glass enhance the brand without hurting vestibular comfort, INP, or Lighthouse scores established in v1.1.
-**Depends on**: Phase 19
-**Requirements**: MOT-01, MOT-02, MOT-03, MOT-04, PERF-01, PERF-02, PERF-03
+**Depends on**: Phase 20
+**Requirements**: MOT-01, MOT-02, MOT-03, MOT-04, CWV-01, CWV-02, CWV-03
 **Success Criteria** (what must be TRUE):
 
   1. Visitor with `prefers-reduced-motion: reduce` sees no scroll-triggered reveals, instant modal dismiss, and no custom cursor or magnetic effects.
@@ -127,10 +148,10 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 21: Admin Parity & Preview
+### Phase 22: Admin Parity & Preview
 
 **Goal**: Editors work in a CMS that looks and previews like the public premium experience, including accurate light/dark/system preview.
-**Depends on**: Phase 20
+**Depends on**: Phase 21
 **Requirements**: ADM-01, ADM-02, ADM-03, ADM-04, TYPE-05, COMP-06
 **Success Criteria** (what must be TRUE):
 
@@ -143,10 +164,10 @@ Production infrastructure, quality/testing, RBAC, chat, payments, mobile — def
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 22: Prerender & Infra Hardening
+### Phase 23: Prerender & Infra Hardening
 
 **Goal**: View Source and crawlers receive theme-accurate static HTML aligned with hydrated React output.
-**Depends on**: Phase 17 (token contract); best completed after Phase 21 (stable theme API)
+**Depends on**: Phase 18 (token contract); best completed after Phase 22 (stable theme API)
 **Requirements**: INFRA-01, INFRA-02
 **Success Criteria** (what must be TRUE):
 
@@ -296,19 +317,20 @@ Plans:
 
 ## Progress
 
-**Execution order (v1.2):** 17 → 18 → 19 → 20 → 21 → 22  
-*(Phase 22 planning can start after Phase 17 token contract is stable; execution fits after admin preview is verified.)*
+**Execution order (v1.2):** 17 → 18 → 19 → 20 → 21 → 22 → 23  
+*(Phase 23 execution fits after admin preview is verified; token contract from Phase 18.)*
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 17. Token Foundation & Theme Architecture | v1.2 | 0/TBD | Not started | - |
-| 18. Shared UI Primitives | v1.2 | 0/TBD | Not started | - |
-| 19. Public Surface Polish | v1.2 | 0/TBD | Not started | - |
-| 20. Motion, Glass & CWV Guardrails | v1.2 | 0/TBD | Not started | - |
-| 21. Admin Parity & Preview | v1.2 | 0/TBD | Not started | - |
-| 22. Prerender & Infra Hardening | v1.2 | 0/TBD | Not started | - |
+| 17. Navbar & Landing Hero (First) | v1.2 | 0/TBD | Not started | - |
+| 18. Token Foundation & Theme Architecture | v1.2 | 0/TBD | Not started | - |
+| 19. Shared UI Primitives | v1.2 | 0/TBD | Not started | - |
+| 20. Public Surface Polish | v1.2 | 0/TBD | Not started | - |
+| 21. Motion, Glass & CWV Guardrails | v1.2 | 0/TBD | Not started | - |
+| 22. Admin Parity & Preview | v1.2 | 0/TBD | Not started | - |
+| 23. Prerender & Infra Hardening | v1.2 | 0/TBD | Not started | - |
 
-**v1.2 requirement coverage:** 38/38 mapped ✓
+**v1.2 requirement coverage:** 50/50 mapped ✓
 
 <details>
 <summary>v1.1 Progress (complete)</summary>
@@ -326,4 +348,4 @@ Plans:
 </details>
 
 ---
-*Roadmap updated: 2026-05-19 — Milestone v1.2 Phases 17–22; v1.1 marked complete*
+*Roadmap updated: 2026-05-19 — v1.2 Phases 17–23; Phase 17 navbar + hero first; v1.1 complete*

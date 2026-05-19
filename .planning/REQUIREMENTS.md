@@ -1,157 +1,244 @@
 # Requirements: Book Website
 
 **Defined:** 2026-05-19  
-**Milestone:** v1.2 Apple-Grade Premium Experience  
+**Milestone:** v1.2 Apple-Grade Premium Experience (active) · v1.1 shipped (Phases 10–16)  
 **Core Value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and marketing intelligence.
 
-## v1.2 Requirements
+## v1.1 Requirements
 
-### Design System & Theme
+### Per-Route Meta & Head Management
 
-- [ ] **DSM-01**: Semantic color tokens exist for light and dark (bg, surface, text, border, accent) using Tailwind v4 `@theme` and `light-dark()` / `@variant dark`
-- [ ] **DSM-02**: System dark mode works via `prefers-color-scheme` with `color-scheme` on `html` and no flash of light theme on first paint
-- [ ] **DSM-03**: Blocking inline theme boot script in `index.html` applies stored preference before React hydrates
-- [ ] **DSM-04**: `next-themes` (or equivalent) provides light/dark/system persistence without conflicting with CMS appearance
-- [ ] **DSM-05**: CMS `appearance` supports `colorScheme` (light | dark | system) editable in Design System admin and applied via `applyAppearance()`
-- [ ] **DSM-06**: Apple-minimal neutral palette (subtle grays, restrained shadows) replaces heavy decorative elevation on public surfaces
-- [ ] **DSM-07**: Glass, CTA, and section `@utility` styles use semantic tokens (not hardcoded `bg-white` / light-only rgba)
+- [x] **META-01**: Each public route (`/`, `/blog`, `/blog/:slug`, `/events`, `/community`) renders unique title and meta description in document head
+- [x] **META-02**: Each public route renders a canonical link matching `SITE_URL` and the current path
+- [x] **META-03**: Each public route renders Open Graph tags (type, title, description, image, url) appropriate to page content
+- [x] **META-04**: Each public route renders Twitter card tags consistent with Open Graph data
+- [x] **META-05**: Admin and dashboard routes include `noindex` robots directive and are excluded from sitemap
+- [x] **META-06**: Static `index.html` contains only minimal shell fallbacks; no duplicate canonical/OG that conflict with per-route head
 
-### Typography & Layout
+### Crawl Infrastructure
 
-- [ ] **TYPE-01**: Single optical type scale (fluid `clamp` for display, fixed steps for UI) applied site-wide including admin
-- [ ] **TYPE-02**: Two-font discipline enforced (Instrument Serif display + Plus Jakarta UI) with no third display face
-- [ ] **TYPE-03**: Section rhythm utilities (`section-public`, `section-inner`, headings, eyebrows) applied consistently on all public routes
-- [ ] **TYPE-04**: Prose/blog content uses comfortable measure (~65ch), logical heading hierarchy, and premium caption/meta styles
-- [ ] **TYPE-05**: Admin forms, tables, and managers align to the same spacing and type scale as public surfaces
+- [x] **CRAWL-01**: `SITE_URL` environment variable is the single source of truth for absolute URLs in canonical, OG, sitemap, and JSON-LD
+- [ ] **CRAWL-02**: `GET /sitemap.xml` generates XML dynamically from published articles and events with accurate `lastmod`
+- [ ] **CRAWL-03**: `robots.txt` allows public marketing paths, disallows `/admin` and `/dashboard`, and references the dynamic sitemap URL
+- [x] **CRAWL-04**: Build-time prerender produces static HTML for `/`, `/blog`, `/blog/:slug`, `/events` (community excluded per D-15)
+- [x] **CRAWL-05**: Prerendered pages include baked meta tags visible in View Source (not only post-hydration DOM)
 
-### Shared Components
+### Structured Data & Semantics
 
-- [ ] **COMP-01**: One token-driven `Button` primitive (CVA) replaces split `btn-cta-*` / slate shadcn variants for public and admin
-- [ ] **COMP-02**: Inputs, selects, and textareas share `Input` styling with visible `focus-visible` rings and 44px min touch height on mobile
-- [ ] **COMP-03**: Cards, lists, chips, and badges use semantic surfaces and a 3-level elevation ladder
-- [ ] **COMP-04**: Modals (`AppDialog`) and overlays use theme-aware surfaces, `tw-animate-css` enter/exit, and reduced-motion instant close
-- [ ] **COMP-05**: Navigation (desktop + mobile) meets premium bar: glass/blur tuned per theme, thumb-zone CTAs, no hover-only affordances
-- [ ] **COMP-06**: Optional manual theme toggle in public nav/footer (light / dark / system) after system tokens are stable
+- [ ] **SCHEMA-01**: Landing page includes `WebSite` and `Organization` JSON-LD derived from CMS settings
+- [ ] **SCHEMA-02**: Landing page includes `Book` JSON-LD with title, author, cover image, and ISBN when provided in CMS
+- [ ] **SCHEMA-03**: Each blog post page includes `BlogPosting` JSON-LD matching visible article content
+- [ ] **SCHEMA-04**: Blog post and events pages include `BreadcrumbList` JSON-LD reflecting navigation hierarchy
+- [ ] **SCHEMA-05**: Published events include `Event` JSON-LD with machine-readable ISO start dates
+- [ ] **SCHEMA-06**: Public pages pass semantic audit: one `h1`, logical heading order, landmark regions, non-empty image `alt` on key images
 
-### Public Pages
+### Admin SEO Tools
 
-- [ ] **PAGE-01**: Landing page sections use unified tokens, typography, imagery, and restrained motion (hero LCP never opacity-zero)
-- [ ] **PAGE-02**: Blog index and post pages match premium reading experience (cards, hero, prose, related/CTA blocks)
-- [ ] **PAGE-03**: Events page (map, cards, detail) matches premium visual and dark-mode standards
-- [ ] **PAGE-04**: Community page (feed, posts, modals, create flow) matches premium visual and dark-mode standards
-- [ ] **PAGE-05**: 404 page is an on-brand minimal moment with clear escape CTA using shared primitives
+- [x] **CMS-01**: `Article` model stores `seoTitle`, `seoDescription`, `ogImage`, and `noindex` with API and admin UI
+- [x] **CMS-02**: Global `settings.seo` supports `ogImage` and `googleSiteVerification` fields editable in admin
+- [ ] **CMS-03**: BlogManager exposes per-article SEO tab with fallback chain (override → title/excerpt → site defaults)
+- [ ] **CMS-04**: Admin displays SERP and social snippet preview using the same meta fields as the live site
+- [ ] **CMS-05**: OG image uploads are resized server-side to 1200×630 via sharp before storage/serving
 
-### Admin CMS
+### Premium UI & UX
 
-- [ ] **ADM-01**: Admin layout, sidebar, and chrome use public semantic tokens (density utilities allowed, not a separate gray theme)
-- [ ] **ADM-02**: Content managers (blog, events, pages, community) use shared `Input`/`Button`/card primitives
-- [ ] **ADM-03**: Design System manager previews light and dark (and system) accurately via `previewData || data` + `applyAppearance()`
-- [ ] **ADM-04**: LivePreview iframe reflects theme changes without duplicate theme logic
+- [ ] **UX-01**: Design tokens (spacing, radius, shadow, typography) are formalized and applied consistently across public sections
+- [ ] **UX-02**: Critical fonts are self-hosted (fontsource) to improve LCP and reduce layout shift from webfont loading
+- [ ] **UX-03**: Motion and animations respect `prefers-reduced-motion` and avoid layout-affecting properties on critical path
+- [ ] **UX-04**: Landing, blog, events, and community flows receive premium visual polish (hierarchy, spacing, CTAs)
+- [ ] **UX-05**: Interactive overlays use accessible Radix dialog patterns where modals are required
+- [x] **UX-06**: Mobile viewports pass responsive review: no horizontal scroll, 44px touch targets, readable type scale
 
-### Motion & Interaction
+### Performance & Core Web Vitals
 
-- [ ] **MOT-01**: New motion uses transform/opacity only; respects `prefers-reduced-motion` via existing hook + global CSS
-- [ ] **MOT-02**: Scroll-triggered section reveals (if used) are once-only, below-fold, and disabled when reduced motion is preferred
-- [ ] **MOT-03**: Backdrop-filter limited to nav and one above-the-fold layer; solid fallbacks on low-end / reduced-motion
-- [ ] **MOT-04**: Custom cursor / magnetic effects removed or gated (not default on mobile or reduced-motion)
+- [ ] **PERF-01**: LCP element on landing and blog is not delayed by opacity-zero or off-screen animation on first paint
+- [ ] **PERF-02**: Three.js and heavy GSAP sequences are lazy-loaded or restricted to below-fold/landing-only contexts
+- [ ] **PERF-03**: Above-fold images specify width/height or aspect-ratio to prevent cumulative layout shift
+- [ ] **PERF-04**: `web-vitals` reports LCP, INP, and CLS to existing telemetry in production
 
-### Imagery & Media
+### Measurement
 
-- [ ] **IMG-01**: Above-fold heroes and key cards specify dimensions or aspect-ratio to prevent CLS in both themes
-- [ ] **IMG-02**: LCP hero image is priority-loaded and not lazy-loaded; below-fold cards may use lazy loading
-- [ ] **IMG-03**: CMS images use `object-fit: cover` with consistent aspect ratios on blog/event/community cards
-- [ ] **IMG-04**: Dark mode does not clip or wash out book cover / OG imagery (tested on landing and blog)
+- [ ] **MSMT-01**: Google Search Console verification meta tag is injectable from admin settings and appears in prerendered HTML
 
-### Performance & Quality
+## v1.2 Requirements — Apple-Grade Premium Experience
 
-- [ ] **PERF-01**: Lighthouse performance and accessibility scores do not regress vs v1.1 Phase 16 baseline on landing and blog
-- [ ] **PERF-02**: `web-vitals` RUM continues reporting LCP, INP, CLS in production after UI changes
-- [ ] **PERF-03**: Playwright (or equivalent) snapshots cover light and dark for landing, blog, and admin preview
+**Focus:** Sitewide premium UI/UX and responsiveness; **Phase 17 ships navbar + landing hero first**, then theme tokens, primitives, remaining surfaces, motion/CWV, admin parity, prerender.
 
-### Prerender & Static HTML
+### Global navigation (first)
 
-- [ ] **INFRA-01**: Prerender pipeline waits for theme-ready state or inlines critical `:root` tokens so View Source matches hydrated theme
-- [ ] **INFRA-02**: CI or verify script fails when semantic token classes are missing from prerendered public HTML
+- [ ] **NAV-01**: Visitor sees a premium global header on desktop (clear logo lockup, primary destinations, optional primary CTA) with calm spacing and no visual clutter at `xl` widths
+- [ ] **NAV-02**: Visitor can operate all header links and controls with keyboard only, with visible `focus-visible` rings and a sensible tab order (including mobile menu trigger)
+- [ ] **NAV-03**: Visitor on phone and tablet gets touch targets ≥44px for menu trigger and primary actions; expanded navigation is usable without introducing horizontal page scroll
+- [ ] **NAV-04**: Visitor using skip links or in-page anchors is not permanently obscured by sticky/fixed header chrome (offset or scroll-padding strategy)
+- [ ] **NAV-05**: Visitor with `prefers-reduced-motion: reduce` sees minimal or no animated open/close for the mobile navigation layer
+- [ ] **NAV-06**: Visitor on viewports from 320px through ultra-wide sees no broken overflow, clipped text, or overlapping layers in the header region
+
+### Landing hero (first)
+
+- [ ] **HERO-01**: Visitor sees hero headline and supporting copy at WCAG-compliant contrast on current light/dark backgrounds
+- [ ] **HERO-02**: Visitor’s LCP element in the hero is visible on first paint (no opacity-zero or animation-delay gating on primary headline); hero media uses dimensions or `aspect-ratio` to avoid CLS
+- [ ] **HERO-03**: Visitor on touch devices can tap primary hero CTAs comfortably (≥44px height) with clear hover/focus/active states on pointer devices
+- [ ] **HERO-04**: Visitor sees balanced whitespace and readable type scale as the hero reflows across `sm` / `md` / `lg` / `xl` breakpoints
+- [ ] **HERO-05**: Visitor is not blocked by decorative layers (gradients, mesh, optional 3D) from reading the hero message; heavy effects remain non-LCP or below the fold per prior CWV decisions
+- [ ] **HERO-06**: Visitor sees CMS-driven hero title, subtitle, imagery, and CTAs without layout thrash when content hydrates
+
+### Design system & theme architecture
+
+- [ ] **DSM-01**: Visitor with OS dark preference sees appropriate dark neutrals on first paint without a full-screen flash of the wrong theme before hydration
+- [ ] **DSM-02**: Visitor can persist light, dark, or system appearance; choice survives reload and does not fight CMS accent/font settings
+- [ ] **DSM-03**: Editor can set site `colorScheme` (`light` \| `dark` \| `system`) in Design System admin; published site reflects it via `applyAppearance()`
+- [ ] **DSM-04**: Public layouts use semantic surfaces (`bg-bg`, `bg-surface`, `text-text`, borders) instead of hardcoded light-only colors on body and section shells
+- [ ] **DSM-05**: Dividers, rings, and subtle borders use tokenized colors in both themes
+- [ ] **DSM-06**: Glass, blur, and translucent layers read from semantic tokens in light and dark variants with acceptable contrast
+- [ ] **DSM-07**: Accent and CTA colors from CMS remain legible and on-brand in both themes (contrast sanity)
+
+### Shared UI primitives
+
+- [ ] **COMP-01**: Visitor sees one consistent primary/secondary/ghost button treatment (shared primitive / CVA) on landing CTAs, forms, and modals
+- [ ] **COMP-02**: Visitor using keyboard or screen reader gets consistent `focus-visible` treatment on buttons, links styled as buttons, inputs, selects, and textareas
+- [ ] **COMP-03**: Visitor sees cards, lists, chips, and badges on a clear three-level elevation ladder that reads correctly in dark mode
+- [ ] **COMP-04**: Visitor opening a modal gets theme-aware overlay and panel; with reduced motion, dismiss is effectively instant
+- [ ] **COMP-05**: Visitor experiences premium navigation chrome (blur, hairline borders) that matches the active theme and does not rely on hover-only critical affordances
+- [ ] **TYPE-01**: Visitor reads headings and UI copy on a single documented type scale (fluid display where appropriate, fixed steps for UI chrome)
+- [ ] **TYPE-02**: Public marketing UI uses only **Instrument Serif** and **Plus Jakarta Sans** for display and body/UI (no third competing display face)
+
+### Public surfaces (after primitives)
+
+- [ ] **PAGE-01**: Visitor on `/` sees cohesive sections (below hero) using shared rhythm, tokens, and imagery discipline
+- [ ] **PAGE-02**: Visitor on `/blog` and `/blog/:slug` sees premium list/detail layouts, comfortable prose width (~65ch), and related/CTA blocks with correct heading hierarchy
+- [ ] **PAGE-03**: Visitor on `/events` sees map, cards, and detail states at the same quality bar in light and dark
+- [ ] **PAGE-04**: Visitor on `/community` sees feed, composer, modals, and detail views matching the public marketing polish
+- [ ] **PAGE-05**: Visitor on unknown URLs sees an on-brand minimal 404 with a clear escape CTA built from shared primitives
+- [ ] **TYPE-03**: Visitor scrolling public routes sees consistent section rhythm (`section-public` / `section-inner`), eyebrow text, and heading scale
+- [ ] **TYPE-04**: Visitor sees consistent vertical rhythm between headings, body, and CTAs within long-form and marketing blocks
+- [ ] **IMG-01**: Visitor sees hero and card imagery without cumulative layout shift (explicit dimensions or aspect boxes)
+- [ ] **IMG-02**: Visitor in dark mode can still parse book cover, avatars, and key photography without muddy gray-on-gray
+- [ ] **IMG-03**: Visitor previewing shares gets OG imagery that remains legible at social crop sizes
+- [ ] **IMG-04**: Visitor benefits from responsive image selection or art direction where the design specifies multiple breakpoints
+
+### Motion, glass & CWV guardrails
+
+- [ ] **MOT-01**: Visitor with `prefers-reduced-motion: reduce` sees no scroll-jank reveals, no custom cursor or magnetic hover effects, and instant modal dismissal
+- [ ] **MOT-02**: Visitor with motion allowed sees scroll-driven reveals only below the fold, once per element, using transform/opacity — never on the LCP hero
+- [ ] **MOT-03**: Visitor sees backdrop blur capped: at most one strong above-the-fold blur layer; low-end or reduced-motion users get solid fallbacks
+- [ ] **MOT-04**: Visitor on mobile is not burdened by default custom cursor or magnetic pull effects
+- [ ] **CWV-01**: Lighthouse performance and accessibility on landing and blog do not regress versus the v1.1 Phase 16 baseline
+- [ ] **CWV-02**: Production RUM still reports LCP, INP, and CLS via `web-vitals` after UI changes
+- [ ] **CWV-03**: CI or local verify can capture Playwright snapshots (or equivalent) for landing, blog, and admin preview in light and dark
+
+### Admin parity & preview
+
+- [ ] **ADM-01**: Editor sees admin chrome (layout, sidebar, tables) on the same semantic tokens as the public site (density utilities allowed)
+- [ ] **ADM-02**: Editor uses blog, events, pages, community, and settings managers with the same `Input`, `Button`, and card primitives as the public site
+- [ ] **ADM-03**: Editor previews light, dark, and system appearances accurately in Design System before publish (`previewData` / `applyAppearance()`)
+- [ ] **ADM-04**: Editor LivePreview reflects theme changes without duplicating divergent theme logic from production
+- [ ] **TYPE-05**: Editor UI respects the same type scale rules where it surfaces public-facing previews
+- [ ] **COMP-06**: Editor-facing destructive or irreversible actions use the same dialog primitive and focus trap behavior as the public site
+
+### Prerender & infra hardening
+
+- [ ] **INFRA-01**: Visitor viewing View Source on prerendered routes sees critical `:root` semantic tokens and correct `color-scheme` without executing client JS
+- [ ] **INFRA-02**: Build or verify scripts fail when prerendered HTML is missing expected semantic token hooks or theme contract classes
 
 ## v2 Requirements
 
-Deferred beyond v1.2.
+Deferred enhancements beyond v1.2 roadmap scope.
 
-### Theme & CMS
+### International & Discovery
 
-- **DSM-ADV-01**: Full CMS dark palette pickers (per-neutral overrides)
-- **DSM-ADV-02**: Admin shell full dark mode (beyond LivePreview parity)
+- **I18N-01**: hreflang tags and locale-specific URLs for multi-language content
+- **I18N-02**: IndexNow ping on article publish for faster Bing discovery
 
-### Motion & Media
+### Advanced SEO
 
-- **MOT-ADV-01**: Blur-up LQIP on below-fold card grids
-- **MOT-ADV-02**: Cinematic hero video with accessible controls
+- **SEO-ADV-01**: Author profile pages (`/author`) with Person schema
+- **SEO-ADV-02**: FAQ / HowTo structured data for landing Q&A sections
 
-### v1.0 / v1.1 Deferred
+### v1.0 Deferred (prior milestone)
 
-- Marketing integration (MKT-*), production infra, RBAC, chat, payments, mobile PWA — see MILESTONES.md and git history
+- Marketing integration (MKT-*), production infra (INFRA-*), RBAC, chat, payments — see archived v1.0 requirements in git history
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Full UI framework migration (MUI, Chakra, shadcn CLI install) | Research: extend existing Tailwind + selective Radix only |
-| Logo / brand color rebrand | User constraint: polish only; CMS accent remains editor-controlled |
-| Heavy 3D / WebGL on inner routes | CWV and Apple-minimal restraint |
-| Scrolljacking / full-page snap | Accessibility and reading flow |
-| Glass on every card | Contrast and dark-mode failures |
-| `/dashboard` CRM placeholder polish | User scoped public + admin CMS only |
-| hreflang / i18n | No bilingual content |
+| Full SSR / Next.js migration | Research recommends prerender on existing Vite SPA; rewrite cost exceeds v1.1 value |
+| Keyword meta tag field | Google ignores; encourages stuffing |
+| Indexing all community UGC | Brand SEO risk; default noindex unless explicitly required |
+| Auto-generated tag archive pages | Thin duplicate content risk |
+| Heavy 3D hero on every page | CWV regression; landing-only per research |
+| hreflang | No bilingual content in v1.1 |
 
 ## Traceability
 
+### v1.2 (active)
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DSM-01 | Phase 17 | Pending |
-| DSM-02 | Phase 17 | Pending |
-| DSM-03 | Phase 17 | Pending |
-| DSM-04 | Phase 17 | Pending |
-| DSM-05 | Phase 17 | Pending |
-| DSM-06 | Phase 17 | Pending |
-| DSM-07 | Phase 17 | Pending |
-| TYPE-01 | Phase 18 | Pending |
-| TYPE-02 | Phase 18 | Pending |
-| TYPE-03 | Phase 19 | Pending |
-| TYPE-04 | Phase 19 | Pending |
-| TYPE-05 | Phase 21 | Pending |
-| COMP-01 | Phase 18 | Pending |
-| COMP-02 | Phase 18 | Pending |
-| COMP-03 | Phase 18 | Pending |
-| COMP-04 | Phase 18 | Pending |
-| COMP-05 | Phase 18 | Pending |
-| COMP-06 | Phase 21 | Pending |
-| PAGE-01 | Phase 19 | Pending |
-| PAGE-02 | Phase 19 | Pending |
-| PAGE-03 | Phase 19 | Pending |
-| PAGE-04 | Phase 19 | Pending |
-| PAGE-05 | Phase 19 | Pending |
-| ADM-01 | Phase 21 | Pending |
-| ADM-02 | Phase 21 | Pending |
-| ADM-03 | Phase 21 | Pending |
-| ADM-04 | Phase 21 | Pending |
-| MOT-01 | Phase 20 | Pending |
-| MOT-02 | Phase 20 | Pending |
-| MOT-03 | Phase 20 | Pending |
-| MOT-04 | Phase 20 | Pending |
-| IMG-01 | Phase 19 | Pending |
-| IMG-02 | Phase 19 | Pending |
-| IMG-03 | Phase 19 | Pending |
-| IMG-04 | Phase 19 | Pending |
-| PERF-01 | Phase 20 | Pending |
-| PERF-02 | Phase 20 | Pending |
-| PERF-03 | Phase 20 | Pending |
-| INFRA-01 | Phase 22 | Pending |
-| INFRA-02 | Phase 22 | Pending |
+| NAV-01 | Phase 17 | Pending |
+| NAV-02 | Phase 17 | Pending |
+| NAV-03 | Phase 17 | Pending |
+| NAV-04 | Phase 17 | Pending |
+| NAV-05 | Phase 17 | Pending |
+| NAV-06 | Phase 17 | Pending |
+| HERO-01 | Phase 17 | Pending |
+| HERO-02 | Phase 17 | Pending |
+| HERO-03 | Phase 17 | Pending |
+| HERO-04 | Phase 17 | Pending |
+| HERO-05 | Phase 17 | Pending |
+| HERO-06 | Phase 17 | Pending |
+| DSM-01 | Phase 18 | Pending |
+| DSM-02 | Phase 18 | Pending |
+| DSM-03 | Phase 18 | Pending |
+| DSM-04 | Phase 18 | Pending |
+| DSM-05 | Phase 18 | Pending |
+| DSM-06 | Phase 18 | Pending |
+| DSM-07 | Phase 18 | Pending |
+| COMP-01 | Phase 19 | Pending |
+| COMP-02 | Phase 19 | Pending |
+| COMP-03 | Phase 19 | Pending |
+| COMP-04 | Phase 19 | Pending |
+| COMP-05 | Phase 19 | Pending |
+| TYPE-01 | Phase 19 | Pending |
+| TYPE-02 | Phase 19 | Pending |
+| PAGE-01 | Phase 20 | Pending |
+| PAGE-02 | Phase 20 | Pending |
+| PAGE-03 | Phase 20 | Pending |
+| PAGE-04 | Phase 20 | Pending |
+| PAGE-05 | Phase 20 | Pending |
+| TYPE-03 | Phase 20 | Pending |
+| TYPE-04 | Phase 20 | Pending |
+| IMG-01 | Phase 20 | Pending |
+| IMG-02 | Phase 20 | Pending |
+| IMG-03 | Phase 20 | Pending |
+| IMG-04 | Phase 20 | Pending |
+| MOT-01 | Phase 21 | Pending |
+| MOT-02 | Phase 21 | Pending |
+| MOT-03 | Phase 21 | Pending |
+| MOT-04 | Phase 21 | Pending |
+| CWV-01 | Phase 21 | Pending |
+| CWV-02 | Phase 21 | Pending |
+| CWV-03 | Phase 21 | Pending |
+| ADM-01 | Phase 22 | Pending |
+| ADM-02 | Phase 22 | Pending |
+| ADM-03 | Phase 22 | Pending |
+| ADM-04 | Phase 22 | Pending |
+| TYPE-05 | Phase 22 | Pending |
+| COMP-06 | Phase 22 | Pending |
+| INFRA-01 | Phase 23 | Pending |
+| INFRA-02 | Phase 23 | Pending |
+
+### v1.1 (shipped)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CRAWL-01 … PERF-03 | Phases 10–16 | See git history / phase summaries |
 
 **Coverage:**
-- v1.2 requirements: 38 total
-- Mapped to phases: 38/38 ✓
-- Unmapped: 0
+- v1.2 requirements: 50 total
+- Mapped to phases: 50
+- Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-05-19 — milestone v1.2*
+*Requirements defined: 2026-05-19*  
+*Last updated: 2026-05-19 — v1.2 scoped; navbar + hero Phase 17 first*
