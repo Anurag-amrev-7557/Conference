@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "verify:phase15-gsc": "node scripts/verify-phase15-gsc.mjs"
+    "verify:phase15-gsc": "node scripts/verify-phase15-gsc.mjs",
+    "verify:phase17": "node scripts/verify-phase17-nav-hero.mjs"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",

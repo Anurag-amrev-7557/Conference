@@ -2,16 +2,14 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   --color-off: #EBEBE8;
-  --color-bg: #F5F5F7;
+  --color-bg: #F2F2F0;
   --color-border: #D1D1CE;
   --color-accent: #003E99;
   --color-accent2: #002D70;
   --color-accent-light: #E0E9FF;
-  --color-text: #1D1D1F;
+  --color-text: #000000;
   --color-text2: #2D2D2D;
   --color-muted: #333333;
   --color-green: #0E4F25;
@@ -68,13 +66,14 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { 
     scroll-behavior: smooth; 
-    color-scheme: light dark;
+    scroll-padding-top: 5.5rem;
+    --header-offset: 5.5rem;
     --font-serif-dynamic: 'Instrument Serif', serif;
     --font-sans-dynamic: 'Plus Jakarta Sans', sans-serif;
   }
   body { 
     font-family: var(--font-sans); 
-    background: var(--color-bg);
+    background: #ffffff; 
     color: var(--color-text); 
     font-size: var(--base-font-size, 15px); 
     line-height: 1.6; 
@@ -106,17 +105,6 @@
       transition-duration: 0.01ms !important;
     }
   }
-}
-
-/* Phase 17 — dark semantic tokens when `html.dark` (next-themes) */
-html.dark {
-  --color-bg: #1c1c1e;
-  --color-off: #2c2c2e;
-  --color-text: #f2f2f7;
-  --color-text2: #d1d1d6;
-  --color-muted: #8e8e93;
-  --color-border: rgba(255, 255, 255, 0.12);
-  --color-tag: #3a3a3c;
 }
 
 /* === KEYFRAMES === */
@@ -218,13 +206,25 @@ html.dark {
 }
 
 @utility glass-pill {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 
-    0 4px 24px -1px rgba(0, 0, 0, 0.03),
-    0 1px 2px -1px rgba(0, 0, 0, 0.02),
-    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+    0 8px 32px -4px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-pill {
+    transition: none;
+  }
 }
 
 @utility glass-premium {
@@ -234,35 +234,6 @@ html.dark {
   box-shadow: 
     inset 0 1px 1px rgba(255, 255, 255, 0.8),
     0 10px 30px rgba(0, 0, 0, 0.03);
-}
-
-/* Dark-mode glass (D-17-17 / D-17-18): lower blur, stronger hairline */
-html.dark .glass-pill {
-  background: rgba(44, 44, 46, 0.72);
-  backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 4px 24px -1px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-html.dark .glass-premium {
-  background: rgba(44, 44, 46, 0.65);
-  backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-html.dark .btn-cta-secondary {
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: var(--color-text);
-}
-
-html.dark .hero-aura-bg {
-  background: #0a0a0a;
 }
 
 @utility studio-glass-card {

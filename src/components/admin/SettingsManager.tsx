@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { OgImageUpload } from './OgImageUpload';
 
 export const SettingsManager: React.FC = () => {
   const { data, updateSettings, updateAppearance, setPreview, isPreviewVisible } = useWebsiteData();
@@ -149,17 +150,33 @@ export const SettingsManager: React.FC = () => {
                         </div>
                                                 <div className="space-y-4">
                            <h4 className="text-xl font-bold text-text">Default Open Graph Image</h4>
-                           <input type="text" value={form.seo.ogImage || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })} placeholder="https://..." aria-describedby="settings-og-help" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.seo.ogImage || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })} placeholder="https://... or upload below" aria-describedby="settings-og-help" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <OgImageUpload
+                             value={form.seo.ogImage || ''}
+                             onChange={(url) => setForm({ ...form, seo: { ...form.seo, ogImage: url } })}
+                             getToken={() => localStorage.getItem('adminToken') || ''}
+                           />
                            <p id="settings-og-help" className="text-[11px] text-muted leading-relaxed">
-                             Used when a page has no specific share image. Enter a full HTTPS URL. Social preview in admin arrives in a later release.
+                             Used when a page has no specific share image. Upload resizes to 1200×630 or paste a full HTTPS URL.
                            </p>
                         </div>
                         <div className="space-y-4">
                            <h4 className="text-xl font-bold text-text">Google Search Console Verification</h4>
                            <input type="text" value={form.seo.googleSiteVerification || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, googleSiteVerification: e.target.value } })} placeholder="google-site-verification token" aria-describedby="settings-gsc-help" className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs focus:bg-white transition-all outline-none rounded-xl shadow-sm" />
                            <p id="settings-gsc-help" className="text-[11px] text-muted leading-relaxed">
-                             Adds a verification meta tag on every public page. Paste only the content value from Search Console, not the full &lt;meta&gt; tag.
+                             Adds a verification meta tag on every public page via SeoHead. Paste only the content value from Search Console (not the full &lt;meta&gt; tag). After saving, run <code className="text-accent">npm run build</code> with the API on port 3001 so prerender bakes the tag into <code className="text-accent">dist/</code>. Confirm in View Source on <code className="text-accent">/</code> for <code className="text-accent">meta name=&quot;google-site-verification&quot;</code>.
                            </p>
+                        </div>
+                        <div className="space-y-4 pt-6 border-t border-border/40">
+                           <h4 className="text-xl font-bold text-text">Book metadata (structured data)</h4>
+                           <p className="text-[11px] text-muted leading-relaxed">
+                             Used for Google Book rich results on the homepage. Leave blank to omit Book schema.
+                           </p>
+                           <input type="text" value={form.book?.title || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, title: e.target.value } })} placeholder="Book title" className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.book?.authorName || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, authorName: e.target.value } })} placeholder="Author name" className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.book?.isbn || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, isbn: e.target.value } })} placeholder="ISBN-13" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-xs focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.book?.coverImageUrl || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, coverImageUrl: e.target.value } })} placeholder="Cover image URL (https://)" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.book?.publisherName || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, publisherName: e.target.value } })} placeholder="Publisher name" className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
                         </div>
                         <button 
                           onClick={() => handleSave('settings')}
@@ -204,6 +221,56 @@ export const SettingsManager: React.FC = () => {
 
                    {activeTab === 'navigation' && (
                      <div className="space-y-12 animate-fadeInUp">
+                        <div className="p-6 border border-border/40 rounded-2xl bg-[#fafafa] space-y-6">
+                           <div>
+                              <h4 className="text-xl font-bold text-text">Header Primary CTA</h4>
+                              <p className="text-[11px] text-muted leading-relaxed mt-2">
+                                 Shown as the pill button in the site header on desktop and in the mobile menu.
+                              </p>
+                           </div>
+                           <div className="grid grid-cols-1 gap-6">
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">Button label</label>
+                                 <input
+                                   type="text"
+                                   value={form.navigation.primaryCta?.label ?? 'Join Now'}
+                                   onChange={(e) => setForm({
+                                     ...form,
+                                     navigation: {
+                                       ...form.navigation,
+                                       primaryCta: {
+                                         ...form.navigation.primaryCta,
+                                         label: e.target.value,
+                                         href: form.navigation.primaryCta?.href ?? '/#final-cta',
+                                       },
+                                     },
+                                   })}
+                                   className="w-full bg-white border border-border/40 p-4 font-bold text-sm focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                 />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">Button URL</label>
+                                 <input
+                                   type="text"
+                                   value={form.navigation.primaryCta?.href ?? '/#final-cta'}
+                                   onChange={(e) => setForm({
+                                     ...form,
+                                     navigation: {
+                                       ...form.navigation,
+                                       primaryCta: {
+                                         ...form.navigation.primaryCta,
+                                         label: form.navigation.primaryCta?.label ?? 'Join Now',
+                                         href: e.target.value,
+                                       },
+                                     },
+                                   })}
+                                   placeholder="/#final-cta"
+                                   className="w-full bg-white border border-border/40 p-4 font-mono text-[11px] text-accent focus:border-accent transition-all outline-none rounded-xl shadow-sm"
+                                 />
+                              </div>
+                           </div>
+                        </div>
+
                         <div className="space-y-10">
                            <div className="flex items-center justify-between">
                               <h4 className="text-xl font-bold text-text">Universal Header Links</h4>

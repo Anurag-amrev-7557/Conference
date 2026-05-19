@@ -77,11 +77,7 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const merged = { ...initialData, ...remoteData };
         // Ensure nested objects are also merged if they exist in remoteData
         if (remoteData.appearance) {
-          merged.appearance = {
-            ...initialData.appearance,
-            ...remoteData.appearance,
-            colorScheme: remoteData.appearance.colorScheme ?? 'system',
-          };
+          merged.appearance = { ...initialData.appearance, ...remoteData.appearance };
           if (remoteData.appearance.typography) {
             merged.appearance.typography = { ...initialData.appearance.typography, ...remoteData.appearance.typography };
           }
@@ -98,7 +94,14 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
             merged.settings.visibility = { ...initialData.settings.visibility, ...remoteData.settings.visibility };
           }
           if (remoteData.settings.navigation) {
-            merged.settings.navigation = { ...initialData.settings.navigation, ...remoteData.settings.navigation };
+            merged.settings.navigation = {
+              ...initialData.settings.navigation,
+              ...remoteData.settings.navigation,
+              primaryCta: {
+                ...initialData.settings.navigation.primaryCta,
+                ...remoteData.settings.navigation.primaryCta,
+              },
+            };
           }
         }
         if (remoteData.hero) {

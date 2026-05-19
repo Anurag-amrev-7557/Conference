@@ -46,7 +46,8 @@ async function main() {
           { id: "2", platform: "Youtube", href: "https://youtube.com/@superhumanly" },
           { id: "3", platform: "Instagram", href: "https://instagram.com/superhumanly.ai" },
           { id: "4", platform: "X", href: "https://x.com/superhumanly" }
-        ]
+        ],
+        primaryCta: { label: "Join Now", href: "/#final-cta" },
       },
       visibility: {
         hero: true,

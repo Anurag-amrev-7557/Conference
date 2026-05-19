@@ -114,6 +114,7 @@ export interface SiteSettings {
     links: NavLink[];
     socials: SocialLink[];
     footerLinks: NavLink[];
+    primaryCta: { label: string; href: string };
   };
   visibility: {
     hero: boolean;
@@ -137,8 +138,6 @@ export interface SiteAppearance {
   primaryColor: string;
   brandName: string;
   brandLogoText: string;
-  /** Light / dark / system — default `system` when omitted in stored JSON */
-  colorScheme?: 'light' | 'dark' | 'system';
   typography: {
     headingFont: 'serif' | 'sans' | 'mono';
     bodyFont: 'serif' | 'sans' | 'mono';
@@ -219,7 +218,8 @@ export const initialData: WebsiteData = {
         { id: "f3", name: 'Strategy', href: '/#who-we-are' },
         { id: "f4", name: 'Live Training', href: '/events' },
         { id: "f5", name: "Join Registry", href: "/#final-cta" }
-      ]
+      ],
+      primaryCta: { label: 'Join Now', href: '/#final-cta' },
     },
     visibility: {
       hero: true,
@@ -242,7 +242,6 @@ export const initialData: WebsiteData = {
     primaryColor: "#0052cc",
     brandName: "Superhumanly -Thoughts",
     brandLogoText: "S",
-    colorScheme: "system",
     typography: {
       headingFont: 'serif',
       bodyFont: 'sans',
