@@ -198,21 +198,24 @@
 }
 
 @utility btn-cta-primary {
-  @apply inline-flex items-center justify-center gap-2 min-h-11 px-8 py-3 text-[11px] font-bold uppercase tracking-widest rounded-full bg-text text-white hover:bg-accent transition-all shadow-lg;
+  @apply inline-flex items-center justify-center gap-2 min-h-11 px-6 sm:px-7 py-2.5 text-[15px] font-semibold rounded-full bg-accent text-white hover:bg-accent2 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,62,153,0.18)];
 }
 
 @utility btn-cta-secondary {
-  @apply inline-flex items-center justify-center gap-2 min-h-11 px-8 py-3 text-[11px] font-bold uppercase tracking-widest rounded-full border border-border bg-white hover:border-accent hover:bg-accent/5 transition-all;
+  @apply inline-flex items-center justify-center gap-2 min-h-11 px-6 sm:px-7 py-2.5 text-[15px] font-semibold rounded-full border border-border/70 bg-white text-text hover:bg-off/80 hover:border-border transition-colors;
+}
+
+@utility btn-nav-ghost {
+  @apply inline-flex items-center justify-center min-h-10 px-4 text-[14px] font-medium text-text2 hover:text-text rounded-full hover:bg-black/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2;
 }
 
 @utility glass-pill {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 
-    0 8px 32px -4px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px -8px rgba(0, 0, 0, 0.08);
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -340,11 +343,27 @@
     opacity: 0.05;
   }
 
-  /* ===== HERO AURA THEME ===== */
+  /* ===== HERO (premium neutral) ===== */
+
+  .hero-premium-bg {
+    position: relative;
+    background: #fafafa;
+  }
+
+  .hero-premium-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 55% at 50% -15%, rgba(0, 62, 153, 0.07), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 20%, rgba(0, 62, 153, 0.04), transparent 50%);
+  }
 
   .hero-aura-bg {
     position: relative;
-    background: #ffffff;
+    background: #fafafa;
   }
 
   .hero-aura-bg::before {
@@ -354,16 +373,8 @@
     z-index: 0;
     pointer-events: none;
     background:
-      linear-gradient(180deg,
-        #4a80b0 0%,
-        #7aadd4 15%,
-        #9ec5e2 30%,
-        #d1e4f4 50%,
-        #ffffff 85%
-      );
-    -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-    transform: translateZ(0);
+      radial-gradient(ellipse 90% 55% at 50% -15%, rgba(0, 62, 153, 0.07), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 20%, rgba(0, 62, 153, 0.04), transparent 50%);
   }
 
   .hero-noise {
@@ -371,9 +382,16 @@
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
     background-size: 128px 128px;
-    opacity: 0.25;
+    opacity: 0.06;
     pointer-events: none;
     z-index: 1;
+  }
+
+  .hero-media-frame {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 24px 48px -12px rgba(0, 0, 0, 0.12);
   }
 
   .glass-card-vibrant {
@@ -403,10 +421,10 @@
   }
 
   .glow-border {
+    border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow:
-      0 0 15px rgba(0, 82, 204, 0.2),
-      0 0 40px rgba(0, 82, 204, 0.08);
-    border: 1px solid rgba(0, 82, 204, 0.3);
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 24px 48px -12px rgba(0, 0, 0, 0.1);
   }
 
   .hero-cta-blue {
