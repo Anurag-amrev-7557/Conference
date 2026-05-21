@@ -2,11 +2,11 @@
 
 ## What This Is
 
-A full-stack author/book marketing website with a React/Vite public site, embedded admin CMS, Express/Prisma content API, and integration with the Superhumanly marketing-backend for lead intelligence, scoring, and agentic email. This milestone takes the existing prototype to production-grade quality and extends it with enterprise features: multi-admin RBAC, real-time chat, payments, and a mobile experience.
+A full-stack author/book marketing website with a React/Vite public site, embedded admin CMS, Express/Prisma content API, and optional integration with the Superhumanly marketing-backend for lead intelligence. **v1.4** focuses on production-ready SEO, a complete CMS command center for all visitor-visible content, and documented admin access — without marketing-stack work.
 
 ## Core Value
 
-Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and marketing intelligence.
+Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and live content controls.
 
 ## Requirements
 
@@ -17,81 +17,50 @@ Visitors can discover the book, engage with content and community, and convert t
 - ✓ Admin CMS for appearance, pages, blogs, events, and settings (`src/components/admin/*`, `/admin/*`)
 - ✓ JWT admin authentication against Express API (`server/src/routes/authRoutes.ts`, `adminRoutes.ts`)
 - ✓ Prisma models for site content, articles, events, community posts, and comments (`server/prisma/schema.prisma`)
-- ✓ Marketing telemetry client posting to marketing-backend webhook shape (`src/lib/marketing.ts` → `marketing_api/main.py`)
+- ✓ SEO foundation: Helmet meta, JSON-LD, dynamic sitemap/robots, prerender, admin SEO tools (v1.1 Phases 10–16)
 
-### Active
+### Active (v1.4)
 
-- [ ] Backend APIs complete for all client mutations (community writes, votes, admin session validation)
-- [ ] Security hardened for production (secrets, rate limits, XSS/CSS sanitization, server-side marketing proxy)
-- [ ] Marketing-backend integration production-ready (identity merge, lead capture, email agent, CORS alignment)
-- [ ] Production infrastructure (CI/CD, env separation, deploy docs, database strategy for scale)
-- [ ] Automated test coverage for critical paths
-- [ ] Multi-admin RBAC with roles and audit trail
-- [ ] Real-time chat for community or support
-- [ ] Payment processing for book/events
-- [ ] Mobile app (or installable PWA) for core reader journeys
+- [ ] Production SEO hardening: `SITE_URL`, event detail URLs in sitemap/prerender, Docker prerender strategy, premium social meta
+- [ ] Admin CMS command center: section copy, catalog heroes, per-route SEO, visibility parity, media uploads, script injection
+- [ ] Production release validation: smoke checks, deploy runbook, credential rotation guidance
 
-### Out of Scope
+### Out of Scope (v1.4)
 
-- Replacing marketing-backend with a new analytics stack — extend and integrate the existing FastAPI service
-- Full e-commerce marketplace — payments target book purchase and event registration, not multi-vendor catalog
-- Native iOS/Android store apps in v1 if PWA satisfies mobile requirement — evaluate in Phase 9 planning
+- marketing-backend / marketing-frontend hardening (v1.3 Phases 24–25 — **paused**)
+- Full SSR / Next.js migration
+- hreflang, IndexNow, community UGC indexing
+- RBAC, payments, native apps
 
 ## Context
 
-**Brownfield baseline (mapped 2026-05-18):** Monorepo at `book website-frontend` with embedded `server/` (Express + SQLite/Prisma). Codebase maps live in `.planning/codebase/`. Known gaps: community write routes missing on server, marketing API key exposed in browser bundle, SQLite not production-scaled, no CI/tests, single admin account, placeholder `/dashboard` CRM page.
+**Brownfield baseline:** Monorepo at `book website-frontend` with embedded `server/` (Express + SQLite/Prisma). v1.1 shipped SEO/prerender; v1.2 UI track paused; v1.3 marketing integration paused per product choice.
 
-**Marketing-backend** (`/Users/anuragverma/Downloads/marketing-backend/`): FastAPI service with `/webhook`, `/events`, `/email-agent/process`, lead scoring (Bronze→Platinum), Bedrock orchestration, SQLite `marketing_agent.db`. Shared `VELLUX_API_KEY` / `VITE_MARKETING_MASTER_KEY` convention.
-
-**Production hosts referenced in code:** `monograph.superhumanly.ai`, `api.superhumanly-thoughts.com` (book API path `/book/api/v1`, marketing `/marketing/webhook`).
+**Production hosts referenced in code:** `monograph.superhumanly.ai`, book API under `/api/v1`.
 
 ## Constraints
 
-- **Stack continuity:** Keep React/Vite frontend and Express/Prisma backend unless a phase explicitly requires change (e.g., Postgres migration)
-- **Marketing-backend coupling:** Book site must integrate with existing `marketing-backend` API contracts; coordinate CORS, API keys, and webhook payloads
-- **Security:** Marketing credentials must not ship in client bundles — server-side proxy is the target pattern
-- **Phased delivery:** Foundation phases (backend, security, marketing, infra, quality) precede expansion phases (RBAC, chat, payments, mobile)
+- **Stack continuity:** React/Vite frontend and Express/Prisma backend
+- **Security:** Server-only secrets; admin bcrypt login (not `VITE_ADMIN_PASSWORD`)
+- **Scope:** Book website + server only in v1.4
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Full-scope milestone includes RBAC, chat, payments, mobile | User explicitly requested all capability areas in milestone scope | — Pending |
-| Marketing integration via server-side proxy | Industry practice; removes `VITE_MARKETING_MASTER_KEY` from browser | — Pending |
-| Database strategy deferred to Phase 4 planning | User chose "decide in phase planning" between Postgres vs SQLite volume | — Pending |
-| Phase order: foundation before expansion | Backend/security/marketing/infra/quality unblock enterprise features | — Pending |
+| Extend `SiteContent` JSON for section copy and route SEO | Avoid parallel CMS DB; matches existing pattern | v1.4 |
+| Docker builds use `PRERENDER_SKIP=1`; prerender in CI/post-publish | API+DB not available at image build time | v1.4 |
+| v1.3 marketing integration paused | User priority is book production launch | 2026-05-21 |
 
-## Evolution
+## Current Milestone: v1.4 Book Production & CMS Command Center
 
-This document evolves at phase transitions and milestone boundaries.
+**Goal:** Ship the book website and embedded server as production-ready, SEO-premium, with every visitor-visible string manageable from `/admin`, verified crawl/prerender/deploy paths, and documented admin bootstrap.
 
-**After each phase transition** (via `$gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
+**Paused:** v1.3 Marketing Integration (Phases 24–27); v1.2 Apple-grade UI (Phases 17–23).
 
-**After each milestone** (via `$gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+**Product order:** Phase 28 SEO infra → Phase 29 content model → Phase 30 admin surfaces → Phase 31 release validation.
 
-## Current Milestone: v1.2 Apple-Grade Premium Experience
-
-**Goal:** Bring every public and admin surface to Apple-minimal premium quality—clear hierarchy, confident spacing, restrained motion, disciplined imagery, and flawless responsiveness from phone to ultra-wide—without regressing technical SEO or Core Web Vitals.
-
-**Execution order (product):** Ship **navbar and landing hero** first as the visible quality bar, then semantic light/dark theme architecture, shared primitives, remaining pages, motion and glass guardrails, admin parity, and prerender hardening.
-
-**Target features:**
-- **First:** Premium global navbar and landing hero (all breakpoints, touch and keyboard, LCP-safe hero, CMS-driven content stable on load)
-- Semantic light/dark/system themes with FOUC-free boot and CMS `colorScheme` alignment
-- Unified UI primitives (buttons, inputs, cards, dialogs, navigation chrome) on design tokens
-- Full public route polish (blog, events, community, 404) plus admin experience matching the same bar
-- Motion, blur, and CWV guardrails; theme-accurate static HTML for prerender
-
-**Shipped prior:** v1.1 (Phases 10–16) — SEO, crawl, prerender, admin SEO tools, and Phase 16 UI/CWV foundation. v1.0 remains paused at Phase 3 for marketing/infra expansion tracks.
+**Builds on:** v1.1 SEO foundation (Phases 10–16).
 
 ---
-*Last updated: 2026-05-19 after v1.2 milestone focus — navbar & hero first*
+*Last updated: 2026-05-21 — v1.4 milestone started*

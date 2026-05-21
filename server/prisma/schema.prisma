@@ -61,8 +61,14 @@ model Event {
   thumbnail   String
   status      String
   isPublished Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
   lat         Float?
   lng         Float?
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noindex        Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

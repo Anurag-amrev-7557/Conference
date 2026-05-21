@@ -25,7 +25,11 @@ async function main() {
       tagline: "The Future of Automation is Here.",
       headline: "The Blueprint for Automating Business with",
       headlineAccent: "Agentic AI",
-      subtitle: "Stop wasting hours on manual tasks. Get our exclusive playbook on how to build, deploy, and scale AI agent swarms for your business — starting today."
+      subtitle: "Stop wasting hours on manual tasks. Get our exclusive playbook on how to build, deploy, and scale AI agent swarms for your business — starting today.",
+      videoUrl: "",
+      primaryCtaLabel: "Book a demo",
+      secondaryCtaLabel: "Join founder network",
+      secondaryCtaHref: "/community",
     },
     settings: {
       seo: {
@@ -33,6 +37,56 @@ async function main() {
         description: "Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today.",
         ogImage: "",
         googleSiteVerification: "",
+        ogSiteName: "Superhumanly",
+        ogLocale: "en_US",
+        twitterSite: "@superhumanly",
+      },
+      catalogPages: {
+        blog: {
+          eyebrow: "Blog",
+          title: "Where builders",
+          titleAccent: "learn to ship",
+          lede: "Architecture, automation, and intelligence for builders shipping agentic systems—guides, playbooks, and research from the Superhumanly team.",
+        },
+        events: {
+          eyebrow: "Events",
+          title: "Where AI leaders",
+          titleAccent: "come together",
+          lede: "Explore upcoming masterclasses, networking sessions, and venture workshops—built for founders shaping the future of agentic AI.",
+        },
+      },
+      sections: {
+        community: {
+          eyebrow: "Community Registry",
+          title: "Join the",
+          titleAccent: "Global Index of Founders.",
+          lede: "An elite network of 2,500+ builders and innovators orchestrating automated business systems. Scale your brand alongside the best.",
+          ctaLabel: "Apply for Access",
+          ctaHref: "/community",
+          founderCountLabel: "2,500+ active founders",
+        },
+        finalCta: {
+          eyebrow: "Final Registry",
+          title: "Secure Your",
+          titleAccent: "Spot",
+          lede: "The architectural blueprint for automating your business with agentic AI — written for founders who ship, not slide decks.",
+        },
+        whoWeAre: {
+          eyebrow: "Who We Are",
+          title: "Built by founders,",
+          titleAccent: "for founders",
+          lede: "The definitive playbook for small business owners who want to harness AI — without jargon, complexity, or hiring a developer.",
+        },
+      },
+      routeSeo: {},
+      book: {
+        title: "The Blueprint for Automating Business with Agentic AI",
+        tagline: "The definitive playbook for scaling with AI agent swarms.",
+        abstract:
+          "Stop wasting hours on manual tasks. This book gives you a practical, step-by-step system to build, deploy, and scale agentic AI inside your business — without hiring a developer or drowning in jargon.\n\nInside you'll find frameworks for agent design, deployment checklists, and real-world workflows you can adapt this week — whether you run a solo consultancy or a growing team.",
+        authorName: "Superhumanly",
+        coverImageUrl: "",
+        publisherName: "Superhumanly Press",
       },
       navigation: {
         links: [
@@ -51,11 +105,18 @@ async function main() {
       },
       visibility: {
         hero: true,
+        stats: true,
+        showcase: true,
+        pillars: true,
+        perks: true,
         whoWeAre: true,
         community: true,
         blog: true,
-        events: true
-      }
+        events: true,
+        finalCta: true,
+      },
+      customCss: "",
+      scripts: { header: "", footer: "" },
     },
     appearance: {
       primaryColor: "#0052cc",

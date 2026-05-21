@@ -24,12 +24,19 @@ export interface Article {
   noindex?: boolean;
 }
 
+export interface EventSeoFields {
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImage?: string;
+  noindex?: boolean;
+}
+
 export interface EventTag {
   name: string;
   color: string;
 }
 
-export interface AppEvent {
+export interface AppEvent extends EventSeoFields {
   id: string;
   day: string;
   weekday: string;
@@ -51,6 +58,8 @@ export interface AppEvent {
 
 export interface SiteBookSettings {
   title?: string;
+  tagline?: string;
+  abstract?: string;
   authorName?: string;
   authorUrl?: string;
   isbn?: string;
@@ -88,6 +97,32 @@ export interface HeroContent {
   headlineAccent: string;
   subtitle: string;
   videoUrl: string;
+  primaryCtaLabel?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+}
+
+export interface CatalogHeroContent {
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  lede?: string;
+}
+
+export interface SectionBlockContent {
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  lede?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  founderCountLabel?: string;
+}
+
+export interface RouteSeoOverride {
+  title?: string;
+  description?: string;
+  ogImage?: string;
 }
 
 export interface NavLink {
@@ -108,7 +143,20 @@ export interface SiteSettings {
     description: string;
     ogImage?: string;
     googleSiteVerification?: string;
+    ogSiteName?: string;
+    ogLocale?: string;
+    twitterSite?: string;
   };
+  catalogPages?: {
+    blog?: CatalogHeroContent;
+    events?: CatalogHeroContent;
+  };
+  sections?: {
+    community?: SectionBlockContent;
+    finalCta?: SectionBlockContent;
+    whoWeAre?: SectionBlockContent;
+  };
+  routeSeo?: Partial<Record<'/' | '/blog' | '/events' | '/community', RouteSeoOverride>>;
   book?: SiteBookSettings;
   navigation: {
     links: NavLink[];
@@ -126,6 +174,7 @@ export interface SiteSettings {
     community: boolean;
     blog: boolean;
     events: boolean;
+    finalCta?: boolean;
   };
   customCss: string;
   scripts: {
@@ -199,6 +248,15 @@ export const initialData: WebsiteData = {
       title: "Superhumanly Playbook — Master Agentic AI Automation",
       description: "Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today."
     },
+    book: {
+      title: "The Blueprint for Automating Business with Agentic AI",
+      tagline: "The definitive playbook for scaling with AI agent swarms.",
+      abstract:
+        "Stop wasting hours on manual tasks. This book gives you a practical, step-by-step system to build, deploy, and scale agentic AI inside your business — without hiring a developer or drowning in jargon.",
+      authorName: "Superhumanly",
+      coverImageUrl: "",
+      publisherName: "Superhumanly Press",
+    },
     navigation: {
       links: [
         { id: "1", name: "Blog", href: "/blog" },
@@ -230,7 +288,8 @@ export const initialData: WebsiteData = {
       perks: true,
       community: true,
       blog: true,
-      events: true
+      events: true,
+      finalCta: true,
     },
     customCss: "",
     scripts: {

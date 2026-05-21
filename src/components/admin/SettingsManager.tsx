@@ -10,7 +10,8 @@ import {
   Loader2, 
   Search,
   Navigation,
-  FileCode
+  FileCode,
+  Layout
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -18,7 +19,9 @@ import { OgImageUpload } from './OgImageUpload';
 
 export const SettingsManager: React.FC = () => {
   const { data, updateSettings, updateAppearance, setPreview, isPreviewVisible } = useWebsiteData();
-  const [activeTab, setActiveTab] = useState<'seo' | 'identity' | 'navigation' | 'advanced'>('seo');
+  const [activeTab, setActiveTab] = useState<
+    'seo' | 'identity' | 'navigation' | 'catalog' | 'routes' | 'advanced'
+  >('seo');
   const [form, setForm] = useState(data.settings);
   const [appearanceForm, setAppearanceForm] = useState(data.appearance);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,10 +58,54 @@ export const SettingsManager: React.FC = () => {
 
   const tabs = [
     { id: 'seo', label: 'SEO', icon: Search },
+    { id: 'routes', label: 'Route SEO', icon: Globe },
+    { id: 'catalog', label: 'Catalog', icon: Layout },
     { id: 'identity', label: 'Identity', icon: Globe },
     { id: 'navigation', label: 'Navigation', icon: Navigation },
     { id: 'advanced', label: 'Advanced', icon: FileCode },
   ];
+
+  const patchCatalog = (
+    page: 'blog' | 'events',
+    field: 'eyebrow' | 'title' | 'titleAccent' | 'lede',
+    value: string,
+  ) => {
+    setForm({
+      ...form,
+      catalogPages: {
+        ...form.catalogPages,
+        [page]: { ...form.catalogPages?.[page], [field]: value },
+      },
+    });
+  };
+
+  const patchRouteSeo = (
+    path: '/' | '/blog' | '/events' | '/community',
+    field: 'title' | 'description',
+    value: string,
+  ) => {
+    setForm({
+      ...form,
+      routeSeo: {
+        ...form.routeSeo,
+        [path]: { ...form.routeSeo?.[path], [field]: value },
+      },
+    });
+  };
+
+  const patchSection = (
+    key: 'community' | 'finalCta' | 'whoWeAre',
+    field: string,
+    value: string,
+  ) => {
+    setForm({
+      ...form,
+      sections: {
+        ...form.sections,
+        [key]: { ...form.sections?.[key], [field]: value },
+      },
+    });
+  };
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-white relative font-sans text-text">
@@ -160,6 +207,45 @@ export const SettingsManager: React.FC = () => {
                              Used when a page has no specific share image. Upload resizes to 1200×630 or paste a full HTTPS URL.
                            </p>
                         </div>
+                        <div className="grid grid-cols-1 gap-4">
+                           <div className="space-y-2">
+                             <h4 className="text-sm font-bold text-text">og:site_name</h4>
+                             <input
+                               type="text"
+                               value={form.seo.ogSiteName || ''}
+                               onChange={(e) =>
+                                 setForm({ ...form, seo: { ...form.seo, ogSiteName: e.target.value } })
+                               }
+                               className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                             />
+                           </div>
+                           <div className="space-y-2">
+                             <h4 className="text-sm font-bold text-text">og:locale</h4>
+                             <input
+                               type="text"
+                               value={form.seo.ogLocale || 'en_US'}
+                               onChange={(e) =>
+                                 setForm({ ...form, seo: { ...form.seo, ogLocale: e.target.value } })
+                               }
+                               className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                             />
+                           </div>
+                           <div className="space-y-2">
+                             <h4 className="text-sm font-bold text-text">twitter:site</h4>
+                             <input
+                               type="text"
+                               value={form.seo.twitterSite || ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   seo: { ...form.seo, twitterSite: e.target.value },
+                                 })
+                               }
+                               placeholder="@handle"
+                               className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                             />
+                           </div>
+                        </div>
                         <div className="space-y-4">
                            <h4 className="text-xl font-bold text-text">Google Search Console Verification</h4>
                            <input type="text" value={form.seo.googleSiteVerification || ''} onChange={e => setForm({ ...form, seo: { ...form.seo, googleSiteVerification: e.target.value } })} placeholder="google-site-verification token" aria-describedby="settings-gsc-help" className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs focus:bg-white transition-all outline-none rounded-xl shadow-sm" />
@@ -173,6 +259,8 @@ export const SettingsManager: React.FC = () => {
                              Used for Google Book rich results on the homepage. Leave blank to omit Book schema.
                            </p>
                            <input type="text" value={form.book?.title || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, title: e.target.value } })} placeholder="Book title" className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <input type="text" value={form.book?.tagline || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, tagline: e.target.value } })} placeholder="Book tagline (short hook)" className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
+                           <textarea value={form.book?.abstract || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, abstract: e.target.value } })} placeholder="Book abstract (use blank lines between paragraphs)" rows={5} className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm leading-relaxed focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm resize-y min-h-[120px]" />
                            <input type="text" value={form.book?.authorName || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, authorName: e.target.value } })} placeholder="Author name" className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
                            <input type="text" value={form.book?.isbn || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, isbn: e.target.value } })} placeholder="ISBN-13" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-xs focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
                            <input type="text" value={form.book?.coverImageUrl || ''} onChange={(e) => setForm({ ...form, book: { ...form.book, coverImageUrl: e.target.value } })} placeholder="Cover image URL (https://)" className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm" />
@@ -185,6 +273,118 @@ export const SettingsManager: React.FC = () => {
                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
                            Save SEO Strategy
                         </button>
+                     </div>
+                   )}
+
+                   {activeTab === 'routes' && (
+                     <div className="space-y-8 animate-fadeInUp">
+                       {(['/', '/blog', '/events', '/community'] as const).map((path) => (
+                         <div key={path} className="p-6 border border-border/40 rounded-2xl space-y-4">
+                           <h4 className="font-bold text-text">{path}</h4>
+                           <input
+                             type="text"
+                             value={form.routeSeo?.[path]?.title || ''}
+                             onChange={(e) => patchRouteSeo(path, 'title', e.target.value)}
+                             placeholder="Page title override"
+                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                           />
+                           <textarea
+                             rows={2}
+                             value={form.routeSeo?.[path]?.description || ''}
+                             onChange={(e) => patchRouteSeo(path, 'description', e.target.value)}
+                             placeholder="Meta description override"
+                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl resize-none"
+                           />
+                         </div>
+                       ))}
+                       <button
+                         onClick={() => handleSave('settings')}
+                         className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 rounded-xl"
+                       >
+                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                         Save Route SEO
+                       </button>
+                     </div>
+                   )}
+
+                   {activeTab === 'catalog' && (
+                     <div className="space-y-10 animate-fadeInUp">
+                       {(['blog', 'events'] as const).map((page) => (
+                         <div key={page} className="p-6 border border-border/40 rounded-2xl space-y-4">
+                           <h4 className="text-lg font-bold text-text capitalize">{page} catalog hero</h4>
+                           <input
+                             type="text"
+                             value={form.catalogPages?.[page]?.eyebrow || ''}
+                             onChange={(e) => patchCatalog(page, 'eyebrow', e.target.value)}
+                             placeholder="Eyebrow"
+                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                           />
+                           <input
+                             type="text"
+                             value={form.catalogPages?.[page]?.title || ''}
+                             onChange={(e) => patchCatalog(page, 'title', e.target.value)}
+                             placeholder="Title (before accent)"
+                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                           />
+                           <input
+                             type="text"
+                             value={form.catalogPages?.[page]?.titleAccent || ''}
+                             onChange={(e) => patchCatalog(page, 'titleAccent', e.target.value)}
+                             placeholder="Title accent (italic)"
+                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
+                           />
+                           <textarea
+                             rows={3}
+                             value={form.catalogPages?.[page]?.lede || ''}
+                             onChange={(e) => patchCatalog(page, 'lede', e.target.value)}
+                             placeholder="Lede paragraph"
+                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl resize-none"
+                           />
+                         </div>
+                       ))}
+                       <div className="p-6 border border-border/40 rounded-2xl space-y-4">
+                         <h4 className="text-lg font-bold text-text">Landing sections (copy)</h4>
+                         {(['whoWeAre', 'community', 'finalCta'] as const).map((key) => (
+                           <div key={key} className="space-y-3 pt-4 border-t border-border/30 first:border-0 first:pt-0">
+                             <p className="text-xs font-bold uppercase tracking-widest text-muted">{key}</p>
+                             <input
+                               type="text"
+                               value={form.sections?.[key]?.eyebrow || ''}
+                               onChange={(e) => patchSection(key, 'eyebrow', e.target.value)}
+                               placeholder="Eyebrow"
+                               className="w-full bg-[#fafafa] border border-border/40 p-3 text-sm rounded-xl"
+                             />
+                             <input
+                               type="text"
+                               value={form.sections?.[key]?.title || ''}
+                               onChange={(e) => patchSection(key, 'title', e.target.value)}
+                               placeholder="Title"
+                               className="w-full bg-[#fafafa] border border-border/40 p-3 text-sm rounded-xl"
+                             />
+                             <input
+                               type="text"
+                               value={form.sections?.[key]?.titleAccent || ''}
+                               onChange={(e) => patchSection(key, 'titleAccent', e.target.value)}
+                               placeholder="Title accent"
+                               className="w-full bg-[#fafafa] border border-border/40 p-3 text-sm rounded-xl"
+                             />
+                             <textarea
+                               rows={2}
+                               value={form.sections?.[key]?.lede || ''}
+                               onChange={(e) => patchSection(key, 'lede', e.target.value)}
+                               placeholder="Lede"
+                               className="w-full bg-[#fafafa] border border-border/40 p-3 text-sm rounded-xl resize-none"
+                             />
+                           </div>
+                         ))}
+                       </div>
+                       <button
+                         onClick={() => handleSave('settings')}
+                         className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 rounded-xl"
+                       >
+                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                         Save Catalog & Sections
+                       </button>
                      </div>
                    )}
 

@@ -1,9 +1,10 @@
-import type { Article } from '../lib/websiteData'
+import type { AppEvent, Article } from '../lib/websiteData'
 import { absoluteUrl } from './siteUrl'
 import {
   isAdminPath,
   isPublicMarketingPath,
   parseBlogSlug,
+  parseEventId,
   routeDefaults,
   type PublicRoutePath,
 } from './routes'
@@ -31,12 +32,36 @@ function siteVerification(data: ResolvePageSeoInput['data']): string | undefined
   return token || undefined
 }
 
+function socialMeta(data: ResolvePageSeoInput['data']): Pick<PageSeo, 'ogSiteName' | 'ogLocale' | 'twitterSite'> {
+  const seo = data.settings.seo
+  return {
+    ogSiteName: seo.ogSiteName?.trim() || seo.title?.trim() || undefined,
+    ogLocale: seo.ogLocale?.trim() || 'en_US',
+    twitterSite: seo.twitterSite?.trim() || undefined,
+  }
+}
+
 function basePageSeo(
   partial: Omit<PageSeo, 'ogUrl'> & { ogUrl?: string },
+  data: ResolvePageSeoInput['data'],
 ): PageSeo {
   return {
     ...partial,
     ogUrl: partial.ogUrl ?? partial.canonical,
+    ...socialMeta(data),
+  }
+}
+
+function routeOverride(
+  pathname: PublicRoutePath,
+  data: ResolvePageSeoInput['data'],
+): (typeof routeDefaults)[PublicRoutePath] {
+  const cms = data.settings.routeSeo?.[pathname]
+  const code = routeDefaults[pathname]
+  return {
+    title: cms?.title ?? code.title,
+    description: cms?.description ?? code.description,
+    ogImage: cms?.ogImage ?? code.ogImage,
   }
 }
 
@@ -46,7 +71,7 @@ function staticMarketingSeo(
   robots?: PageSeo['robots'],
 ): PageSeo {
   const site = data.settings.seo
-  const defaults = routeDefaults[pathname]
+  const defaults = routeOverride(pathname, data)
   const canonicalPath = normalizeCanonicalPath(pathname)
   const title = defaults.title ?? site.title
   const description = defaults.description ?? site.description
@@ -54,15 +79,18 @@ function staticMarketingSeo(
   const canonical = absoluteUrl(canonicalPath)
   const indexable = !robots
 
-  return basePageSeo({
-    title,
-    description,
-    canonical,
-    ogType: 'website',
-    ogImage,
-    robots,
-    googleSiteVerification: indexable ? siteVerification(data) : undefined,
-  })
+  return basePageSeo(
+    {
+      title,
+      description,
+      canonical,
+      ogType: 'website',
+      ogImage,
+      robots,
+      googleSiteVerification: indexable ? siteVerification(data) : undefined,
+    },
+    data,
+  )
 }
 
 function articleSeo(data: ResolvePageSeoInput['data'], article: Article): PageSeo {
@@ -74,28 +102,74 @@ function articleSeo(data: ResolvePageSeoInput['data'], article: Article): PageSe
   const canonical = absoluteUrl(canonicalPath)
   const noindex = article.noindex === true || !article.isPublished
 
-  return basePageSeo({
-    title,
-    description,
-    canonical,
-    ogType: 'article',
-    ogImage,
-    robots: noindex ? 'noindex,nofollow' : undefined,
-    googleSiteVerification: noindex ? undefined : siteVerification(data),
-  })
+  return basePageSeo(
+    {
+      title,
+      description,
+      canonical,
+      ogType: 'article',
+      ogImage,
+      robots: noindex ? 'noindex,nofollow' : undefined,
+      googleSiteVerification: noindex ? undefined : siteVerification(data),
+    },
+    data,
+  )
+}
+
+function eventSeo(data: ResolvePageSeoInput['data'], event: AppEvent): PageSeo {
+  const site = data.settings.seo
+  const title = event.seoTitle ?? `${event.title} | ${site.title}`
+  const description =
+    event.seoDescription ?? `${event.title} — ${event.host} at ${event.location}. ${site.description}`
+  const ogImage = resolveImageUrl(event.ogImage ?? event.thumbnail ?? site.ogImage, '/og-image.jpg')
+  const canonicalPath = normalizeCanonicalPath(`/events/${event.id}`)
+  const canonical = absoluteUrl(canonicalPath)
+  const noindex = event.noindex === true || !event.isPublished
+
+  return basePageSeo(
+    {
+      title,
+      description,
+      canonical,
+      ogType: 'website',
+      ogImage,
+      robots: noindex ? 'noindex,nofollow' : undefined,
+      googleSiteVerification: noindex ? undefined : siteVerification(data),
+    },
+    data,
+  )
+}
+
+function missingEventSeo(data: ResolvePageSeoInput['data']): PageSeo {
+  const site = data.settings.seo
+  const defaults = routeOverride('/events', data)
+  return basePageSeo(
+    {
+      title: defaults.title ?? site.title,
+      description: defaults.description ?? site.description,
+      canonical: absoluteUrl('/events'),
+      ogType: 'website',
+      ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
+      robots: 'noindex,nofollow',
+    },
+    data,
+  )
 }
 
 function missingBlogSlugSeo(data: ResolvePageSeoInput['data']): PageSeo {
   const site = data.settings.seo
-  const defaults = routeDefaults['/blog']
-  return basePageSeo({
-    title: defaults.title ?? site.title,
-    description: defaults.description ?? site.description,
-    canonical: absoluteUrl('/blog'),
-    ogType: 'website',
-    ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
-    robots: 'noindex,nofollow',
-  })
+  const defaults = routeOverride('/blog', data)
+  return basePageSeo(
+    {
+      title: defaults.title ?? site.title,
+      description: defaults.description ?? site.description,
+      canonical: absoluteUrl('/blog'),
+      ogType: 'website',
+      ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
+      robots: 'noindex,nofollow',
+    },
+    data,
+  )
 }
 
 function adminSeo(data: ResolvePageSeoInput['data']): PageSeo {
@@ -103,30 +177,36 @@ function adminSeo(data: ResolvePageSeoInput['data']): PageSeo {
   const title = site.title ? `Admin — ${site.title}` : 'Admin'
   const description = site.description
   const canonical = absoluteUrl(normalizeCanonicalPath('/admin'))
-  return basePageSeo({
-    title,
-    description,
-    canonical,
-    ogType: 'website',
-    ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
-    robots: 'noindex,nofollow',
-  })
+  return basePageSeo(
+    {
+      title,
+      description,
+      canonical,
+      ogType: 'website',
+      ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
+      robots: 'noindex,nofollow',
+    },
+    data,
+  )
 }
 
 function notFoundSeo(data: ResolvePageSeoInput['data'], pathname: string): PageSeo {
   const site = data.settings.seo
   const canonical = absoluteUrl(normalizeCanonicalPath(pathname))
-  return basePageSeo({
-    title: `Page Not Found | ${site.title}`,
-    description: site.description,
-    canonical,
-    ogType: 'website',
-    ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
-    robots: 'noindex,nofollow',
-  })
+  return basePageSeo(
+    {
+      title: `Page Not Found | ${site.title}`,
+      description: site.description,
+      canonical,
+      ogType: 'website',
+      ogImage: resolveImageUrl(site.ogImage, '/og-image.jpg'),
+      robots: 'noindex,nofollow',
+    },
+    data,
+  )
 }
 
-export function resolvePageSeo({ pathname, data, article }: ResolvePageSeoInput): PageSeo {
+export function resolvePageSeo({ pathname, data, article, event }: ResolvePageSeoInput): PageSeo {
   const normalizedPath = normalizeCanonicalPath(pathname)
 
   if (isAdminPath(normalizedPath) || normalizedPath === '/dashboard') {
@@ -143,6 +223,14 @@ export function resolvePageSeo({ pathname, data, article }: ResolvePageSeoInput)
       return missingBlogSlugSeo(data)
     }
     return articleSeo(data, article)
+  }
+
+  const eventId = parseEventId(normalizedPath)
+  if (eventId) {
+    if (!event) {
+      return missingEventSeo(data)
+    }
+    return eventSeo(data, event)
   }
 
   if (normalizedPath in routeDefaults) {

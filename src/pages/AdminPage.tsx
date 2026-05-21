@@ -7,6 +7,7 @@ import { EventManager } from '../components/admin/EventManager';
 import { PageEditor } from '../components/admin/PageEditor';
 import { SettingsManager } from '../components/admin/SettingsManager';
 import { DesignSystemManager } from '../components/admin/DesignSystemManager';
+import { MediaManager } from '../components/admin/MediaManager';
 import { AdminOverview } from '../components/admin/AdminOverview';
 import { Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -181,6 +182,14 @@ export const AdminPage: React.FC = () => {
             <DesignSystemManager />
           </AdminLayout>
         } 
+      />
+      <Route
+        path="media"
+        element={
+          <AdminLayout title="Media" onLogout={handleLogout} wide={true}>
+            <MediaManager />
+          </AdminLayout>
+        }
       />
       <Route 
         path="blogs" 

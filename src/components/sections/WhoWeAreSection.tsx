@@ -1,96 +1,101 @@
-import { motion, useInView } from "framer-motion"
-import { useRef } from "react"
+import { useEffect, useRef, type CSSProperties } from "react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 import { pillarIcons } from "../../lib/websiteData"
+import { renderSectionHeading } from "../../lib/renderSectionTitle"
 
 export function WhoWeAreSection() {
   const { data } = useWebsiteData()
-  const { stats, pillars } = data
+  const { stats, pillars, settings } = data
+  const { visibility } = settings
+  const copy = settings.sections?.whoWeAre
+  const showStats = visibility.stats !== false
+  const showPillars = visibility.pillars !== false
   const sectionRef = useRef<HTMLElement>(null)
-  const isInView = useInView(sectionRef, { once: true, margin: "-80px" })
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("who-section--visible")
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "-60px 0px", threshold: 0.06 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <section
-      ref={sectionRef}
-      id="who-we-are"
-      className="relative py-24 bg-white border-b border-border/20"
-    >
-      <div className="container mx-auto px-6 sm:px-10 relative z-10 mb-12">
+    <section ref={sectionRef} id="who-we-are" className="who-section">
+      <div className="who-section__ambient" aria-hidden />
 
-        {/* Top Row: Label + Headline + Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
-          
-          {/* Left: Headline block — takes 7 cols */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-7"
-          >
-            <span className="text-[12px] font-bold text-accent uppercase tracking-[0.4em] mb-4 block">
-              Who We Are
-            </span>
-            <h2 className="text-[clamp(48px,8vw,82px)] font-serif leading-[1.1] tracking-tight text-text mb-6">
-              Built by founders,{" "}<br/>
-              <span className="italic text-accent">for founders</span>.
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">
+        <div className="who-section__intro grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-12 items-start mb-12 sm:mb-14 lg:mb-16">
+          <div className="lg:col-span-7">
+            <div className="editorial-eyebrow mb-5 sm:mb-6">
+              <span className="editorial-eyebrow__rule" aria-hidden />
+              <span className="section-eyebrow !mb-0 text-muted">
+                {copy?.eyebrow?.trim() || "Who We Are"}
+              </span>
+            </div>
+
+            <h2 className="editorial-heading editorial-heading--who mb-6">
+              {renderSectionHeading(copy, (
+                <>
+                  Built by founders,
+                  <br />
+                  <span className="italic editorial-accent">for founders</span>.
+                </>
+              ))}
             </h2>
-            <p className="text-[18px] text-muted leading-relaxed max-w-xl">
-              The definitive playbook for small business owners who want to
-              harness AI — without jargon, complexity, or hiring a developer.
+
+            <p className="editorial-lede max-w-xl">
+              {copy?.lede?.trim() ||
+                "The definitive playbook for small business owners who want to harness AI — without jargon, complexity, or hiring a developer."}
             </p>
-          </motion.div>
+          </div>
 
-          {/* Right: Stats — takes 5 cols, 2x2 grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.15 }}
-            className="lg:col-span-5 grid grid-cols-2 gap-4"
-          >
+          {showStats ? (
+          <ul className="who-section__stats lg:col-span-5 grid grid-cols-2 gap-4 sm:gap-5 list-none p-0 m-0">
             {stats.map((stat, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-xl bg-off/60 border border-border/50 hover:border-accent/20 transition-all duration-300"
+              <li
+                key={stat.id}
+                className="who-stat-card"
+                style={{ "--stat-i": idx } as CSSProperties}
               >
-                <div className="text-4xl font-serif italic text-text mb-1">
-                  {stat.value}
-                </div>
-                <div className="text-[11px] font-bold text-muted uppercase tracking-[0.15em]">
-                  {stat.label}
-                </div>
-              </div>
+                <p className="who-stat-card__value">{stat.value}</p>
+                <p className="who-stat-card__label">{stat.label}</p>
+              </li>
             ))}
-          </motion.div>
+          </ul>
+          ) : null}
         </div>
 
-        {/* Divider */}
-        <div className="w-full h-px bg-border mb-10" />
-
-        {/* Bottom Row: Three pillars in a tight 3-col grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {pillars.map((pillar, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.25 + idx * 0.1 }}
-              className="group flex flex-col"
-            >
-              <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-6 shadow-[0_4px_12px_rgba(0,82,204,0.2)]">
-                {(() => {
-                  const Icon = pillarIcons[pillar.iconName];
-                  return <Icon className="w-6 h-6 text-white" />;
-                })()}
-              </div>
-              <h3 className="text-4xl font-normal mb-3 tracking-tight">
-                {pillar.title}
-              </h3>
-              <p className="text-[16px] text-muted leading-relaxed">
-                {pillar.description}
-              </p>
-            </motion.div>
-          ))}
-        </div>
+        {showPillars ? (
+        <ul className="who-section__pillars grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 list-none p-0 m-0">
+          {pillars.map((pillar, idx) => {
+            const Icon = pillarIcons[pillar.iconName]
+            return (
+              <li
+                key={pillar.id}
+                className="who-pillar-card group"
+                style={{ "--pillar-i": idx } as CSSProperties}
+              >
+                <div className="who-pillar-card__icon" aria-hidden>
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                </div>
+                <h3 className="who-pillar-card__title">{pillar.title}</h3>
+                <p className="who-pillar-card__desc">{pillar.description}</p>
+              </li>
+            )
+          })}
+        </ul>
+        ) : null}
       </div>
     </section>
   )

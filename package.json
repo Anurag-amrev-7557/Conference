@@ -11,8 +11,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "e2e:smoke": "node scripts/e2e-smoke.mjs",
+    "smoke:production": "node scripts/smoke-production.mjs",
     "verify:phase15-gsc": "node scripts/verify-phase15-gsc.mjs",
-    "verify:phase17": "node scripts/verify-phase17-nav-hero.mjs"
+    "verify:phase17": "node scripts/verify-phase17-nav-hero.mjs",
+    "verify:phase20": "node scripts/verify-phase20-blog-index.mjs"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",

@@ -1,4 +1,4 @@
-import type { Article, WebsiteData } from '../lib/websiteData'
+import type { AppEvent, Article, WebsiteData } from '../lib/websiteData'
 
 export interface PageSeo {
   title: string
@@ -9,10 +9,14 @@ export interface PageSeo {
   ogUrl: string
   robots?: 'noindex,nofollow'
   googleSiteVerification?: string
+  ogSiteName?: string
+  ogLocale?: string
+  twitterSite?: string
 }
 
 export interface ResolvePageSeoInput {
   pathname: string
   data: WebsiteData
   article?: Article
+  event?: AppEvent
 }

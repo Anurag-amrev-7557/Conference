@@ -28,18 +28,20 @@ export function LandingPage() {
     <>
     <SeoHead seo={seo} />
     <JsonLd graph={jsonLd} />
-    <main className="relative bg-[#fafafa] min-h-screen overflow-x-hidden">
+    <main className="relative bg-white min-h-screen overflow-x-hidden">
       <div className="noise-texture" />
 
-      {/* Hero */}
-      {visibility.hero && <HeroSection onBookDemo={() => setIsModalOpen(true)} />}
-
-      {/* Book Showcase */}
-      {visibility.showcase && (
-        <Suspense fallback={<section className="min-h-[50vh] bg-off" aria-hidden />}>
-          <BookShowcase />
-        </Suspense>
-      )}
+      {/* Hero + book share one continuous surface (grid, tint, bg) */}
+      {visibility.hero || visibility.showcase ? (
+        <div className="landing-flow">
+          {visibility.hero && <HeroSection onBookDemo={() => setIsModalOpen(true)} />}
+          {visibility.showcase && (
+            <Suspense fallback={<section className="min-h-[40vh] bg-transparent" aria-hidden />}>
+              <BookShowcase />
+            </Suspense>
+          )}
+        </div>
+      ) : null}
 
       {/* Community */}
       {visibility.community && <CommunitySection />}
@@ -52,9 +54,9 @@ export function LandingPage() {
 
       {/* Events */}
       {visibility.events && <EventsSection />}
-      
+
       {/* Final CTA */}
-      <FinalCTA />
+      {(visibility.finalCta ?? true) && <FinalCTA />}
 
       {/* Footer */}
       <Footer />

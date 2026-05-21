@@ -1,0 +1,46 @@
+services:
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      - frontend
+      - server
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - SITE_URL=${SITE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - ADMIN_ALLOWED_ORIGINS=${ADMIN_ALLOWED_ORIGINS}
+      - MARKETING_BACKEND_URL=http://marketing-backend:8000
+      - MARKETING_API_KEY=${MARKETING_API_KEY}
+    volumes:
+      - sqlite-data:/app/prisma
+    depends_on:
+      - marketing-backend
+    restart: unless-stopped
+
+  marketing-backend:
+    image: ${MARKETING_BACKEND_IMAGE:-ghcr.io/your-org/marketing-backend:latest}
+    environment:
+      - VELLUX_MASTER_KEY=${MARKETING_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:

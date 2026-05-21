@@ -28,8 +28,8 @@
 
 ## v1.2 — Apple-Grade Premium Experience
 
-**Status:** In progress (requirements + roadmap defined)  
-**Started:** 2026-05-19  
+**Status:** Paused after planning
+**Started:** 2026-05-19
 **Goal:** Sitewide Apple-minimal premium UI/UX and responsiveness on every surface without regressing SEO or Core Web Vitals.
 
 **Phases:** 7 (Phases 17–23 in ROADMAP.md)
@@ -40,4 +40,30 @@
 
 ---
 
-*Last updated: 2026-05-19 — v1.2 active; navbar/hero Phase 17 first*
+## v1.3 — Marketing Integration & Admin Production Readiness
+
+**Status:** Paused (deferred — marketing stack out of v1.4 scope)
+**Started:** 2026-05-20
+**Goal:** Make the marketing backend/frontend and the book website behave as one production-grade system.
+
+**Phases:** 4 (Phases 24–27 in ROADMAP.md)
+
+**Resume when:** Product prioritizes marketing-backend/frontend hardening again.
+
+---
+
+## v1.4 — Book Production & CMS Command Center
+
+**Status:** Executing
+**Started:** 2026-05-21
+**Goal:** Production-ready book site with premium SEO, full admin CMS for visitor-visible content, and documented deploy/admin access.
+
+**Phases:** 4 (Phases 28–31 in ROADMAP.md)
+
+**Product order:** **28 SEO production** → **29 content model** → **30 admin surfaces** → **31 release validation**
+
+**Builds on:** v1.1 shipped SEO/prerender; absorbs relevant v1.2 public-surface and admin parity gaps.
+
+---
+
+*Last updated: 2026-05-21 — v1.4 active; v1.3 paused*

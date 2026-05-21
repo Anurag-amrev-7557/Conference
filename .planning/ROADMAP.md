@@ -4,25 +4,118 @@
 
 - ⏸️ **v1.0 Production-Ready** — Phases 1–9 (paused at Phase 3; Phases 1–2 complete) — see [MILESTONES.md](./MILESTONES.md)
 - ✅ **v1.1 Premium Presentation & SEO Dominance** — Phases 10–16 (complete 2026-05-19)
-- 🚧 **v1.2 Apple-Grade Premium Experience** — Phases 17–23 (in progress; **start with Phase 17 navbar + hero**)
+- ⏸️ **v1.2 Apple-Grade Premium Experience** — Phases 17–23 (paused after planning; see archived phase details below)
+- ⏸️ **v1.3 Marketing Integration & Admin Production Readiness** — Phases 24–27 (paused; marketing deferred)
+- 🚧 **v1.4 Book Production & CMS Command Center** — Phases 28–31 (current)
 
 ## Overview
 
-**v1.2** elevates every public page and the admin CMS to Apple-minimal premium quality — clear hierarchy, confident spacing, restrained motion, disciplined imagery, and flawless responsiveness — without regressing technical SEO or Core Web Vitals.
+**v1.4** makes the book website production-ready: hardened SEO/crawl/prerender/deploy paths, expanded `SiteContent` for all visitor-visible copy, admin editors for media/SEO/scripts/community moderation, and release smoke checks.
 
-**Product order:** **Phase 17** ships the global **navbar** and landing **hero** as the visible quality bar across all breakpoints, then **Phase 18** semantic light/dark tokens, **Phase 19** shared primitives, **Phase 20** remaining public surfaces, **Phase 21** motion/CWV guardrails, **Phase 22** admin parity, **Phase 23** prerender hardening.
+**Product order:** **Phase 28** SEO infra → **Phase 29** content model → **Phase 30** admin UI → **Phase 31** release validation.
 
-**v1.1** (complete) delivered crawlable SEO, prerender, admin SEO tools, and Phase 16 foundation (spacing/type tokens, fonts, Radix modals). **v1.0** marketing integration, infra, RBAC, chat, payments, and mobile remain deferred.
+**v1.1** (complete) delivered crawlable SEO, prerender, admin SEO tools. **v1.3** (paused) covers marketing-stack integration when resumed.
 
-## Phases (v1.2 — active)
+## Phases (v1.4 — active)
 
-- [ ] **Phase 17: Navbar & Landing Hero (First)** — Apple-grade header and hero on `/`; responsive 320px–ultra-wide; LCP-safe; keyboard and touch.
-- [ ] **Phase 18: Token Foundation & Theme Architecture** — Semantic light/dark tokens, `next-themes`, CMS `colorScheme`, FOUC-free boot; align navbar/hero to tokens.
-- [ ] **Phase 19: Shared UI Primitives** — Unified Button, Input, Card, Dialog on semantic tokens.
-- [ ] **Phase 20: Public Surface Polish** — Remaining landing sections, blog, events, community, 404; typography rhythm, prose, imagery.
-- [ ] **Phase 21: Motion, Glass & CWV Guardrails** — Restrained motion, blur caps, reduced-motion, Lighthouse and Playwright gates.
-- [ ] **Phase 22: Admin Parity & Preview** — Admin on public tokens; Design System light/dark preview; optional theme toggle.
-- [ ] **Phase 23: Prerender & Infra Hardening** — Theme-ready static HTML and CI token assertions.
+- [x] **Phase 28: SEO Production Hardening** — `SITE_URL`, Docker prerender strategy, `/events/:id` in sitemap/prerender, premium social meta, deploy docs.
+- [x] **Phase 29: Admin Content Model Expansion** — `SiteContent` keys for sections, catalog heroes, route SEO; wire public components; visibility fix.
+- [x] **Phase 30: Admin Surfaces & Editors** — Media hub, PageEditor/Settings refinements, event SEO, community moderation, script injection.
+- [x] **Phase 31: Production Release Validation** — Smoke tests, credential rotation docs, prerender-on-publish workflow, REQUIREMENTS sync.
+
+## Phase Details (v1.4)
+
+### Phase 28: SEO Production Hardening
+
+**Goal:** Crawl, prerender, and deploy paths work in Docker/Compose with correct canonical URLs.
+**Requirements:** SEO-01, SEO-02, SEO-03, SEO-04, SEO-06, REL-05 (SEO section)
+**Depends on:** v1.1 SEO foundation
+
+### Phase 29: Admin Content Model Expansion
+
+**Goal:** Extend `SiteContent` + API for section copy, catalog heroes, per-route SEO, visibility parity.
+**Requirements:** ADM-05, ADM-06, ADM-07, ADM-09, SEO-05
+**Depends on:** Phase 28
+
+### Phase 30: Admin Surfaces & Editors
+
+**Goal:** Media hub, blog/event SEO editors, community moderation, script injection, consolidate editors.
+**Requirements:** ADM-08, ADM-10, ADM-11, ADM-12, ADM-13, ADM-14
+**Depends on:** Phase 29
+
+### Phase 31: Production Release Validation
+
+**Goal:** Docs, smoke tests, credential guidance, prerender-on-publish workflow.
+**Requirements:** REL-05, REL-06, REL-07, REL-08, SEO-04, SEO-07
+**Depends on:** Phase 30
+
+## Phases (v1.3 — paused)
+
+- [ ] **Phase 24: Marketing Stack Production Hardening**
+- [ ] **Phase 25: Book-to-Marketing Integration**
+- [ ] **Phase 26: Admin Customization Parity**
+- [ ] **Phase 27: Combined Release Validation**
+
+## Phase Details (v1.3)
+
+### Phase 24: Marketing Stack Production Hardening
+
+**Goal**: The marketing backend and marketing frontend can be deployed as production services with correct routing, hostnames, origins, and runtime configuration.
+**Depends on**: existing marketing-backend and marketing-frontend code, plus the book site's production host/origin contract
+**Requirements**: MKT-01, MKT-02, MKT-03, MKT-04
+**Success Criteria** (what must be TRUE):
+
+  1. Marketing backend exposes stable `/webhook`, `/events`, and `/email-agent/process` routes with production-safe env handling and health checks.
+  2. Marketing frontend runs correctly under the `/marketing` base path and points at the configured marketing backend API in production.
+  3. Public and admin origins used by the marketing stack are explicit and documented, with no dev-only defaults in production docs.
+  4. Deployment instructions can bring up the marketing backend and frontend without hidden manual fixes or route mismatches.
+
+**Plans**: TBD
+
+### Phase 25: Book-to-Marketing Integration
+
+**Goal**: The book website sends tracking, lead capture, and email-agent traffic through the book server proxy so the marketing stack receives consistent production payloads without browser secrets.
+**Depends on**: Phase 24
+**Requirements**: INT-01, INT-02, INT-03, INT-04
+**Success Criteria** (what must be TRUE):
+
+  1. Browser-side book pages do not ship marketing API keys, and all marketing requests go through the book server proxy.
+  2. Lead, CTA, and telemetry events created on the book site are accepted by the marketing backend with the expected payload shape and retry/error behavior.
+  3. Contact/support email-agent requests succeed end to end through the book API, with clear failures when the marketing backend is unavailable.
+  4. The book site, book server, and marketing backend agree on CORS, env names, and production hostnames.
+
+**Plans**: TBD
+
+### Phase 26: Admin Customization Parity
+
+**Goal**: Editors can change the public site’s page content, sections, components, text, colors, layout, and custom CSS through the admin UI, then preview and publish those changes safely.
+**Depends on**: Phase 25
+**Requirements**: ADM-01, ADM-02, ADM-03, ADM-04
+**Success Criteria** (what must be TRUE):
+
+  1. Admin users can edit appearance, page content, and section-level presentation controls without breaking existing data models.
+  2. Live preview reflects edits before publish and matches the public render closely enough to trust the final result.
+  3. Component and page customization remains responsive and accessible across the admin surface.
+  4. Custom CSS and other rich controls are constrained enough to avoid unsafe or layout-breaking output.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 27: Combined Release Validation
+
+**Goal**: The integrated book + marketing system has release-grade verification, documentation, and rollout notes.
+**Depends on**: Phase 26
+**Requirements**: REL-01, REL-02, REL-03, REL-04
+**Success Criteria** (what must be TRUE):
+
+  1. Build, lint, and smoke checks exist for the book website, book server, marketing backend, and marketing frontend.
+  2. The critical end-to-end path from book CTA to marketing lead capture or email-agent handling is exercised before release.
+  3. Deployment docs capture required env vars, hostnames, base paths, and rollback notes for the combined stack.
+  4. The milestone can be handed off without relying on tribal knowledge for production setup.
+
+**Plans**: TBD
+
+## Phase Details (v1.2)
 
 <details>
 <summary>✅ v1.1 Premium Presentation & SEO Dominance (Phases 10–16) — COMPLETE 2026-05-19</summary>

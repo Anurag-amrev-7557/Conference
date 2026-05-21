@@ -1,10 +1,8 @@
 export const API_BASE =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.PROD
-    ? 'https://api.superhumanly-thoughts.com/book/api/v1'
+    ? '/api/v1'
     : 'http://localhost:3001/api/v1');
-
-
 
 export const api = {
   // Public content (split endpoints)
@@ -52,6 +50,32 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');
     return data; // { token, success }
+  },
+
+  async uploadMediaImage(token: string, file: File): Promise<{ url: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_BASE}/admin/media-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to upload image');
+    return data as { url: string };
+  },
+
+  async uploadOgImage(token: string, file: File): Promise<{ url: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_BASE}/admin/og-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to upload image');
+    return data as { url: string };
   },
 
   async getAdminMe(token: string) {
@@ -217,6 +241,29 @@ export const api = {
     });
     if (!res.ok) throw new Error('Failed to delete post');
     return res.json();
+  },
+
+  async deleteAdminCommunityComment(token: string, id: string) {
+    const res = await fetch(`${API_BASE}/admin/community/comments/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to delete comment');
+    return res.json();
+  },
+
+  async updateAdminCommunityPost(token: string, id: string, body: Record<string, unknown>) {
+    const res = await fetch(`${API_BASE}/admin/community/posts/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update post');
+    return data;
   },
 
   async pinAdminCommunityPost(token: string, id: string, pinned: boolean) {

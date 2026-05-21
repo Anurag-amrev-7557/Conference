@@ -103,6 +103,24 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
               },
             };
           }
+          if (remoteData.settings.catalogPages) {
+            merged.settings.catalogPages = {
+              ...initialData.settings.catalogPages,
+              ...remoteData.settings.catalogPages,
+            };
+          }
+          if (remoteData.settings.sections) {
+            merged.settings.sections = {
+              ...initialData.settings.sections,
+              ...remoteData.settings.sections,
+            };
+          }
+          if (remoteData.settings.routeSeo) {
+            merged.settings.routeSeo = {
+              ...initialData.settings.routeSeo,
+              ...remoteData.settings.routeSeo,
+            };
+          }
         }
         if (remoteData.hero) {
           merged.hero = { ...initialData.hero, ...remoteData.hero };

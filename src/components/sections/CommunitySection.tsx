@@ -1,121 +1,134 @@
-import { motion, useInView } from "framer-motion"
-import { useRef } from "react"
+import { useEffect, useRef, type CSSProperties } from "react"
 import { Globe, ArrowRight } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 import { perkIcons } from "../../lib/websiteData"
+import { renderSectionHeading } from "../../lib/renderSectionTitle"
 import { Link } from "react-router-dom"
+
+const FOUNDER_NODES = [
+  { initials: "AK", hue: 215 },
+  { initials: "MR", hue: 220 },
+  { initials: "JL", hue: 210 },
+  { initials: "SC", hue: 225 },
+] as const
 
 export function CommunitySection() {
   const { data } = useWebsiteData()
-  const { perks } = data
+  const { perks, settings } = data
+  const copy = settings.sections?.community
+  const showPerks = settings.visibility.perks !== false
   const sectionRef = useRef<HTMLElement>(null)
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("community-section--visible")
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "-60px 0px", threshold: 0.06 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <section
-      ref={sectionRef}
-      id="community"
-      className="relative py-32 pb-24 bg-[#f8fbfe] overflow-hidden border-b border-border/10"
-    >
-      {/* Background architectural spine - very subtle */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-full bg-border/5 pointer-events-none" />
+    <section ref={sectionRef} id="community" className="community-section">
+      <div className="community-section__ambient" aria-hidden />
+      <div className="community-section__globe" aria-hidden>
+        <Globe className="w-64 h-64 text-accent" />
+      </div>
 
-      <div className="container mx-auto px-6 sm:px-10 relative z-10 mb-24">
-        {/* Blended Header: High-Density & Architectural */}
-        <div className="flex flex-col items-center text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="flex items-center gap-4 mb-6"
-          >
-            <div className="w-8 h-px bg-accent/50" />
-            <span className="text-[10px] font-bold text-muted uppercase tracking-[0.4em]">Community Registry</span>
-            <div className="w-8 h-px bg-accent/50" />
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">
+        <header className="community-section__header flex flex-col items-center text-center max-w-3xl mx-auto mb-14 sm:mb-16 lg:mb-20">
+          <div className="editorial-eyebrow editorial-eyebrow--center mb-6 sm:mb-7">
+            <span className="editorial-eyebrow__rule" aria-hidden />
+            <span className="section-eyebrow !mb-0 text-muted">
+              {copy?.eyebrow?.trim() || "Community Registry"}
+            </span>
+            <span className="editorial-eyebrow__rule" aria-hidden />
+          </div>
 
-          </motion.div>
-          
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="text-[clamp(36px,6vw,60px)] font-serif italic text-text leading-[1.1] mb-8 max-w-3xl"
-          >
-            Join the <span className="text-accent font-normal not-italic">Global Index</span> of Founders.
-          </motion.h2>
+          <h2 className="editorial-heading editorial-heading--section mb-6 sm:mb-8 max-w-3xl">
+            {renderSectionHeading(copy, (
+              <>
+                Join the <span className="editorial-accent">Global Index</span> of Founders.
+              </>
+            ))}
+          </h2>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col items-center gap-8"
-          >
-             <p className="text-[18px] text-muted leading-relaxed font-light max-w-2xl">
-              An elite network of 2,500+ builders and innovators orchestrating 
-              automated business systems. Scale your brand alongside the best.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center gap-10">
-              <Link to="/community" className="group relative px-10 py-5 bg-text text-white rounded-full font-bold text-[12px] uppercase tracking-[0.2em] hover:bg-accent transition-all shadow-xl flex items-center">
-                 Apply for Access <ArrowRight className="ml-2 w-4 h-4 inline group-hover:translate-x-1.5 transition-transform" />
-              </Link>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-off overflow-hidden shadow-sm">
-                      <img src={`https://i.pravatar.cc/100?img=${i + 30}`} alt="Founder avatar" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col items-start border-l border-border/40 pl-4 py-1">
-                  <span className="text-[11px] font-bold text-text uppercase tracking-widest leading-none mb-1">+2.5K ACTIVE</span>
-                  <span className="text-[9px] font-bold text-muted uppercase tracking-[0.2em] leading-none">Founder Nodes</span>
-                </div>
+          <p className="editorial-lede max-w-2xl mb-9 sm:mb-10">
+            {copy?.lede?.trim() ||
+              "An elite network of 2,500+ builders and innovators orchestrating automated business systems. Scale your brand alongside the best."}
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+            <Link
+              to={copy?.ctaHref?.trim() || "/community"}
+              className="btn-cta-primary group w-full sm:w-auto justify-center"
+            >
+              {copy?.ctaLabel?.trim() || "Apply for Access"}
+              <ArrowRight
+                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+
+            <div
+              className="flex items-center gap-4"
+              aria-label={copy?.founderCountLabel?.trim() || "2,500+ active founders"}
+            >
+              <div className="flex -space-x-2.5">
+                {FOUNDER_NODES.map((node) => (
+                  <div
+                    key={node.initials}
+                    className="community-founder-node"
+                    style={
+                      {
+                        "--node-hue": node.hue,
+                      } as CSSProperties
+                    }
+                  >
+                    <span className="sr-only">Founder {node.initials}</span>
+                    <span aria-hidden>{node.initials}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-text tracking-tight">+2.5K active</p>
+                <p className="text-xs text-text2/80 uppercase tracking-[0.12em]">Founder nodes</p>
               </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </header>
+
+        {showPerks ? (
+        <ul className="community-perks grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 list-none p-0 m-0">
+          {perks.map((perk, idx) => {
+            const Icon = perkIcons[perk.iconName]
+            return (
+              <li
+                key={perk.id ?? idx}
+                className="community-perk-card group"
+                style={{ "--perk-i": idx } as CSSProperties}
+              >
+                <div className="community-perk-card__icon" aria-hidden>
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                </div>
+                <p className="community-perk-card__label">{perk.label}</p>
+                <h3 className="community-perk-card__title">{perk.title}</h3>
+                <p className="community-perk-card__desc">{perk.description}</p>
+              </li>
+            )
+          })}
+        </ul>
+        ) : null}
       </div>
-
-      {/* Full Width Registry with Margins */}
-      <div className="w-full px-6 sm:px-12 lg:px-20 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-b border-border/20 py-20 gap-y-16">
-          {perks.map((perk, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.3 + idx * 0.1, duration: 0.7 }}
-              className={`px-8 lg:px-12 flex flex-col group ${idx !== 0 ? 'lg:border-l border-border/20' : ''}`}
-            >
-              {/* Architectural Icon Container */}
-              <div className="w-12 h-12 flex items-center justify-center mb-8 bg-white border border-border/40 rounded-2xl shadow-sm group-hover:border-accent group-hover:shadow-[0_0_20px_rgba(0,82,204,0.1)] transition-all duration-500">
-                {(() => {
-                  const Icon = perkIcons[perk.iconName];
-                  return <Icon className="w-5 h-5 text-accent" />;
-                })()}
-              </div>
-
-              {/* Label */}
-              <div className="text-[9px] font-medium text-muted uppercase tracking-[0.3em] mb-4 group-hover:text-accent transition-colors">
-                {perk.label}
-              </div>
-
-              {/* Title & Desc */}
-              <h4 className="text-3xl italic text-text mb-4 group-hover:text-accent transition-colors">
-                {perk.title}
-              </h4>
-              <p className="text-[16px] text-black leading-relaxed font-light group-hover:text-text transition-colors">
-                {perk.description}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-        {/* Desktop Technical Backdrop */}
-        <div className="absolute bottom-0 right-0 p-10 opacity-5 pointer-events-none hidden lg:block">
-           <Globe className="w-64 h-64 text-accent" />
-        </div>
     </section>
   )
 }

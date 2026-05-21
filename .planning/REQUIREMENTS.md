@@ -1,8 +1,8 @@
 # Requirements: Book Website
 
-**Defined:** 2026-05-19  
-**Milestone:** v1.2 Apple-Grade Premium Experience (active) · v1.1 shipped (Phases 10–16)  
-**Core Value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure and marketing intelligence.
+**Defined:** 2026-05-20
+**Milestone:** v1.4 Book Production & CMS Command Center (active) · v1.3 Marketing Integration (paused) · v1.2 Apple-Grade (archived planning) · v1.1 shipped (Phases 10–16)
+**Core Value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure, marketing intelligence, and live content controls.
 
 ## v1.1 Requirements
 
@@ -156,7 +156,7 @@ Deferred enhancements beyond v1.2 roadmap scope.
 
 ### v1.0 Deferred (prior milestone)
 
-- Marketing integration (MKT-*), production infra (INFRA-*), RBAC, chat, payments — see archived v1.0 requirements in git history
+- Production infra (INFRA-*), RBAC, chat, payments, mobile — see archived v1.0 requirements in git history
 
 ## Out of Scope
 
@@ -169,9 +169,94 @@ Deferred enhancements beyond v1.2 roadmap scope.
 | Heavy 3D hero on every page | CWV regression; landing-only per research |
 | hreflang | No bilingual content in v1.1 |
 
+## v1.4 Requirements — Book Production & CMS Command Center
+
+**Focus:** Production SEO, complete admin CMS for visitor-visible content, release validation. Marketing stack deferred.
+
+### SEO production (SEO-01 … SEO-07)
+
+- [x] **SEO-01:** `SITE_URL` required and documented in Compose, Docker, and `docs/deployment.md`
+- [x] **SEO-02:** `/events/:id` included in sitemap and prerender path list when published
+- [x] **SEO-03:** Production Docker/CI build reliably produces or skips prerender (`PRERENDER_SKIP` or staged API+DB build)
+- [x] **SEO-04:** Documented procedure to re-run prerender after blog/event/global SEO publish
+- [x] **SEO-05:** Per-route default title/description/OG editable in admin (backed by `SiteContent`, not only `routes.ts`)
+- [x] **SEO-06:** Premium social cards (`og:site_name`, locale, `twitter:site` where applicable)
+- [ ] **SEO-07:** Prerendered HTML reflects published appearance tokens where feasible (deferred — client theme injection; document in runbook)
+
+### Admin command center (ADM-05 … ADM-14)
+
+- [x] **ADM-05:** Landing section copy (hero incl. tagline + CTAs, who-we-are headers, community block, final CTA) editable and persisted
+- [x] **ADM-06:** Catalog heroes for `/blog` and `/events` editable (eyebrow, title, lede)
+- [x] **ADM-07:** Section visibility toggles match what `LandingPage` renders
+- [x] **ADM-08:** Central **Media** manager for OG, covers, thumbnails, reusable image URLs
+- [x] **ADM-09:** Navigation, footer links, social URLs, primary CTA CMS-driven without public `config.ts` fallbacks
+- [x] **ADM-10:** Header/footer custom scripts injected safely on publish
+- [x] **ADM-11:** Blog editor: preview, SEO tab, publish workflow, category alignment (existing BlogManager + ArticleSeoTab)
+- [x] **ADM-12:** Events: per-event SEO fields + admin form parity with public detail page
+- [x] **ADM-13:** Community admin: comment delete, optional post edit, moderation UX
+- [x] **ADM-14:** Orphan admin components removed or consolidated into PageEditor/Settings
+
+### Production release (REL-05 … REL-08)
+
+- [x] **REL-05:** Deploy runbook covers admin bootstrap, `JWT_SECRET`, `SITE_URL`, prerender, credential rotation
+- [x] **REL-06:** Automated smoke checks: public routes, sitemap/robots, admin login, content PATCH round-trip
+- [x] **REL-07:** `REQUIREMENTS.md` checkboxes synced with shipped v1.1 + v1.4 work
+- [x] **REL-08:** Production password not left at seed default without explicit dev-only guard (documented in runbook)
+
+## v1.3 Requirements — Marketing Integration & Admin Production Readiness (paused)
+
+**Focus:** Production readiness for the marketing backend/frontend, book website integration with marketing services, and admin customization parity for live content control.
+
+### Marketing stack production readiness
+
+- [ ] **MKT-01**: Marketing backend exposes stable production routes for webhook ingestion, event capture, email-agent processing, and health checks with explicit env configuration
+- [ ] **MKT-02**: Marketing frontend builds and serves correctly under the `/marketing` base path with a configurable API URL and no asset or routing breakage in production
+- [ ] **MKT-03**: Marketing deployment docs and env examples describe production hostnames, origins, and local development overrides without leaking dev-only assumptions into release notes
+- [ ] **MKT-04**: Marketing backend and marketing frontend have repeatable smoke checks that confirm the primary lead-intake and orchestration flows still work after deploy
+
+### Book-to-marketing integration
+
+- [ ] **INT-01**: Book website telemetry, lead capture, and support/email-agent requests use the book server proxy instead of shipping marketing secrets to the browser
+- [ ] **INT-02**: Book server forwards `/api/v1/marketing/webhook` and `/api/v1/marketing/email-agent/process` to the marketing backend with the expected payload, headers, and error handling
+- [ ] **INT-03**: Visitor identity and engagement tracking remain stable across page views, CTA clicks, and form submissions so the marketing backend can merge lead context reliably
+- [ ] **INT-04**: Book site, book server, and marketing backend share the same production origin and CORS contract, with no mismatched hostnames or path prefixes in release configs
+
+### Admin customization parity
+
+- [ ] **ADM-01**: Admin users can customize page sections, components, and copy across public routes without losing persisted data or breaking the current schema
+- [ ] **ADM-02**: Admin users can adjust global colors, typography, layout spacing, and custom CSS through the CMS with preview-first behavior before publish
+- [ ] **ADM-03**: Live preview reflects page and style edits closely enough that editors can trust it as the pre-publish source of truth
+- [ ] **ADM-04**: Admin customization surfaces remain accessible and responsive, including focus states, inputs, dialogs, and any destructive actions needed for content management
+
+### Release validation
+
+- [ ] **REL-01**: Release verification covers the integrated book site, book server, marketing backend, and marketing frontend with build and smoke checks
+- [ ] **REL-02**: The end-to-end lead path from public CTA to marketing backend capture and follow-up is verified before release
+- [ ] **REL-03**: Deployment docs capture required env vars, hostnames, base paths, and rollback notes for the combined stack
+- [ ] **REL-04**: Production readiness checks can be repeated by another operator without relying on hidden local setup knowledge
+
 ## Traceability
 
-### v1.2 (active)
+### v1.4 (active)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SEO-01 … SEO-06 | Phase 28 | Shipped |
+| SEO-07 | Phase 31 | Partial |
+| ADM-05 … ADM-07, ADM-09, SEO-05 | Phase 29 | Shipped |
+| ADM-08, ADM-10 … ADM-14 | Phase 30 | Shipped |
+| REL-05 … REL-08 | Phase 31 | Shipped |
+
+### v1.3 (paused)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| MKT-01 … MKT-04 | Phase 24 | Deferred |
+| INT-01 … INT-04 | Phase 25 | Deferred |
+| ADM-01 … ADM-04 | Phase 26 | Deferred |
+| REL-01 … REL-04 | Phase 27 | Deferred |
+
+### v1.2 (archived planning)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -235,10 +320,10 @@ Deferred enhancements beyond v1.2 roadmap scope.
 | CRAWL-01 … PERF-03 | Phases 10–16 | See git history / phase summaries |
 
 **Coverage:**
-- v1.2 requirements: 50 total
-- Mapped to phases: 50
+- v1.4 requirements: 25 total
+- Mapped to phases: 25
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-05-19*  
-*Last updated: 2026-05-19 — v1.2 scoped; navbar + hero Phase 17 first*
+*Requirements defined: 2026-05-20*
+*Last updated: 2026-05-21 — v1.4 book production active; v1.3 paused*
