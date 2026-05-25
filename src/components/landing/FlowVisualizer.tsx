@@ -1,4 +1,4 @@
-import React from 'react';
+// Removed unused React import
 import { motion } from 'framer-motion';
 import { 
   Activity, Users, Mail, MessageSquare, 

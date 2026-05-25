@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 import adminRoutes from './routes/adminRoutes';
 import communityRoutes from './routes/communityRoutes';
 import marketingRoutes from './routes/marketingRoutes';
+import seoRoutes from './routes/seoRoutes';
 import { getJwtSecret } from './lib/jwtSecret';
 import { getSiteUrl } from './lib/siteUrl';
 import { createCorsMiddleware } from './lib/corsPolicy';
@@ -41,6 +42,9 @@ app.use(
 );
 app.use(createCorsMiddleware());
 app.use(express.json());
+
+// Crawl files (CRAWL-02, CRAWL-03) — root paths + prerender-paths handoff
+app.use(seoRoutes);
 
 // Routes
 app.use('/api/v1/content', contentRoutes);

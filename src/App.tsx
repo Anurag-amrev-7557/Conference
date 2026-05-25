@@ -9,6 +9,7 @@ import { CommunityPage } from './pages/CommunityPage'
 import { BlogPage } from './pages/BlogPage'
 import { BlogPostPage } from './pages/BlogPostPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { ConferencePage } from './pages/ConferencePage'
 import { Navbar } from './components/Navbar'
 import { useWebsiteData } from './components/WebsiteDataProvider'
 import { ScrollToHash } from './components/ScrollToHash'
@@ -117,6 +118,7 @@ function App() {
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:id" element={<EventDetailPage />} />
             <Route path="/community" element={<CommunityPage />} />
+            <Route path="/conference" element={<><Navbar /><ConferencePage /></>} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />

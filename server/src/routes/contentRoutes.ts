@@ -78,13 +78,6 @@ function mapCommunityPost(p: {
 
 async function fetchSitePayload() {
   const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
-  const rawAppearance = safeParse(content?.appearance) as Record<string, unknown>;
-  const colorScheme =
-    rawAppearance.colorScheme === 'light' ||
-    rawAppearance.colorScheme === 'dark' ||
-    rawAppearance.colorScheme === 'system'
-      ? rawAppearance.colorScheme
-      : 'system';
   return {
     siteUrl: getSiteUrl(),
     hero: safeParse(content?.hero),
@@ -92,7 +85,7 @@ async function fetchSitePayload() {
     pillars: safeParse(content?.pillars, []),
     perks: safeParse(content?.perks, []),
     settings: safeParse(content?.settings),
-    appearance: { ...rawAppearance, colorScheme },
+    appearance: safeParse(content?.appearance),
   };
 }
 

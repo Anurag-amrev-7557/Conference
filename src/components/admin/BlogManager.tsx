@@ -12,9 +12,8 @@ import {
   BookOpen, 
   FileText,
   Globe,
-  Search,
-  EyeOff
 } from 'lucide-react';
+import { ArticleSeoTab } from './ArticleSeoTab';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -24,6 +23,9 @@ export const BlogManager: React.FC = () => {
   const [editForm, setEditForm] = useState<Partial<Article>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [editorTab, setEditorTab] = useState<'content' | 'seo'>('content');
+
+  const storedArticle = editingId ? data.articles.find((a) => a.id === editingId) : undefined;
 
   // Sync with live preview
   useEffect(() => {
@@ -41,6 +43,7 @@ export const BlogManager: React.FC = () => {
   const handleEdit = (article: Article) => {
     setEditingId(article.id);
     setEditForm(article);
+    setEditorTab('content');
   };
 
   const handleAddNew = async () => {
@@ -164,6 +167,32 @@ export const BlogManager: React.FC = () => {
                      exit={{ opacity: 0, y: -10 }}
                      className="p-8 space-y-10"
                    >
+                          <div className="flex gap-2 p-1 bg-[#fafafa] border border-border/40 rounded-xl w-fit">
+                            {(['content', 'seo'] as const).map((tab) => (
+                              <button
+                                key={tab}
+                                type="button"
+                                onClick={() => setEditorTab(tab)}
+                                className={cn(
+                                  'px-5 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all',
+                                  editorTab === tab
+                                    ? 'bg-text text-white shadow-sm'
+                                    : 'text-muted hover:text-text',
+                                )}
+                              >
+                                {tab === 'content' ? 'Content' : 'SEO'}
+                              </button>
+                            ))}
+                          </div>
+
+                          {editorTab === 'seo' ? (
+                            <ArticleSeoTab
+                              editForm={editForm}
+                              setEditForm={setEditForm}
+                              storedArticle={storedArticle}
+                              data={data}
+                            />
+                          ) : (
                           <div className="space-y-12">
                              {/* Core Info */}
                              <div className="space-y-8">
@@ -226,83 +255,6 @@ export const BlogManager: React.FC = () => {
                                 />
                              </div>
 
-                             {/* Search & Social */}
-                             <div className="space-y-8 pt-4 border-t border-border/40">
-                                <div className="flex items-center gap-3">
-                                   <Search className="w-4 h-4 text-accent" />
-                                   <h4 className="text-xl font-bold text-text">Search & Social</h4>
-                                </div>
-                                <div className="space-y-4">
-                                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">SEO Title</label>
-                                   <input
-                                     type="text"
-                                     value={editForm.seoTitle || ''}
-                                     onChange={e => setEditForm({ ...editForm, seoTitle: e.target.value })}
-                                     placeholder="Override title for search results"
-                                     aria-describedby="blog-seo-title-help"
-                                     className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-lg focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                                   />
-                                   <p id="blog-seo-title-help" className="text-[11px] text-muted leading-relaxed">
-                                     Leave blank to use the article title and short summary on the live site.
-                                   </p>
-                                </div>
-                                <div className="space-y-4">
-                                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">SEO Description</label>
-                                   <textarea
-                                     value={editForm.seoDescription || ''}
-                                     onChange={e => setEditForm({ ...editForm, seoDescription: e.target.value })}
-                                     rows={3}
-                                     placeholder="Override meta description for search and social"
-                                     className="w-full bg-[#fafafa] border border-border/40 p-6 text-sm leading-relaxed italic resize-none focus:bg-white transition-all outline-none rounded-xl shadow-sm"
-                                   />
-                                </div>
-                                <div className="space-y-4">
-                                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">Open Graph Image URL</label>
-                                   <input
-                                     type="text"
-                                     value={editForm.ogImage || ''}
-                                     onChange={e => setEditForm({ ...editForm, ogImage: e.target.value })}
-                                     placeholder="https://..."
-                                     className="w-full bg-[#fafafa] border border-border/40 p-4 font-mono text-[10px] text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                                   />
-                                   {editForm.ogImage ? (
-                                     <div className="aspect-[1.91/1] max-w-xs rounded-xl overflow-hidden border border-border/40">
-                                        <img src={editForm.ogImage} alt="" className="w-full h-full object-cover" />
-                                     </div>
-                                   ) : null}
-                                </div>
-                                <div className="p-8 border border-border/40 rounded-2xl bg-[#fafafa] flex items-center justify-between shadow-sm">
-                                   <div className="flex items-center gap-6">
-                                      <div className={cn(
-                                        "w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shadow-sm",
-                                        editForm.noindex ? "bg-accent/5 border-accent/20 text-accent" : "bg-white border-border/40 text-muted/40"
-                                      )}>
-                                         <EyeOff className="w-5 h-5" />
-                                      </div>
-                                      <div>
-                                         <p className="text-[14px] font-bold text-text uppercase tracking-widest">{editForm.noindex ? 'Hidden from Search' : 'Indexable'}</p>
-                                         <p className="text-[11px] text-muted leading-relaxed mt-1">
-                                           {editForm.noindex
-                                             ? 'Adds noindex when this article is published. Unpublished drafts are also excluded from indexing.'
-                                             : 'Article may be indexed when published and this toggle is off.'}
-                                         </p>
-                                      </div>
-                                   </div>
-                                   <button
-                                     type="button"
-                                     onClick={() => setEditForm({ ...editForm, noindex: !editForm.noindex })}
-                                     className={cn(
-                                       "w-12 h-6 rounded-full relative transition-all duration-500 p-1 border shadow-inner",
-                                       editForm.noindex ? "bg-accent border-accent" : "bg-white border-border/40"
-                                     )}
-                                   >
-                                      <motion.div
-                                        animate={{ x: editForm.noindex ? 24 : 0 }}
-                                        className="w-4 h-4 bg-white rounded-full shadow-md"
-                                      />
-                                   </button>
-                                </div>
-                             </div>
 
                              {/* Cover */}
 
@@ -365,6 +317,7 @@ export const BlogManager: React.FC = () => {
                                 </button>
                              </div>
                           </div>
+                          )}
 
                       <div className="pt-8 sticky bottom-0 bg-white pb-8">
                          <button 

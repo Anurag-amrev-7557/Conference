@@ -4,6 +4,7 @@
   "workflow": {
     "research": true,
     "ui_phase": true,
-    "text_mode": false
+    "text_mode": false,
+    "_auto_chain_active": true
   }
 }

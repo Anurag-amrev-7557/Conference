@@ -1,160 +1,139 @@
-import { motion, useInView } from "framer-motion"
-import { useRef } from "react"
+import { useEffect, useRef, type CSSProperties } from "react"
 import { Link } from "react-router-dom"
-import { MapPin, ArrowUpRight, Calendar, User, ArrowRight } from "lucide-react"
+import { MapPin, Calendar, User, ArrowRight } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 
 export function EventsSection() {
   const { data } = useWebsiteData()
-  const events = data.events.filter(e => e.isPublished)
+  const events = data.events.filter((e) => e.isPublished)
   const sectionRef = useRef<HTMLElement>(null)
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("events-section--visible")
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "-60px 0px", threshold: 0.06 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <section
-      ref={sectionRef}
-      id="events"
-      className="relative py-24 bg-white overflow-hidden border-b border-border/20"
-    >
-      {/* Background ambient glow - very subtle for light mode */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/3 rounded-full blur-[100px] pointer-events-none" />
+    <section ref={sectionRef} id="events" className="events-section">
+      <div className="events-section__ambient" aria-hidden />
 
-      <div className="container mx-auto px-6 sm:px-10 max-w-4xl relative z-10">
-        
-        {/* Section Header - Symmetrical & Clean */}
-        <div className="flex flex-col items-center text-center mb-20">
-          <motion.span
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="text-[11px] font-bold text-accent uppercase tracking-[0.4em] mb-4"
-          >
-            Founder Calendar
-          </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="text-[clamp(32px,5vw,48px)] font-serif italic text-text leading-tight"
-          >
-            Live Training <span className="text-muted font-normal not-italic">&</span> Events
-          </motion.h2>
-          <div className="w-12 h-[1px] bg-accent mt-8" />
-        </div>
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">
+        <header className="events-section__header flex flex-col items-center text-center max-w-3xl mx-auto mb-12 sm:mb-14 lg:mb-16">
+          <div className="editorial-eyebrow editorial-eyebrow--center mb-6 sm:mb-7">
+            <span className="editorial-eyebrow__rule" aria-hidden />
+            <span className="section-eyebrow !mb-0 text-muted">Founder Calendar</span>
+            <span className="editorial-eyebrow__rule" aria-hidden />
+          </div>
 
-        <div className="relative">
-          {/* Vertical Timeline Spine - Subtle grey */}
-          <div className="absolute left-[7px] top-4 bottom-0 w-[1px] bg-border/40" />
+          <h2 className="editorial-heading editorial-heading--section mb-0">
+            Live Training & <span className="italic editorial-accent">Events</span>
+          </h2>
+        </header>
 
-          <div className="flex flex-col gap-16">
-            {events.map((event, idx) => (
-              <div key={idx} className="relative pl-10 sm:pl-14">
-                
-                {/* Timeline Node - Refined dot */}
-                <div className="absolute left-0 top-3 w-[15px] h-[15px] rounded-full bg-white border-2 border-accent z-10 shadow-sm" />
+        {events.length > 0 ? (
+          <div className="events-timeline mx-auto w-full max-w-3xl">
+            <div className="events-timeline__spine" aria-hidden />
 
-                {/* Date Header - Smaller & Sharp */}
-                <motion.div
-                  initial={{ opacity: 0, x: -15 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ delay: idx * 0.15 }}
-                  className="flex items-baseline gap-3 mb-6"
+            <ol className="events-timeline__list list-none p-0 m-0 flex flex-col gap-12 sm:gap-14">
+              {events.map((event, idx) => (
+                <li
+                  key={event.id}
+                  className="events-timeline__item"
+                  style={{ "--event-i": idx } as CSSProperties}
                 >
-                  <span className="text-xl font-serif italic text-text">{event.day}</span>
-                  <span className="text-[11px] font-bold text-muted uppercase tracking-[0.2em]">{event.weekday}</span>
-                </motion.div>
+                  <div className="events-timeline__node" aria-hidden />
 
-                {/* Event Card - More compact and card-like */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.1 + idx * 0.15, duration: 0.6 }}
-                  className="group relative p-6 sm:p-7 rounded-[24px] bg-white border border-border/60 hover:border-accent/40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-                >
-                  <div className="flex flex-col sm:flex-row justify-between gap-8">
-                    
-                    {/* Event Content */}
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="text-[14px] font-bold text-text">{event.time}</span>
-                        <div className="w-1 h-1 rounded-full bg-border" />
-                        <span className="text-[12px] font-medium text-muted tracking-tight">{event.full_time}</span>
-                      </div>
+                  <div className="events-timeline__date">
+                    <span className="events-timeline__day">{event.day}</span>
+                    <span className="events-timeline__weekday">{event.weekday}</span>
+                  </div>
 
-                      <h3 className="text-[1.7rem] font-medium mb-6 group-hover:text-accent transition-colors">
-                        {event.title}
-                      </h3>
+                  <article className="events-event-card group">
+                    <Link to="/events" className="events-event-card__link">
+                      <div className="events-event-card__main">
+                        <p className="events-event-card__time">
+                          <span className="events-event-card__time-primary">{event.time}</span>
+                          <span className="events-event-card__meta-dot" aria-hidden />
+                          <span>{event.full_time}</span>
+                        </p>
 
-                      <div className="flex flex-col gap-3 mb-8">
-                        <div className="flex items-center gap-2.5 text-muted">
-                          <div className="w-7 h-7 rounded-full bg-accent/5 border border-accent/10 flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-accent" />
-                          </div>
-                          <span className="text-[14px] font-medium">By {event.host}</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 text-muted">
-                          <div className="w-7 h-7 rounded-full bg-accent/5 border border-accent/10 flex items-center justify-center">
-                            <MapPin className="w-3.5 h-3.5 text-accent" />
-                          </div>
-                          <span className="text-[14px] font-medium">{event.location}</span>
-                        </div>
-                      </div>
+                        <h3 className="events-event-card__title">{event.title}</h3>
 
-                      {/* Tags & Price */}
-                      <div className="mt-auto flex flex-wrap items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          {event.tags.map((tag, tIdx) => (
-                            <span
-                              key={tIdx}
-                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${tag.color}`}
-                            >
+                        <ul className="events-event-card__details list-none p-0 m-0">
+                          <li>
+                            <User className="w-3.5 h-3.5 shrink-0 text-accent" aria-hidden />
+                            <span>By {event.host}</span>
+                          </li>
+                          <li>
+                            <MapPin className="w-3.5 h-3.5 shrink-0 text-accent" aria-hidden />
+                            <span>{event.location}</span>
+                          </li>
+                        </ul>
+
+                        <div className="events-event-card__tags">
+                          {event.tags.map((tag) => (
+                            <span key={tag.name} className="events-event-card__tag">
                               {tag.name}
                             </span>
                           ))}
+                          {event.price ? (
+                            <span className="events-event-card__tag events-event-card__tag--price">
+                              {event.price}
+                            </span>
+                          ) : null}
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-extrabold tracking-widest border border-emerald-100">
-                          {event.price}
-                        </span>
                       </div>
-                    </div>
 
-                    {/* Thumbnail Section - Scaled down */}
-                    <div className="relative w-full sm:w-36 h-36 sm:h-36 rounded-2xl overflow-hidden shadow-sm group-hover:scale-[1.02] transition-transform duration-500">
-                      <img
-                        src={event.thumbnail}
-                        alt="Event thumbnail"
-                        className={`w-full h-full object-cover ${event.status === 'Past' ? 'grayscale' : ''} transition-all duration-700`}
-                      />
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-accent/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-10 h-10 bg-white text-accent rounded-full flex items-center justify-center shadow-lg"
-                        >
-                          <ArrowUpRight className="w-5 h-5" />
-                        </motion.button>
+                      <div className="events-event-card__media">
+                        <img
+                          src={event.thumbnail}
+                          alt=""
+                          width={144}
+                          height={144}
+                          loading="lazy"
+                          className={
+                            event.status === "Past"
+                              ? "events-event-card__img events-event-card__img--past"
+                              : "events-event-card__img"
+                          }
+                        />
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            ))}
+                    </Link>
+                  </article>
+                </li>
+              ))}
+            </ol>
           </div>
-        </div>
+        ) : (
+          <p className="events-section__empty editorial-lede text-center max-w-lg mx-auto">
+            Upcoming founder sessions will appear here. Browse the calendar for past trainings and
+            workshops.
+          </p>
+        )}
 
-        {/* Footer: Browse more */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.8 }}
-          className="mt-20 flex flex-col items-center gap-6"
-        >
-          <div className="w-[1px] h-12 bg-border" />
-          <Link to="/events" className="group flex items-center gap-3 px-8 py-4 rounded-full border border-border hover:border-accent hover:bg-accent/3 transition-all duration-300">
-            <Calendar className="w-4 h-4 text-accent" />
-            <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-muted group-hover:text-text">Browse Full Calendar</span>
-            <ArrowRight className="w-3.5 h-3.5 text-accent/30 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+        <div className="events-section__footer">
+          <Link to="/events" className="btn-cta-secondary group">
+            <Calendar className="w-4 h-4 text-accent" aria-hidden />
+            Browse full calendar
+            <ArrowRight
+              className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden
+            />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

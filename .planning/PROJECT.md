@@ -52,15 +52,13 @@ Visitors can discover the book, engage with content and community, and convert t
 | Docker builds use `PRERENDER_SKIP=1`; prerender in CI/post-publish | API+DB not available at image build time | v1.4 |
 | v1.3 marketing integration paused | User priority is book production launch | 2026-05-21 |
 
-## Current Milestone: v1.4 Book Production & CMS Command Center
+## Current Milestone: v1.5 Conference Launch
 
-**Goal:** Ship the book website and embedded server as production-ready, SEO-premium, with every visitor-visible string manageable from `/admin`, verified crawl/prerender/deploy paths, and documented admin bootstrap.
+**Goal:** Launch a premium, ai4.io-inspired conference page to attract users, integrated seamlessly with the existing public site architecture.
 
 **Paused:** v1.3 Marketing Integration (Phases 24–27); v1.2 Apple-grade UI (Phases 17–23).
 
-**Product order:** Phase 28 SEO infra → Phase 29 content model → Phase 30 admin surfaces → Phase 31 release validation.
-
-**Builds on:** v1.1 SEO foundation (Phases 10–16).
+**Builds on:** v1.4 CMS Command Center (Phases 28–31).
 
 ---
-*Last updated: 2026-05-21 — v1.4 milestone started*
+*Last updated: 2026-05-25 — v1.5 milestone started*

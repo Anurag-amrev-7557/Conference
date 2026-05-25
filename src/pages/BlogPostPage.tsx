@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
 import { useWebsiteData } from '../components/WebsiteDataProvider';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { BlogPostMarkdown } from '../components/blog/BlogPostMarkdown';
+import { extractMarkdownToc } from '../lib/extractMarkdownToc';
 import { ArrowLeft, Link as LinkIcon, ChevronRight, Bookmark } from 'lucide-react';
 import { SeoHead } from '../seo/SeoHead';
+import { JsonLd } from '../seo/JsonLd';
 import { usePageSeo } from '../seo/usePageSeo';
+import { usePageJsonLd } from '../seo/usePageJsonLd';
 
 // Custom icons for the professional monograph feel
 const XIcon = (props: any) => (
@@ -27,17 +30,29 @@ export const BlogPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data, loading } = useWebsiteData();
   const navigate = useNavigate();
+
+  const article = data.articles.find((a) => a.slug === slug);
+  const tocItems = useMemo(
+    () => (article ? extractMarkdownToc(article.content) : []),
+    [article?.id, article?.content],
+  );
+
   const [copied, setCopied] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  
-  const article = data.articles.find(a => a.slug === slug);
+  const [activeTocId, setActiveTocId] = useState<string | undefined>();
+
   const seo = usePageSeo({ article });
+  const jsonLd = usePageJsonLd({ article });
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
-    restDelta: 0.001
+    restDelta: 0.001,
   });
+
+  useEffect(() => {
+    setActiveTocId(tocItems[0]?.id);
+  }, [article?.id, tocItems]);
 
   useEffect(() => {
     if (!loading && !article) {
@@ -45,6 +60,38 @@ export const BlogPostPage: React.FC = () => {
     }
     window.scrollTo(0, 0);
   }, [article, navigate, loading]);
+
+  useEffect(() => {
+    if (!article || tocItems.length === 0) return;
+
+    const nodes = tocItems
+      .map(({ id }) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (nodes.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length === 0) return;
+        visible.sort((a, b) => {
+          const topA = a.boundingClientRect.top;
+          const topB = b.boundingClientRect.top;
+          const offset = typeof window !== 'undefined' ? window.innerHeight * 0.2 : 0;
+          const dist = (top: number) => Math.abs(top - offset);
+          return dist(topA) - dist(topB);
+        });
+        setActiveTocId(visible[0].target.id);
+      },
+      {
+        rootMargin: `calc(-1 * (var(--header-offset, 5.5rem) + 1.25rem)) 0px -45% 0px`,
+        threshold: [0, 0.02, 0.08, 0.25, 0.5, 1],
+      },
+    );
+
+    nodes.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [article, tocItems]);
 
   const handleCopyLink = () => {
     if (!article) return;
@@ -56,8 +103,9 @@ export const BlogPostPage: React.FC = () => {
   return (
     <>
     <SeoHead seo={seo} />
+    <JsonLd graph={jsonLd} />
     {article ? (
-    <motion.div className="min-h-screen bg-white">
+    <motion.div className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
       
       {/* Cinematic Reading Progress */}
@@ -67,191 +115,240 @@ export const BlogPostPage: React.FC = () => {
       />
 
       <article className="relative">
-        {/* Architectural Header Section */}
-        <header className="pt-48 pb-20 px-6 sm:px-12 lg:px-16 max-w-[1400px] mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
-            
-            <div className="flex-1 max-w-4xl">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-4 mb-8"
-              >
-                <Link to="/blog" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-accent">
-                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-                  The Playbook
-                </Link>
-                <div className="w-[1px] h-4 bg-border/60" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-muted">
-                  {article.category}
-                </span>
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.8 }}
-                className="text-[clamp(44px,7vw,100px)] font-serif italic text-text leading-[0.95] tracking-playbook mb-12"
-              >
-                {article.title}
-              </motion.h1>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex flex-wrap items-center gap-x-12 gap-y-6 pt-12 border-t border-border/60 shadow-[inset_0_1px_0_rgba(255,255,255,1)]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border border-border/50">
-                    <img src={article.authorAvatar} alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-text">{article.authorName}</p>
-                    <p className="text-[11px] font-medium uppercase tracking-widest text-muted">{article.authorRole}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted/60">Released</span>
-                  <span className="text-xs font-bold tracking-tight">{article.publishedAt}</span>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted/60">Reading Time</span>
-                  <span className="text-xs font-bold tracking-tight">{article.time} Read</span>
-                </div>
-              </motion.div>
+        {/* Full-width reading layout: sticky TOC (left) + header, hero, and body (right) */}
+        <div className="blog-post-page__shell blog-post-page__layout pt-44 sm:pt-48 pb-28 lg:pb-32">
+          <aside className="blog-post-page__toc-wrap" aria-label="Article outline">
+            <div className="blog-post-page__toc-panel">
+              <h3 className="blog-post-page__toc-title">Table of Contents</h3>
+              {tocItems.length > 0 ? (
+                <nav>
+                  <ul className="blog-post-page__toc-list">
+                    {tocItems.map((item) => (
+                      <li
+                        key={`${article.id}:${item.id}`}
+                        className="blog-post-page__toc-li"
+                        style={{
+                          paddingLeft: `${Math.max(0, item.level - 2) * 0.65}rem`,
+                        }}
+                      >
+                        <a
+                          href={`#${encodeURIComponent(item.id)}`}
+                          className={
+                            activeTocId === item.id ? 'blog-post-page__toc-link--active' : undefined
+                          }
+                        >
+                          {item.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ) : (
+                <p className="blog-post-page__toc-empty">
+                  Sections appear automatically when your article uses markdown headings (#, ##, …).
+                </p>
+              )}
             </div>
+          </aside>
 
-            {/* Sidebar Share Shelf (Desktop) */}
-            <motion.aside
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="hidden xl:flex flex-col gap-4 border-l border-border/60 pl-10"
-            >
-              <button 
-                onClick={() => setIsBookmarked(!isBookmarked)}
-                className={`w-14 h-14 rounded-full border border-border flex items-center justify-center transition-all ${isBookmarked ? 'bg-accent text-white border-accent' : 'bg-white text-text hover:border-accent hover:text-accent shadow-elite'}`}
-              >
-                <Bookmark className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => window.open(`https://twitter.com/intent/tweet?url=${window.location.href}`, '_blank')}
-                className="w-14 h-14 rounded-full border border-border bg-white text-text flex items-center justify-center hover:border-accent hover:text-accent transition-all shadow-elite"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={handleCopyLink}
-                className="w-14 h-14 rounded-full border border-border bg-white text-text flex items-center justify-center hover:border-accent hover:text-accent transition-all shadow-elite relative"
-              >
-                <LinkIcon className="w-5 h-5" />
-                <AnimatePresence>
-                  {copied && (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      className="absolute -top-12 left-1/2 -translate-x-1/2 bg-text text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg whitespace-nowrap"
+          <div className="blog-post-page__article-stream">
+            <header className="pb-10 lg:pb-12">
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 flex-1">
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2"
+                  >
+                    <Link
+                      to="/blog"
+                      className="group inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted hover:text-accent transition-colors"
                     >
-                      Copied Link
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-            </motion.aside>
-          </div>
-        </header>
+                      <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                      The Playbook
+                    </Link>
+                    <span className="text-muted/40" aria-hidden>
+                      ·
+                    </span>
+                    <span className="blog-post-page__kicker">{article.category}</span>
+                  </motion.div>
 
-        {/* Cinematic Imagery Bleed */}
-        <motion.section
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-[1400px] mx-auto px-6 sm:px-12 lg:px-16 mb-24"
-        >
-          <div className="relative aspect-[21/9] rounded-[48px] overflow-hidden shadow-alabaster shadow-2xl">
-            <img 
-              src={article.thumbnail} 
-              alt="" 
-              className="w-full h-full object-cover scale-105"
-            />
-            <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-[48px]" />
-          </div>
-        </motion.section>
+                  <motion.h1
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05, duration: 0.5 }}
+                    className="blog-post-page__headline"
+                  >
+                    {article.title}
+                  </motion.h1>
 
-        {/* Narrative Engine (Main Content) */}
-        <main className="max-w-[1400px] mx-auto px-6 sm:px-12 lg:px-16 flex justify-center pb-32">
-          <div className="w-full">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className="blog-post-page__meta"
+                  >
+                    <p className="blog-post-page__authorline">
+                      <span className="text-muted">By </span>
+                      <span className="blog-post-page__author-name">{article.authorName}</span>
+                      {article.authorRole ? (
+                        <span className="blog-post-page__author-role">, {article.authorRole}</span>
+                      ) : null}
+                    </p>
+                    <p className="blog-post-page__meta-subline">
+                      Published: {article.publishedAt}
+                      <span className="mx-2 text-border" aria-hidden>
+                        |
+                      </span>
+                      {article.time} read
+                    </p>
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex shrink-0 items-center gap-2 lg:pt-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsBookmarked(!isBookmarked)}
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border border-border transition-all ${
+                      isBookmarked
+                        ? 'border-accent bg-accent text-white'
+                        : 'bg-white text-text hover:border-accent hover:text-accent shadow-elite'
+                    }`}
+                    aria-pressed={isBookmarked}
+                    aria-label="Bookmark"
+                  >
+                    <Bookmark className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.open(
+                        `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`,
+                        '_blank',
+                      )
+                    }
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white text-text shadow-elite transition-all hover:border-accent hover:text-accent"
+                    aria-label="Share on X"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="relative flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white text-text shadow-elite transition-all hover:border-accent hover:text-accent"
+                    aria-label="Copy link"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    <AnimatePresence>
+                      {copied && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className="absolute -top-11 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-text px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white"
+                        >
+                          Copied
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                </motion.div>
+              </div>
+            </header>
+
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="prose prose-zinc prose-2xl max-w-none 
-                prose-headings:font-serif prose-headings:italic prose-headings:font-normal prose-headings:tracking-tighter prose-headings:leading-none
-                prose-p:text-text prose-p:leading-[1.7] prose-p:mb-12 prose-p:font-light prose-p:tracking-tight prose-p:text-[1.4rem]
-                prose-li:text-text prose-li:text-[1.4rem] prose-li:leading-[1.7] prose-li:mb-4 prose-li:font-light
-                prose-blockquote:border-l-0 prose-blockquote:relative prose-blockquote:my-20 prose-blockquote:px-0
-                prose-blockquote:before:content-[''] prose-blockquote:after:content-['']
-                prose-blockquote:italic prose-blockquote:font-serif prose-blockquote:text-4xl prose-blockquote:text-accent prose-blockquote:leading-tight
-                prose-strong:font-bold prose-strong:text-text
-                prose-img:rounded-[32px] prose-img:shadow-2xl prose-img:my-20 prose-img:border prose-img:border-border/60
-                prose-pre:bg-off prose-pre:rounded-2xl prose-pre:border prose-pre:border-border/60 prose-pre:text-text
-                selection:bg-accent/10
-                drop-cap"
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-12 lg:mb-16"
             >
-              <ReactMarkdown>{article.content}</ReactMarkdown>
-            </motion.div>
+              <div className="relative aspect-[21/9] overflow-hidden rounded-2xl shadow-alabaster ring-1 ring-black/5 lg:aspect-[2.2/1]">
+                <img
+                  src={article.thumbnail}
+                  alt={article.title}
+                  width={1400}
+                  height={600}
+                  loading="eager"
+                  fetchPriority="high"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </motion.section>
 
-            {/* Architectural Signature */}
-            <footer className="mt-32 pt-20 border-t-2 border-text flex flex-col items-center">
-              <span className="text-playbook mb-16">End of Playbook Guide</span>
-              
-              <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-20 p-12 bg-off rounded-[40px] border border-border/60 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl -mr-16 -mt-16" />
-                
-                <div className="flex flex-col gap-8">
-                  <div className="flex items-center gap-6">
-                    <img src={article.authorAvatar} alt="" className="w-24 h-24 rounded-3xl object-cover ring-8 ring-white shadow-xl" />
-                    <div>
-                      <h4 className="text-3xl font-serif italic mb-1">{article.authorName}</h4>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">{article.authorRole}</p>
+            <main className="blog-post-page__content">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.6 }}
+                className="prose max-w-none blog-post-page__prose selection:bg-accent/10"
+              >
+                <BlogPostMarkdown toc={tocItems} content={article.content} />
+              </motion.div>
+
+              <footer className="mt-32 flex flex-col items-center border-t-2 border-text pt-20">
+                <span className="text-playbook mb-16">End of Playbook Guide</span>
+
+                <div className="group relative w-full grid grid-cols-1 gap-20 overflow-hidden rounded-[40px] border border-border/60 bg-off p-12 md:grid-cols-2">
+                  <div className="absolute right-0 top-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-accent/5 blur-3xl" />
+
+                  <div className="flex flex-col gap-8">
+                    <div className="flex items-center gap-6">
+                      <img
+                        src={article.authorAvatar}
+                        alt={article.authorName}
+                        className="h-24 w-24 rounded-3xl object-cover shadow-xl ring-8 ring-white"
+                      />
+                      <div>
+                        <h3 className="mb-1 font-serif text-3xl italic">{article.authorName}</h3>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
+                          {article.authorRole}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-light leading-relaxed text-muted">
+                      Specialized in high-fidelity agentic architecture and digital monopolies.
+                      Orchestrating the transition from human-led enterprise to AI-native ecosystems.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-start justify-between gap-8">
+                    <div className="flex w-full flex-col gap-4">
+                      <button className="w-full rounded-2xl bg-text py-4 text-[10px] font-bold uppercase tracking-[0.3em] text-white transition-studio hover:bg-zinc-800">
+                        Follow Strategy
+                      </button>
+                      <button className="w-full rounded-2xl border border-border py-4 text-[10px] font-bold uppercase tracking-[0.3em] text-text transition-studio hover:bg-white">
+                        Book Strategy Call
+                      </button>
+                    </div>
+                    <div className="mt-auto flex items-center gap-6">
+                      {['X', 'LinkedIn', 'Archive'].map((link) => (
+                        <span
+                          key={link}
+                          className="flex cursor-pointer items-center gap-1 text-[9px] font-bold uppercase tracking-[0.3em] text-muted transition-colors hover:text-accent"
+                        >
+                          {link === 'LinkedIn' && (
+                            <LinkedInIcon className="h-2.5 w-2.5" />
+                          )}
+                          {link}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <p className="text-sm text-muted leading-relaxed font-light">
-                    Specialized in high-fidelity agentic architecture and digital monopolies. Orchestrating the transition from human-led enterprise to AI-native ecosystems.
-                  </p>
                 </div>
-
-                <div className="flex flex-col justify-between items-start gap-8">
-                  <div className="flex flex-col gap-4 w-full">
-                    <button className="w-full py-4 bg-text text-white text-[10px] font-bold uppercase tracking-[0.3em] rounded-2xl hover:bg-zinc-800 transition-studio">
-                      Follow Strategy
-                    </button>
-                    <button className="w-full py-4 border border-border text-text text-[10px] font-bold uppercase tracking-[0.3em] rounded-2xl hover:bg-white transition-studio">
-                      Book Strategy Call
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-6 mt-auto">
-                    {['X', 'LinkedIn', 'Archive'].map(link => (
-                      <span key={link} className="text-[9px] font-bold uppercase tracking-[0.3em] text-muted hover:text-accent cursor-pointer transition-colors flex items-center gap-1">
-                        {link === 'LinkedIn' && <LinkedInIcon className="w-2.5 h-2.5" />}
-                        {link}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </footer>
+              </footer>
+            </main>
           </div>
-        </main>
+        </div>
       </article>
 
       {/* Suggested Narratives */}
       <section className="bg-white py-32 border-t border-border/40 relative z-10">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-12 lg:px-16">
+        <div className="blog-post-page__shell">
           <div className="flex justify-between items-end mb-24">
             <div>
               <span className="text-playbook text-accent mb-6 block">Keep Learning</span>
@@ -272,7 +369,7 @@ export const BlogPostPage: React.FC = () => {
                   <div className="relative aspect-[16/10] rounded-[40px] overflow-hidden shadow-alabaster group-hover:shadow-2xl transition-all duration-700">
                     <img 
                       src={rel.thumbnail} 
-                      alt="" 
+                      alt={rel.title} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />

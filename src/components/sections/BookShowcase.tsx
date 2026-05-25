@@ -1,234 +1,153 @@
-import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Zap, 
-  CheckCircle2, 
-  Sparkles,
-  ArrowRight,
-  Database,
-  Cpu,
-  Bot,
-  Send
-} from 'lucide-react';
-import { MarketingService } from '../../lib/marketing';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
+import { Link } from "react-router-dom"
+import { ArrowRight, BookOpen } from "lucide-react"
+import { useWebsiteData } from "../WebsiteDataProvider"
 
-gsap.registerPlugin(ScrollTrigger);
-
-const demoSteps = [
-  {
-    id: 'ingestion',
-    title: 'Precision Ingestion',
-    icon: Database,
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-    content: 'Connect your private data layer (Knowledge Base, CRM, APIs). Our system autonomously vectors these into a semantic mesh.',
-    prompt: 'Synthesizing knowledge graph from 50,000 corporate records...'
-  },
-  {
-    id: 'orchestration',
-    title: 'Agentic Logic',
-    icon: Cpu,
-    color: 'text-brand-indigo',
-    bg: 'bg-brand-indigo/10',
-    content: 'Define behaviors using natural language. The orchestrator decomposes complex goals into executable agent swarms.',
-    prompt: 'Running multi-agent reasoning chain for lead intent...'
-  },
-  {
-    id: 'dispatch',
-    title: 'Autonomous Dispatch',
-    icon: Send,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-    content: 'The final agent executes high-priority actions: hyper-personalized outreach, real-time strategy calls, and revenue events.',
-    prompt: 'Dispatched hyper-personalized campaign to prospect id #921'
+function BookCoverFace({ coverUrl }: { coverUrl?: string }) {
+  if (coverUrl) {
+    return <img src={coverUrl} alt="" className="book-3d__cover-img" />
   }
-];
-
-export function BookShowcase() {
-  const [activeStep, setActiveStep] = useState(0);
-  const [isBuilding, setIsBuilding] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 80%",
-        toggleActions: "play none none reverse"
-      }
-    });
-
-    tl.from(".reveal-text", {
-      y: 100,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.2,
-      ease: "power4.out"
-    })
-    .from(".reveal-card", {
-      x: -50,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.1,
-      ease: "power2.out"
-    }, "-=0.5");
-  }, { scope: containerRef });
-
-  const handleStepChange = (idx: number) => {
-    setActiveStep(idx);
-    MarketingService.logEvent('showcase_step_view', { step: demoSteps[idx].id });
-  };
-
-  const handleRunDemo = () => {
-    setIsBuilding(true);
-    setTimeout(() => {
-      setIsBuilding(false);
-      MarketingService.logEvent('showcase_demo_complete', { outcome: 'success' });
-    }, 4000);
-  };
 
   return (
-    <section ref={containerRef} className="py-24 bg-bg-off relative overflow-hidden border-y border-border/10">
-      {/* Neural Pulse Aura */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-indigo/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute top-1/4 right-[10%] w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] animate-pulse [animation-delay:2s]" />
+    <div className="book-3d__cover-art" aria-hidden>
+      <div className="flex items-center gap-2 text-white/65 text-[11px] font-medium uppercase tracking-[0.22em]">
+        <BookOpen className="w-4 h-4 shrink-0" aria-hidden />
+        <span>Superhumanly</span>
       </div>
-
-      <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none rotate-12">
-        <Bot size={400} />
+      <div className="text-center px-2">
+        <p className="text-white text-3xl sm:text-4xl font-semibold tracking-tight leading-none">Playbook</p>
+        <p className="mt-3 text-sm font-medium text-white/55 uppercase tracking-[0.18em]">Agentic AI</p>
       </div>
+      <div className="h-px w-12 bg-white/20 mx-auto" aria-hidden />
+    </div>
+  )
+}
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
-        <div className="flex flex-col lg:flex-row gap-16 items-start">
-          
-          {/* Text Content */}
-          <div className="lg:w-1/2 space-y-8">
-            <div className="reveal-text inline-flex items-center px-4 py-1.5 rounded-full bg-brand-indigo/10 border border-brand-indigo/20 text-brand-indigo text-[12px] font-black uppercase tracking-[0.2em] mb-4">
-              <Zap size={14} className="mr-2" /> Prototype Node
+function Book3D({ coverUrl }: { coverUrl?: string }) {
+  return (
+    <div className="book-3d-scene">
+      <div className="book-3d-pivot">
+        <div className="book-3d__ground" aria-hidden />
+        <div className="book-3d">
+          <div className="book-3d__back" aria-hidden />
+          <div className="book-3d__top" aria-hidden />
+          <div className="book-3d__bottom" aria-hidden />
+          <div className="book-3d__spine" aria-hidden />
+          <div className="book-3d__edge" aria-hidden />
+          <div className="book-3d__cover">
+            <BookCoverFace coverUrl={coverUrl} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function BookShowcase() {
+  const { data } = useWebsiteData()
+  const book = data.settings.book
+  const { hero } = data
+
+  const title =
+    book?.title?.trim() || "The Blueprint for Automating Business with Agentic AI"
+  const tagline = book?.tagline?.trim() || hero.tagline
+  const abstract =
+    book?.abstract?.trim() ||
+    hero.subtitle ||
+    "A practical guide to building and scaling agentic AI in your business."
+  const authorName = book?.authorName?.trim()
+  const publisherName = book?.publisherName?.trim()
+  const isbn = book?.isbn?.trim()
+  const coverUrl = book?.coverImageUrl?.trim()
+
+  const abstractParagraphs = abstract.split(/\n\n+/).filter(Boolean)
+  const coverAlt = `Cover: ${title}`
+
+  return (
+    <section
+      id="book"
+      className="book-section-bg relative w-full pt-10 sm:pt-14 lg:pt-16 pb-16 sm:pb-20 lg:pb-24"
+      aria-labelledby="book-section-title"
+    >
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-10 lg:gap-14 xl:gap-16 items-center max-w-[1600px] mx-auto">
+          <div className="flex justify-center lg:justify-start shrink-0">
+            <div role="img" aria-label={coverAlt} className="max-w-full">
+              <Book3D coverUrl={coverUrl} />
             </div>
-            
-            <h2 className="reveal-text text-[clamp(40px,5vw,64px)] font-serif italic text-text leading-tight">
-              Build Zero-Latency <span className="text-brand-indigo not-italic">Agents</span> in Minutes.
-            </h2>
-            
-            <p className="reveal-text text-lg text-muted font-medium max-w-xl">
-              From raw data to autonomous outreach. The Superhumanly Studio follows a museum-grade architectural blueprint for scaling intelligence.
-            </p>
+          </div>
 
-            <div className="space-y-4 pt-4">
-              {demoSteps.map((step, idx) => (
-                <button
-                  key={step.id}
-                  onClick={() => handleStepChange(idx)}
-                  className={`reveal-card w-full flex items-center gap-6 p-6 rounded-3xl transition-all border text-left ${
-                    activeStep === idx 
-                      ? 'bg-white border-brand-indigo/30 shadow-xl shadow-brand-indigo/5 translate-x-2' 
-                      : 'bg-white/40 border-border/50 hover:bg-white/60 hover:border-brand-indigo/20 grayscale opacity-60'
-                  }`}
-                >
-                  <div className={`p-4 rounded-2xl ${step.bg} ${step.color}`}>
-                    <step.icon size={24} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg text-text">{step.title}</h4>
-                    {activeStep === idx && (
-                      <p className="text-sm text-muted mt-1 font-medium italic">{step.content}</p>
-                    )}
-                  </div>
-                  <div className="ml-auto">
-                    {activeStep === idx ? (
-                      <div className="w-2 h-2 rounded-full bg-brand-indigo animate-pulse" />
-                    ) : (
-                      <ArrowRight size={16} className="text-muted/40" />
-                    )}
-                  </div>
-                </button>
+          <div className="flex flex-col items-start text-left max-w-2xl lg:max-w-none">
+            <div className="editorial-eyebrow mb-4 sm:mb-5">
+              <span className="editorial-eyebrow__rule" aria-hidden />
+              <span className="section-eyebrow !mb-0 text-muted">The Playbook</span>
+            </div>
+
+            <h2 id="book-section-title" className="editorial-heading editorial-heading--book mb-4">
+              {title}
+            </h2>
+
+            {tagline ? (
+              <p className="editorial-tagline mb-6 sm:mb-8 max-w-xl">{tagline}</p>
+            ) : null}
+
+            <div className="space-y-4 mb-8 sm:mb-10">
+              {abstractParagraphs.map((paragraph) => (
+                <p key={paragraph.slice(0, 48)} className="editorial-lede max-w-none">
+                  {paragraph}
+                </p>
               ))}
             </div>
-          </div>
 
-          {/* Interactive Debugger / Visualization */}
-          <div className="lg:w-1/2 w-full h-full flex flex-col pt-12 lg:pt-0">
-            <div className="bg-[#091b36] rounded-[40px] p-1 border-4 border-white shadow-[0_32px_120px_rgba(0,0,0,0.1)] overflow-hidden">
-               <div className="bg-white/5 backdrop-blur-md px-8 py-4 flex items-center justify-between border-b border-white/10">
-                 <div className="flex gap-2">
-                   <div className="w-3 h-3 rounded-full bg-red-400" />
-                   <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                   <div className="w-3 h-3 rounded-full bg-green-400" />
-                 </div>
-                 <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] font-mono">Terminal: Agent_Init.sh</div>
-                 <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[9px] font-bold rounded border border-green-400/30">RUNTIME LIVE</span>
-               </div>
-
-               <div className="p-8 md:p-12 min-h-[500px] flex flex-col">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeStep}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex-1 flex flex-col items-center justify-center text-center space-y-12"
-                    >
-                      {/* Central Visual */}
-                      <div className="relative">
-                        <motion.div 
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 4, repeat: Infinity }}
-                          className={`w-36 h-36 rounded-full ${demoSteps[activeStep].bg} flex items-center justify-center border-4 border-white/10`}
+            {(authorName || publisherName || isbn) && (
+              <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-text2 mb-8 sm:mb-10">
+                {authorName ? (
+                  <div>
+                    <dt className="sr-only">Author</dt>
+                    <dd>
+                      <span className="text-text2/70">By </span>
+                      {book?.authorUrl ? (
+                        <a
+                          href={book.authorUrl}
+                          className="font-medium text-text hover:underline underline-offset-4"
                         >
-                          {(() => {
-                            const Icon = demoSteps[activeStep].icon;
-                            return <Icon size={64} className={demoSteps[activeStep].color} />;
-                          })()}
-                        </motion.div>
-                        
-                        {/* Dynamic connection lines simulation */}
-                        <div className="absolute inset-0 -z-10 bg-brand-indigo/10 blur-3xl opacity-30 rounded-full" />
-                      </div>
-
-                      <div className="space-y-4 max-w-sm">
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm font-mono text-[13px] text-brand-indigo/70 leading-relaxed italic">
-                          "{demoSteps[activeStep].prompt}"
-                        </div>
-                        {isBuilding ? (
-                          <div className="flex items-center justify-center gap-3">
-                            <span className="w-2 h-2 rounded-full bg-brand-indigo animate-bounce [animation-delay:-0.3s]" />
-                            <span className="w-2 h-2 rounded-full bg-brand-indigo animate-bounce [animation-delay:-0.15s]" />
-                            <span className="w-2 h-2 rounded-full bg-brand-indigo animate-bounce" />
-                          </div>
-                        ) : (
-                          <CheckCircle2 size={24} className="text-green-500 mx-auto opacity-40" />
-                        )}
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-
-                  <div className="mt-auto pt-10">
-                    <button
-                      onClick={handleRunDemo}
-                      disabled={isBuilding}
-                      className="w-full h-16 bg-white text-[#091b36] rounded-2xl font-black text-[13px] uppercase tracking-[0.3em] hover:bg-white/90 transition-all flex items-center justify-center gap-4 group"
-                    >
-                      {isBuilding ? (
-                        <>Injesting Node Graph...</>
+                          {authorName}
+                        </a>
                       ) : (
-                        <>
-                          <Sparkles size={16} /> Deploy Autonomous Sandbox <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
-                        </>
+                        <span className="font-medium text-text">{authorName}</span>
                       )}
-                    </button>
-                    <p className="text-[10px] text-white/30 text-center mt-4 font-mono font-bold uppercase tracking-widest">Powered by Vellux Orchestration Engine v4.0</p>
+                    </dd>
                   </div>
-               </div>
+                ) : null}
+                {publisherName ? (
+                  <div>
+                    <dt className="sr-only">Publisher</dt>
+                    <dd className="text-text2/80">{publisherName}</dd>
+                  </div>
+                ) : null}
+                {isbn ? (
+                  <div>
+                    <dt className="sr-only">ISBN</dt>
+                    <dd className="font-mono text-xs text-text2/70">ISBN {isbn}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+              <Link to="/#final-cta" className="btn-cta-primary w-full sm:w-auto text-center">
+                Get the playbook
+              </Link>
+              <Link
+                to="/blog"
+                className="btn-cta-secondary group w-full sm:w-auto justify-center sm:justify-start"
+              >
+                Read excerpts
+                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
+              </Link>
             </div>
           </div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }

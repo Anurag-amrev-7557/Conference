@@ -39,7 +39,13 @@ export function isPublicMarketingPath(pathname: string): boolean {
   if ((PUBLIC_ROUTE_PATHS as readonly string[]).includes(pathname)) {
     return true
   }
-  return /^\/blog\/[^/]+\/?$/.test(pathname)
+  if (/^\/blog\/[^/]+\/?$/.test(pathname)) return true
+  return /^\/events\/[^/]+\/?$/.test(pathname)
+}
+
+export function parseEventId(pathname: string): string | null {
+  const match = pathname.match(/^\/events\/([^/]+)\/?$/)
+  return match ? match[1] : null
 }
 
 export function parseBlogSlug(pathname: string): string | null {

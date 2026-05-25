@@ -1,127 +1,194 @@
+import { useEffect, useRef, type SVGProps } from "react"
 import { Link } from "react-router-dom"
+import { ArrowRight } from "lucide-react"
 import { useWebsiteData } from "./WebsiteDataProvider"
 
-// Custom high-fidelity SVG Icons for the Big 4 Socials (Monograph Wireframe Style)
-const LinkedInIcon = (props: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>
-  </svg>
-)
-const YoutubeIcon = (props: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/>
-    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
-  </svg>
-)
-const InstagramIcon = (props: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-  </svg>
-)
-const XIcon = (props: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M20 4L4 20"/>
+type IconProps = SVGProps<SVGSVGElement>
+
+const LinkedInIcon = (props: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect width="4" height="12" x="2" y="9" />
+    <circle cx="4" cy="4" r="2" />
   </svg>
 )
 
-export function Footer() {
-  const { data } = useWebsiteData()
-  const { socials } = data.settings.navigation
+const YoutubeIcon = (props: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z" />
+    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
+  </svg>
+)
 
-  const iconMap = {
-    LinkedIn: LinkedInIcon,
-    Youtube: YoutubeIcon,
-    Instagram: InstagramIcon,
-    X: XIcon
+const InstagramIcon = (props: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+)
+
+const XIcon = (props: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+    <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+    <path d="M20 4L4 20" />
+  </svg>
+)
+
+const iconMap = {
+  LinkedIn: LinkedInIcon,
+  Youtube: YoutubeIcon,
+  Instagram: InstagramIcon,
+  X: XIcon,
+} as const
+
+function splitBrandName(name: string): { lead: string; trail: string | null } {
+  const match = name.match(/^(.+?)\s*[-–—]\s*(.+)$/)
+  if (!match) return { lead: name, trail: null }
+  return { lead: match[1].trim(), trail: match[2].trim() }
+}
+
+function FooterNavLink({ href, children }: { href: string; children: string }) {
+  const className = "site-footer__link"
+
+  if (href.startsWith("/")) {
+    return (
+      <Link to={href} className={className}>
+        {children}
+      </Link>
+    )
+  }
+
+  if (href.startsWith("#")) {
+    return (
+      <a href={href} className={className}>
+        {children}
+      </a>
+    )
   }
 
   return (
-    <footer className="py-10 bg-white border-t border-border/10 relative z-10">
-      <div className="w-full px-6 sm:px-12 lg:px-16">
-        
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 lg:gap-24 mb-20">
-          
-          {/* Identity Column */}
-          <div className="flex flex-col items-start gap-6 lg:col-span-1">
-            <div className="flex flex-col gap-1">
-              <span className="text-6xl font-serif italic text-text tracking-tighter">Superhumanly</span>
-            </div>
-            <p className="text-[16px] text-black leading-relaxed max-w-sm">
+    <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
+
+export function Footer() {
+  const footerRef = useRef<HTMLElement>(null)
+  const { data } = useWebsiteData()
+  const { appearance, settings } = data
+  const { socials, footerLinks, primaryCta } = settings.navigation
+  const { lead, trail } = splitBrandName(appearance.brandName)
+  const year = new Date().getFullYear()
+
+  useEffect(() => {
+    const el = footerRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("site-footer--visible")
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "-40px 0px", threshold: 0.05 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <footer ref={footerRef} className="site-footer">
+      <div className="site-footer__ambient" aria-hidden />
+
+      <div className="site-footer__inner w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+        <div className="site-footer__grid">
+          <div className="site-footer__brand">
+            <Link to="/" className="site-footer__mark">
+              <span className="editorial-heading site-footer__mark-text">
+                {lead}
+                {trail ? (
+                  <>
+                    {" "}
+                    <span className="editorial-accent">{trail}</span>
+                  </>
+                ) : null}
+              </span>
+            </Link>
+
+            <p className="editorial-lede site-footer__tagline">
               Orchestrating the future of automated business systems.
             </p>
+
+            <Link to={primaryCta.href} className="site-footer__registry group">
+              Join the registry
+              <ArrowRight
+                className="site-footer__registry-icon"
+                aria-hidden
+              />
+            </Link>
           </div>
 
-          {/* Navigation Column 1 */}
-          <div className="flex flex-col gap-8 lg:pl-10">
-            <span className="text-[11px] font-bold text-text uppercase tracking-widest">Section Index</span>
-              {[
-                { name: 'The Playbook', href: '/blog' },
-                { name: 'Founders Hub', href: '/community' },
-                { name: 'Strategy', href: '/#who-we-are' },
-                { name: 'Live Training', href: '/events' },
-                { name: "Join Registry", href: "/#final-cta" }
-              ].map((link) => {
-                const isInternal = link.href.startsWith('/');
+          <nav className="site-footer__nav" aria-label="Footer">
+            <div className="editorial-eyebrow site-footer__column-head">
+              <span className="editorial-eyebrow__rule" aria-hidden />
+              <h3 className="site-footer__column-title">Section Index</h3>
+            </div>
+            <ul className="site-footer__links">
+              {footerLinks.map((link) => (
+                <li key={link.id}>
+                  <FooterNavLink href={link.href}>{link.name}</FooterNavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-                if (isInternal) {
-                  return (
-                    <Link
-                      key={link.name}
-                      to={link.href}
-                      className="text-[15px] text-black hover:text-accent transition-colors font-medium tracking-wide"
-                    >
-                      {link.name}
-                    </Link>
-                  );
-                }
-
-                return (
-                  <a 
-                    key={link.name} 
-                    href={link.href}
-                    className="text-[15px] text-black hover:text-accent transition-colors font-medium tracking-wide"
-                  >
-                    {link.name}
-                  </a>
-                );
-              })}
-          </div>
-
-          {/* Socials Column */}
-          <div className="flex flex-col gap-8 lg:text-right lg:items-end">
-            <span className="text-[11px] font-bold text-text uppercase tracking-widest">Connection</span>
-            <div className="flex items-center gap-8">
+          <div className="site-footer__social">
+            <div className="editorial-eyebrow site-footer__column-head site-footer__column-head--end">
+              <span className="editorial-eyebrow__rule" aria-hidden />
+              <h3 className="site-footer__column-title">Connection</h3>
+            </div>
+            <ul className="site-footer__social-list">
               {socials.map((social) => {
-                const Icon = iconMap[social.platform]
+                const Icon = iconMap[social.platform as keyof typeof iconMap]
+                if (!Icon) return null
+
                 return (
-                  <a 
-                    key={social.id} 
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-black hover:text-accent transition-all hover:scale-110 ${social.platform === 'Youtube' ? 'scale-115' : ''}`}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </a>
+                  <li key={social.id}>
+                    <a
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="site-footer__social-btn"
+                      aria-label={social.platform}
+                    >
+                      <Icon className="site-footer__social-icon" />
+                    </a>
+                  </li>
                 )
               })}
-            </div>
-          </div>
-
-        </div>
-
-        {/* Global Bottom Bar */}
-        <div className="pt-10 border-t border-border/10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <span className="text-[11px] font-bold text-muted uppercase tracking-widest">
-            © 2026 Superhumanly AI Playbook.
-          </span>
-          <div className="flex items-center gap-8">
-            <span className="text-[11px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-text transition-colors">Privacy Policy</span>
-            <span className="text-[11px] font-bold text-muted uppercase tracking-widest cursor-pointer hover:text-text transition-colors">Terms of Service</span>
+            </ul>
           </div>
         </div>
 
+        <div className="site-footer__divider" aria-hidden />
+
+        <div className="site-footer__bar">
+          <p className="site-footer__copyright">
+            © {year} Superhumanly AI Playbook.
+          </p>
+          <nav className="site-footer__legal" aria-label="Legal">
+            <a href="#" className="site-footer__legal-link">
+              Privacy Policy
+            </a>
+            <a href="#" className="site-footer__legal-link">
+              Terms of Service
+            </a>
+          </nav>
+        </div>
       </div>
     </footer>
   )

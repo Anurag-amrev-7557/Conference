@@ -32,28 +32,28 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({
     });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="community-feed flex flex-col gap-4">
       {/* Feed Header / Controls */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 justify-between">
-        <div className="relative w-full sm:max-w-md group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-accent transition-colors" />
+      <div className="community-feed-controls z-20 flex flex-col gap-3 px-0 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="group relative w-full">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition-colors group-focus-within:text-accent" />
           <input
             type="text"
             placeholder="Search discussions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-12 bg-white rounded-2xl border border-border/40 pl-12 pr-4 text-sm focus:border-accent focus:ring-4 focus:ring-accent/5 transition-all outline-none"
+            className="community-feed-search h-11 w-full pl-11 pr-4 text-sm outline-none transition-all"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="flex bg-off p-1 rounded-xl border border-border/20">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <div className="community-feed-sort-wrap flex p-1">
             {(['New', 'Top'] as const).map(sort => (
               <button
                 key={sort}
                 onClick={() => setActiveSort(sort)}
-                className={`px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                  activeSort === sort ? 'bg-white text-text shadow-sm' : 'text-muted hover:text-text'
+                className={`community-feed-sort-btn rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] transition-all ${
+                  activeSort === sort ? 'bg-white text-text shadow-[0_4px_12px_rgba(0,0,0,0.08)]' : 'text-muted hover:text-text'
                 }`}
               >
                 {sort}
@@ -63,16 +63,16 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({
           
           <button
             onClick={onCreateClick}
-            className="h-12 w-12 sm:w-auto sm:px-6 bg-accent text-white rounded-xl flex items-center justify-center gap-2 font-bold text-[12px] uppercase tracking-wider hover:bg-accent2 transition-all shadow-lg shadow-accent/20"
+            className="community-feed-cta inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-accent text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent2 sm:w-auto sm:px-5"
           >
             <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Start Discussion</span>
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.1em] whitespace-nowrap">Start Discussion</span>
           </button>
         </div>
       </div>
 
       {/* Posts List */}
-      <div className="grid grid-cols-1 gap-6 pb-20">
+      <div className="community-post-list pb-20">
         <AnimatePresence mode="popLayout">
           {filteredPosts.length > 0 ? (
             filteredPosts.map((post) => (
@@ -87,12 +87,12 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="py-20 text-center bg-white rounded-[32px] border border-dashed border-border/40"
+              className="rounded-[24px] border border-dashed border-border/50 bg-white py-20 text-center"
             >
-              <div className="text-muted font-serif italic text-xl">No discussions found matching your search.</div>
+              <div className="text-xl font-medium text-muted">No discussions found matching your search.</div>
               <button 
                 onClick={() => setSearchQuery('')}
-                className="mt-4 text-accent font-bold uppercase tracking-widest text-[10px]"
+                className="mt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent"
               >
                 Clear Search
               </button>

@@ -24,7 +24,7 @@ function isPublicApiRoute(path: string): boolean {
  * Split CORS: public vs admin origin lists (SEC-05 D-13–D-15).
  */
 export function createCorsMiddleware(): RequestHandler {
-  const defaultPublic = ['http://localhost:5173', 'http://localhost:5174', 'https://superhumanly-thoughts.com'];
+  const defaultPublic = ['http://localhost:5173', 'http://localhost:5174'];
   const publicOrigins = parseOrigins(process.env.ALLOWED_ORIGINS, defaultPublic);
   const adminOrigins = parseOrigins(process.env.ADMIN_ALLOWED_ORIGINS, publicOrigins);
   const isProduction = process.env.NODE_ENV === 'production';
@@ -35,10 +35,8 @@ export function createCorsMiddleware(): RequestHandler {
     const adminRoute = isAdminRoute(path);
 
     if (isProduction && !origin) {
-      if (req.method === 'GET' && path === '/health') {
-        return cors({ origin: false })(req, res, next);
-      }
-      return res.status(403).json({ error: 'Origin header required' });
+      // Non-browser or same-origin requests may legitimately omit Origin in production.
+      return cors({ origin: false, credentials: false })(req, res, next);
     }
 
     if (!origin) {
@@ -48,7 +46,7 @@ export function createCorsMiddleware(): RequestHandler {
     const allowList = adminRoute ? adminOrigins : isPublicApiRoute(path) ? publicOrigins : publicOrigins;
 
     if (!allowList.includes(origin)) {
-      return res.status(403).json({ error: 'Cross-Origin Request Blocked by Vellux Security Policy' });
+      return res.status(403).json({ error: 'Cross-Origin Request Blocked by Book Website Security Policy (legacy: Vellux policy)' });
     }
 
     const useCredentials = adminRoute && adminOrigins.includes(origin);

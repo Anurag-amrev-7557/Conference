@@ -3,7 +3,7 @@ import { WaitlistForm } from "../landing/WaitlistForm"
 import { useWebsiteData } from "../WebsiteDataProvider"
 import { renderSectionHeading } from "../../lib/renderSectionTitle"
 
-export function FinalCTA() {
+export function FinalCTA({ forceDark = false }: { forceDark?: boolean }) {
   const { data } = useWebsiteData()
   const copy = data.settings.sections?.finalCta
   const sectionRef = useRef<HTMLElement>(null)
@@ -27,7 +27,7 @@ export function FinalCTA() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="final-cta" className="final-cta-section">
+    <section ref={sectionRef} id="final-cta" className={`final-cta-section ${forceDark ? 'final-cta-section--dark' : ''}`}>
       <div className="final-cta-section__ambient" aria-hidden />
       <div className="final-cta-section__glow" aria-hidden />
 

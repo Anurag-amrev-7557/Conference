@@ -6,17 +6,39 @@
 - ✅ **v1.1 Premium Presentation & SEO Dominance** — Phases 10–16 (complete 2026-05-19)
 - ⏸️ **v1.2 Apple-Grade Premium Experience** — Phases 17–23 (paused after planning; see archived phase details below)
 - ⏸️ **v1.3 Marketing Integration & Admin Production Readiness** — Phases 24–27 (paused; marketing deferred)
-- 🚧 **v1.4 Book Production & CMS Command Center** — Phases 28–31 (current)
+- ✅ **v1.4 Book Production & CMS Command Center** — Phases 28–31 (complete 2026-05-21)
+- 🚀 **v1.5 Conference Launch** — Phases 32–33 (active)
 
 ## Overview
 
+**v1.5** (active) adds a premium conference landing page inspired by ai4.io to attract users to the event.
+
 **v1.4** makes the book website production-ready: hardened SEO/crawl/prerender/deploy paths, expanded `SiteContent` for all visitor-visible copy, admin editors for media/SEO/scripts/community moderation, and release smoke checks.
 
-**Product order:** **Phase 28** SEO infra → **Phase 29** content model → **Phase 30** admin UI → **Phase 31** release validation.
+**Product order:** **Phase 32** Conference UI Development → **Phase 33** Integration & Final Polish.
 
 **v1.1** (complete) delivered crawlable SEO, prerender, admin SEO tools. **v1.3** (paused) covers marketing-stack integration when resumed.
 
-## Phases (v1.4 — active)
+## Phases (v1.5 — active)
+
+- [x] **Phase 32: Conference UI Development** — Build out `ConferencePage` and all supporting sections (Hero, Social Proof, Speakers, Agenda, Tickets) with dark-theme styling.
+- [x] **Phase 33: Integration & Navigation** — Add routing, link in global Navbar, verify responsive behavior and contrast.
+
+## Phase Details (v1.5)
+
+### Phase 32: Conference UI Development
+
+**Goal:** Build the individual components of the ai4.io-inspired conference page.
+**Requirements:** CONF-02, CONF-03, CONF-04, CONF-05
+**Depends on:** v1.1 SEO foundation
+
+### Phase 33: Integration & Navigation
+
+**Goal:** Route the conference page and ensure it looks premium across all breakpoints.
+**Requirements:** CONF-01
+**Depends on:** Phase 32
+
+## Phases (v1.4 — completed)
 
 - [x] **Phase 28: SEO Production Hardening** — `SITE_URL`, Docker prerender strategy, `/events/:id` in sitemap/prerender, premium social meta, deploy docs.
 - [x] **Phase 29: Admin Content Model Expansion** — `SiteContent` keys for sections, catalog heroes, route SEO; wire public components; visibility fix.
@@ -441,4 +463,4 @@ Plans:
 </details>
 
 ---
-*Roadmap updated: 2026-05-19 — v1.2 Phases 17–23; Phase 17 navbar + hero first; v1.1 complete*
+*Roadmap updated: 2026-05-25 — v1.5 Phase 32-33; v1.4 complete*

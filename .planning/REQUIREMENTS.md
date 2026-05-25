@@ -1,7 +1,7 @@
 # Requirements: Book Website
 
 **Defined:** 2026-05-20
-**Milestone:** v1.4 Book Production & CMS Command Center (active) · v1.3 Marketing Integration (paused) · v1.2 Apple-Grade (archived planning) · v1.1 shipped (Phases 10–16)
+**Milestone:** v1.5 Conference Launch (active) · v1.4 (completed) · v1.3 Marketing Integration (paused) · v1.2 Apple-Grade (archived planning) · v1.1 shipped (Phases 10–16)
 **Core Value:** Visitors can discover the book, engage with content and community, and convert to leads — while editors operate a secure, reliable CMS backed by production infrastructure, marketing intelligence, and live content controls.
 
 ## v1.1 Requirements
@@ -181,7 +181,7 @@ Deferred enhancements beyond v1.2 roadmap scope.
 - [x] **SEO-04:** Documented procedure to re-run prerender after blog/event/global SEO publish
 - [x] **SEO-05:** Per-route default title/description/OG editable in admin (backed by `SiteContent`, not only `routes.ts`)
 - [x] **SEO-06:** Premium social cards (`og:site_name`, locale, `twitter:site` where applicable)
-- [ ] **SEO-07:** Prerendered HTML reflects published appearance tokens where feasible (deferred — client theme injection; document in runbook)
+- [ ] **SEO-07:** Prerendered HTML reflects published appearance tokens where feasible (partial — prerender waits for `--color-accent` inline vars; full `:root`/`color-scheme` static bake → v1.2 Phase 23)
 
 ### Admin command center (ADM-05 … ADM-14)
 
@@ -235,9 +235,27 @@ Deferred enhancements beyond v1.2 roadmap scope.
 - [ ] **REL-03**: Deployment docs capture required env vars, hostnames, base paths, and rollback notes for the combined stack
 - [ ] **REL-04**: Production readiness checks can be repeated by another operator without relying on hidden local setup knowledge
 
+## v1.5 Requirements — Conference Launch
+
+**Focus:** Building an ai4.io-inspired conference page to attract users, integrated seamlessly with the existing site architecture.
+
+### Conference UI (CONF-01 … CONF-05)
+
+- [ ] **CONF-01:** Add `/conference` route and global navigation link.
+- [ ] **CONF-02:** Develop `ConferenceHero` section with high-impact, dark-themed aesthetics and clear primary CTA.
+- [ ] **CONF-03:** Develop `ConferenceSocialProof` section (e.g., scrolling logos/metrics).
+- [ ] **CONF-04:** Develop `ConferenceSpeakers` and `ConferenceAgenda` with interactive elements but no dashboard complexity.
+- [ ] **CONF-05:** Develop `ConferenceTickets` section displaying pricing tiers cleanly in premium cards.
+
 ## Traceability
 
-### v1.4 (active)
+### v1.5 (active)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CONF-01 … CONF-05 | Phase 32 | Pending |
+
+### v1.4 (completed)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -320,10 +338,10 @@ Deferred enhancements beyond v1.2 roadmap scope.
 | CRAWL-01 … PERF-03 | Phases 10–16 | See git history / phase summaries |
 
 **Coverage:**
-- v1.4 requirements: 25 total
-- Mapped to phases: 25
+- v1.5 requirements: 5 total
+- Mapped to phases: 5
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-20*
-*Last updated: 2026-05-21 — v1.4 book production active; v1.3 paused*
+*Last updated: 2026-05-25 — v1.5 conference active; v1.4 complete*

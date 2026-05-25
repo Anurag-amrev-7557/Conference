@@ -39,10 +39,10 @@ if (/initial=\{[^}]*hidden|opacity:\s*0[^1-9]/.test(hero) && /motion\.h1|variant
 }
 ok('Hero avoids opacity-zero LCP pattern')
 
-if (!/font-sans/.test(hero) || /font-serif/.test(hero.split('<h1')[1]?.split('</h1>')[0] ?? '')) {
-  fail('Hero h1 should use sans, not serif')
+if (!/editorial-heading/.test(hero) || !/editorial-accent/.test(hero)) {
+  fail('Hero h1 should use shared editorial typography')
 }
-ok('Hero h1 uses sans typography')
+ok('Hero h1 uses editorial typography')
 
 if (!/btn-cta-primary/.test(hero) || !/btn-cta-secondary/.test(hero)) fail('Hero missing button pair')
 ok('Hero uses primary/secondary buttons')

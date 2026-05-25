@@ -86,62 +86,57 @@ export const CommunityPage: React.FC = () => {
   return (
     <>
     <SeoHead seo={seo} />
-    <div className="min-h-screen bg-off selection:bg-accent/20">
+    <div className="community-page-canvas min-h-screen overflow-x-hidden selection:bg-accent/20">
       <Navbar />
       
-      <main className="container mx-auto px-6 sm:px-10 pt-32 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <main className="community-page-shell mx-auto pt-25 pb-20 sm:pt-25">
+        <div className="community-page-grid border-t border-border/65">
           
           {/* Left Sidebar: Navigation & Identity */}
-          <aside className="lg:col-span-3 space-y-10 order-2 lg:order-1">
-            <div className="bg-white p-8 rounded-[40px] border border-border/40 shadow-alabaster">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-accent/5 rounded-2xl flex items-center justify-center border border-accent/10">
-                  <Plus className="w-5 h-5 text-accent" />
+          <aside className="community-page-sidebar order-2 lg:order-1 lg:self-start">
+            <div className="community-sidebar-rail pl-2">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/20 bg-accent/5">
+                  <Plus className="h-4 w-4 text-accent" />
                 </div>
-                <h3 className="text-lg font-serif italic text-text">Spaces</h3>
+                <h3 className="text-md font-semibold uppercase mb-0 tracking-[0.14em] text-muted">Spaces</h3>
               </div>
-              <nav className="space-y-2">
-                {categories.map(cat => (
+
+              <nav className="space-y-1.5">
+                {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => { setActiveCategory(cat); setSelectedPostId(null); }}
-                    className={`w-full text-left px-5 py-3 rounded-2xl text-sm font-bold transition-all ${
-                      activeCategory === cat 
-                        ? 'bg-accent text-white shadow-lg shadow-accent/20' 
-                        : 'text-muted hover:bg-off hover:text-text'
+                    className={`community-sidebar-item w-full rounded-md px-3 py-2 text-left text-base ${
+                      activeCategory === cat ? 'community-sidebar-item--active' : ''
                     }`}
                   >
                     {cat}
                   </button>
                 ))}
               </nav>
-            </div>
 
-            <div className="bg-text text-white p-8 rounded-[40px] border border-white/10 shadow-alabaster overflow-hidden relative group">
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <TrendingUp className="w-5 h-5 text-accent" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-accent">Network Growth</span>
+              <div className="my-5 border-t border-border/65" />
+
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-accent" />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Network Growth</span>
+              </div>
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted">Members</span>
+                  <span className="font-semibold text-text">2.5K</span>
                 </div>
-                <h4 className="text-2xl font-serif italic mb-4">Community Reach</h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                    <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Members</span>
-                    <span className="text-xl font-medium">2.5K</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Active Now</span>
-                    <span className="text-xl font-medium text-accent">142</span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted">Active now</span>
+                  <span className="font-semibold text-accent">142</span>
                 </div>
               </div>
-              <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-accent/20 rounded-full blur-3xl pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
             </div>
           </aside>
 
           {/* Center Column: Post Feed or Detail View */}
-          <section className="lg:col-span-9 space-y-12 order-1 lg:order-2">
+          <section className="community-page-main order-1 space-y-6 lg:order-2">
             <AnimatePresence mode="wait">
               {selectedPostId && selectedPost ? (
                 <motion.div
@@ -149,51 +144,54 @@ export const CommunityPage: React.FC = () => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-10"
+                  className="space-y-8 pt-4"
                 >
                   {/* Detail Navigation */}
                   <button 
                     onClick={() => setSelectedPostId(null)}
-                    className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-muted hover:text-accent transition-colors mb-4"
+                    className="mb-2 cursor-pointer inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-accent border border-border/65 rounded-full px-4 py-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Feed
                   </button>
 
                   {/* Detailed Post View */}
-                  <div className="bg-white rounded-[40px] border border-border/40 p-10 shadow-alabaster">
-                    <div className="flex items-center gap-3 mb-8">
-                       <span className="px-4 py-1.5 bg-accent/5 border border-accent/10 rounded-full text-[10px] font-black uppercase tracking-widest text-accent">
-                        {selectedPost.category}
-                      </span>
-                      <span className="text-[11px] text-muted font-bold ml-auto uppercase tracking-widest">
-                        Published {new Date(selectedPost.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
+                  <div className="community-detail-wrap mt-2">
 
-                    <h1 className="text-4xl sm:text-5xl font-serif italic text-text mb-8 leading-tight">
-                      {selectedPost.title}
-                    </h1>
-
-                    <div className="flex items-center gap-4 mb-10 pb-10 border-b border-border/40">
+                    <div className="flex items-center gap-4 pb-4">
                       <img 
                         src={selectedPost.authorAvatar} 
                         alt={selectedPost.authorName} 
-                        className="w-14 h-14 rounded-2xl object-cover border border-border/40 shadow-sm"
+                        className="w-12 h-12 rounded-full object-cover border border-border/40 shadow-sm"
                       />
-                      <div>
-                        <p className="text-lg font-bold text-text mb-1">{selectedPost.authorName}</p>
-                        <p className="text-xs font-bold text-muted uppercase tracking-widest">{selectedPost.authorRole}</p>
+                      <div className="flex flex-col items-start">
+                        <div className="flex items-center gap-1">
+                          <span className="rounded-full text-base text-accent">
+                            {selectedPost.category}
+                          </span>
+                          <span className="text-black text-sm" aria-hidden>•</span>
+                          <span className="text-sm font-normal text-muted">
+                            {new Date(selectedPost.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-base font-semibold text-text">{selectedPost.authorName}</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{selectedPost.authorRole}</p>
+                        </div>
                       </div>
                       <div className="ml-auto flex items-center gap-4">
-                        <div className="text-center px-6 border-l border-border/40">
+                        <div className="border-l border-border/40 px-6 text-center">
                            <p className="text-2xl font-medium text-text">{selectedPost.votes}</p>
-                           <p className="text-[10px] font-black uppercase tracking-widest text-muted">Upvotes</p>
+                           <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Upvotes</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="prose prose-slate max-w-none text-lg text-text2 leading-relaxed font-light mb-12">
+                    <h1 className="mb-3 text-3xl font-normal leading-tight tracking-tight text-text sm:text-5xl">
+                      {selectedPost.title}
+                    </h1>
+
+                    <div className="prose prose-slate max-w-none text-[1.03rem] leading-7 text-text2">
                       {selectedPost.content}
                     </div>
 
@@ -210,14 +208,14 @@ export const CommunityPage: React.FC = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-12"
+                  className="space-y-8"
                 >
-                  <div className="flex flex-col gap-4">
-                    <span className="text-[12px] font-black text-accent uppercase tracking-[0.4em]">Founder Hub</span>
-                    <h1 className="text-5xl sm:text-7xl font-serif italic text-text leading-tight">
-                      Agentic <span className="text-accent font-normal not-italic">Networking</span>.
+                  <div className="space-y-3 pb-2 mb-0 mt-4">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">Founder Hub</span>
+                    <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight text-text sm:text-5xl">
+                      Agentic <span className="text-accent">Networking</span>
                     </h1>
-                    <p className="text-xl text-muted max-w-2xl font-light leading-relaxed">
+                    <p className="max-w-4xl text-base leading-7 text-muted">
                       Connect with the world's most innovative AI founders and builders. Peer-vetted strategic discussions on scaling business with artificial intelligence.
                     </p>
                   </div>

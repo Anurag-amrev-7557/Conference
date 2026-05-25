@@ -1,97 +1,118 @@
-import { motion, useInView } from "framer-motion"
-import { useRef } from "react"
+import { useEffect, useRef, type CSSProperties } from "react"
 import { ArrowRight, BookOpen } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 import { Link } from "react-router-dom"
 
 export function BlogSection() {
   const { data } = useWebsiteData()
-  const articles = data.articles.filter(a => a.isPublished).slice(0, 3)
+  const articles = data.articles.filter((a) => a.isPublished).slice(0, 3)
   const sectionRef = useRef<HTMLElement>(null)
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
+  const layout =
+    articles.length <= 1 ? "featured" : articles.length === 2 ? "duo" : "trio"
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("playbook-section--visible")
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "-60px 0px", threshold: 0.06 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <section
-      ref={sectionRef}
-      id="dispatch"
-      className="relative py-24 bg-white border-b border-border/20"
-    >
-      <div className="container mx-auto px-6 sm:px-10 relative z-10">
-        
-        {/* Simplified Section Header */}
-        <div className="text-center mb-20">
-          <motion.span
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="text-[12px] font-bold text-accent uppercase tracking-[0.4em] mb-4 block"
+    <section ref={sectionRef} id="dispatch" className="playbook-section">
+      <div className="playbook-section__ambient" aria-hidden />
+
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">
+        <header className="playbook-section__header flex flex-col items-center text-center max-w-3xl mx-auto mb-12 sm:mb-14 lg:mb-16">
+          <div className="editorial-eyebrow editorial-eyebrow--center mb-6 sm:mb-7">
+            <span className="editorial-eyebrow__rule" aria-hidden />
+            <span className="section-eyebrow !mb-0 text-muted">The Playbook</span>
+            <span className="editorial-eyebrow__rule" aria-hidden />
+          </div>
+
+          <h2 className="editorial-heading editorial-heading--section mb-0">
+            Latest <span className="italic editorial-accent">Automation</span> Strategies
+          </h2>
+        </header>
+
+        {articles.length > 0 ? (
+          <ul
+            className={`playbook-articles playbook-articles--${layout} list-none p-0 m-0`}
           >
-            The Playbook
-          </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="text-[clamp(32px,5vw,52px)] font-serif not-italic text-text leading-tight"
-          >
-            Latest <span className="text-accent font-normal italic mx-1">Automation</span> Strategies
-          </motion.h2>
-        </div>
-
-        {/* Simplified Article Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
-          {articles.map((article, idx) => (
-            <motion.article
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: idx * 0.1, duration: 0.6 }}
-              className="group flex flex-col"
-            >
-              <Link to={`/blog/${article.slug}`} className="flex flex-col flex-1">
-                {/* Thumbnail */}
-                <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-off shadow-sm group-hover:shadow-md transition-all duration-500">
-                  <img
-                    src={article.thumbnail}
-                    alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-[10px] font-bold text-accent uppercase tracking-[0.1em]">{article.category}</span>
-                    <div className="w-1 h-1 rounded-full bg-border" />
-                    <span className="text-[10px] font-medium text-muted uppercase tracking-widest">{article.time} READ</span>
+            {articles.map((article, idx) => (
+              <li
+                key={article.id}
+                className="playbook-article-card group"
+                style={{ "--article-i": idx } as CSSProperties}
+              >
+                <Link
+                  to={`/blog/${article.slug}`}
+                  className={`playbook-article-card__link ${
+                    layout === "featured" ? "playbook-article-card__link--featured" : ""
+                  }`}
+                >
+                  <div className="playbook-article-card__media">
+                    <img
+                      src={article.thumbnail}
+                      alt=""
+                      width={640}
+                      height={400}
+                      loading="lazy"
+                      className="playbook-article-card__img"
+                    />
                   </div>
-                  
-                  <h3 className="text-3xl mb-3 group-hover:text-accent transition-colors">
-                    {article.title}
-                  </h3>
-                  <p className="text-[17px] text-black leading-relaxed mb-6 font-light">
-                    {article.excerpt}
-                  </p>
 
-                  <div className="mt-auto flex items-center gap-2 text-text font-bold text-[11px] uppercase tracking-widest group-hover:text-accent transition-colors cursor-pointer">
-                    Get the Strategy <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <div className="playbook-article-card__body">
+                    <p className="playbook-article-card__meta">
+                      <span className="playbook-article-card__category">{article.category}</span>
+                      <span className="playbook-article-card__meta-dot" aria-hidden />
+                      <span>{article.time} read</span>
+                    </p>
+
+                    <h3 className="playbook-article-card__title">{article.title}</h3>
+                    <p className="playbook-article-card__excerpt editorial-lede max-w-none">
+                      {article.excerpt}
+                    </p>
+
+                    <span className="playbook-article-card__cta">
+                      Get the strategy
+                      <ArrowRight
+                        className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                        aria-hidden
+                      />
+                    </span>
                   </div>
-                </div>
-              </Link>
-            </motion.article>
-          ))}
-        </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="playbook-section__empty editorial-lede text-center max-w-lg mx-auto">
+            New playbook guides are on the way. Browse the full library for frameworks and
+            strategies.
+          </p>
+        )}
 
-        {/* Explore More - Simplified */}
-        <motion.div
-           initial={{ opacity: 0 }}
-           animate={isInView ? { opacity: 1 } : {}}
-           transition={{ delay: 0.6 }}
-           className="mt-20 flex justify-center"
-        >
-           <Link to="/blog" className="flex items-center gap-3 px-8 py-4 rounded-full border border-border hover:border-accent hover:bg-accent/5 transition-all duration-300 group">
-             <BookOpen className="w-4 h-4 text-accent" />
-             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-muted group-hover:text-text">View Playbook</span>
-           </Link>
-        </motion.div>
+        <div className="playbook-section__footer">
+          <Link to="/blog" className="btn-cta-secondary group">
+            <BookOpen className="w-4 h-4 text-accent" aria-hidden />
+            View playbook
+            <ArrowRight
+              className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden
+            />
+          </Link>
+        </div>
       </div>
     </section>
   )

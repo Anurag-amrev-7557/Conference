@@ -129,8 +129,11 @@ async function prerenderPath(page, path) {
       const title = document.title?.trim() || ''
       const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href') || ''
       const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content') || ''
+      const accent = document.documentElement.style.getPropertyValue('--color-accent')?.trim()
       const hostTitle = title === window.location.host || title === '127.0.0.1'
       if (title.length < 4 || hostTitle || !ogTitle || ogTitle.length < 4) return false
+      // SEO-07 partial: bake CMS appearance vars set by ThemeSynchronizer before snapshot
+      if (!accent || accent.length < 3) return false
       if (blogSlug) {
         return canonical.includes(blogSlug) && window.location.pathname.includes(blogSlug)
       }

@@ -146,6 +146,9 @@ Restore: `./scripts/restore-sqlite.sh /path/to/backup.db` then `docker compose u
 - [ ] `GET /robots.txt` → references sitemap, disallows `/admin`
 - [ ] Admin login at `/admin` with rotated password
 - [ ] View Source on `/` shows title, canonical, `og:site_name` after prerender
+- [ ] View Source on `/` includes inline `style` on `<html>` with `--color-accent` (CMS appearance; SEO-07 partial)
+
+**Note:** After `prisma` schema changes, run `cd server && npx prisma generate` and restart the API so `/api/v1/seo/prerender-paths` sees new fields.
 
 ## 9. Operational notes
 

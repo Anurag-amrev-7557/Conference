@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ChevronUp, ChevronDown, MessageSquare, Pin, Clock } from 'lucide-react';
+import { ChevronUp, ChevronDown, MessageSquare, Pin, Share2, MoreHorizontal } from 'lucide-react';
 import type { CommunityPost } from '../../lib/websiteData';
 
 function timeAgo(date: string) {
@@ -29,69 +29,80 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onVote, onClick }) => 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="bg-white rounded-[32px] border border-border/40 p-6 sm:p-8 hover:border-accent/30 transition-all shadow-alabaster group cursor-pointer"
+      className="community-post-card group cursor-pointer px-0 py-0 transition-all duration-200"
       onClick={() => onClick(post.id)}
     >
-      <div className="flex gap-6">
-        {/* Voting Sidebar */}
-        <div className="flex flex-col items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); onVote(post.id, 1); }}
-            className="p-1.5 rounded-lg hover:bg-accent/5 transition-colors text-muted hover:text-accent"
-          >
-            <ChevronUp className="w-6 h-6" />
-          </button>
-          <span className="text-[14px] font-bold text-text tabular-nums">{post.votes}</span>
-          <button
-            onClick={(e) => { e.stopPropagation(); onVote(post.id, -1); }}
-            className="p-1.5 rounded-lg hover:bg-accent/5 transition-colors text-muted hover:text-accent"
-          >
-            <ChevronDown className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="px-3 py-1 bg-accent/5 border border-accent/10 rounded-full text-[10px] font-black uppercase tracking-widest text-accent">
-              {post.category}
-            </span>
+      <div className="rounded-lg bg-transparent p-3 text-text sm:p-3">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-2 text-[12px] text-muted">
+            <span className="font-semibold text-text">r/{post.category.toLowerCase().replace(/\s+/g, '')}</span>
+            <span aria-hidden>•</span>
+            <span>{timeAgo(post.createdAt)} ago</span>
             {post.isPinned && (
-              <div className="flex items-center gap-1 text-accent">
+              <div className="ml-1 flex items-center gap-1 text-accent">
                 <Pin className="w-3.5 h-3.5 fill-current" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Pinned</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.1em]">Pinned</span>
               </div>
             )}
-            <span className="text-[11px] text-muted font-medium flex items-center gap-1.5 ml-auto">
-              <Clock className="w-3.5 h-3.5" />
-              {timeAgo(post.createdAt)} ago
-            </span>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="ml-auto rounded-full p-1 text-muted hover:bg-off hover:text-text"
+              aria-label="More options"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-medium text-text mb-4 leading-tight group-hover:text-accent transition-colors">
+          <h3 className="community-post-title mb-2 text-[1.45rem] font-semibold leading-tight tracking-tight text-text sm:text-[1.7rem]">
             {post.title}
           </h3>
           
-          <p className="text-muted text-[15px] leading-relaxed line-clamp-3 mb-8">
+          <p className="community-post-body mb-4 line-clamp-4 text-[1rem] leading-7 text-muted">
             {post.content}
           </p>
 
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex items-center gap-3">
-              <img 
-                src={post.authorAvatar} 
-                alt={post.authorName} 
-                className="w-10 h-10 rounded-2xl object-cover border border-border/40"
+          <div className="mt-auto flex items-center gap-2 text-muted">
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-white px-2 py-1 text-[12px] font-medium hover:bg-off"
+            >
+              <ChevronUp
+                className="h-3.5 w-3.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVote(post.id, 1);
+                }}
               />
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-text">{post.authorName}</span>
-                <span className="text-[11px] text-muted uppercase tracking-wider font-semibold">{post.authorRole}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 px-4 py-2 bg-off rounded-2xl border border-border/20 text-muted">
-              <MessageSquare className="w-4 h-4" />
-              <span className="text-[13px] font-bold">{post.comments.length}</span>
+              <span className="px-0.5">{post.votes}</span>
+              <ChevronDown
+                className="h-3.5 w-3.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVote(post.id, -1);
+                }}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-white px-3 py-1 text-[12px] font-medium hover:bg-off"
+              aria-label="Comments"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              {post.comments.length}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-white px-3 py-1 text-[12px] font-medium hover:bg-off"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
+            <div className="ml-auto text-[12px] text-muted">
+              {post.authorName}
             </div>
           </div>
         </div>

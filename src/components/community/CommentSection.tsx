@@ -37,15 +37,13 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ comments, onAddC
   return (
     <div className="space-y-10">
       <div className="pt-10 border-t border-border/40">
-        <h3 className="text-xl font-serif italic text-text mb-8">Hub Discussion ({comments.length})</h3>
-        
-        {/* New Comment Input */}
-        <form onSubmit={handleSubmit} className="mb-12 relative">
+
+      <form onSubmit={handleSubmit} className="mb-12 relative">
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add your insights..."
-            className="w-full px-6 py-5 bg-off border border-border/40 rounded-[24px] focus:bg-white focus:border-accent transition-all text-sm outline-none resize-none min-h-[120px]"
+            className="w-full px-6 py-5 border border-border/40 rounded-[24px] focus:bg-white focus:border-accent transition-all text-sm outline-none resize-none min-h-[120px]"
           />
           <button
             type="submit"
@@ -55,7 +53,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ comments, onAddC
             <Send className="w-4 h-4" />
           </button>
         </form>
-
         {/* Comments List */}
         <div className="space-y-8">
           {comments.length > 0 ? (

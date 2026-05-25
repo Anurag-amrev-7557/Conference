@@ -1,10 +1,9 @@
 /**
- * Email-agent integration is deferred to Phase 3 (MKT-*).
- * This modal uses mailto until the book API proxies /email-agent/process.
+ * Email-agent integration via book API proxy (Phase 3: MKT-01, D-07, D-08).
  */
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, X, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { Mail, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AppDialog } from './ui/AppDialog';
 
 export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [email, setEmail] = useState('');
@@ -12,26 +11,38 @@ export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onCl
   const [body, setBody] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [responseMsg, setResponseMsg] = useState('');
+  const [agentReply, setAgentReply] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
 
-    // Phase 3 will proxy email-agent/process; no direct marketing-backend calls in Phase 2 (D-20).
-    const mailto = `mailto:support@bookwebsite.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-      `From: ${email}\n\n${body}`,
-    )}`;
-
     try {
-      window.location.href = mailto;
-      setResponseMsg(
-        'Your email client should open with this message. Full AI support chat ships in Phase 3.',
-      );
+      const response = await fetch('/api/v1/marketing/email-agent/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: email,
+          sender: 'support@bookwebsite.com',
+          subject,
+          body,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const reply = data.reply_body || data.message || 'Your request has been received and processed.';
+      setAgentReply(reply);
+      setResponseMsg('Your support request has been processed by our AI agent.');
       setStatus('success');
-    } catch {
+    } catch (error) {
+      console.error('Support request error:', error);
       setStatus('error');
       setResponseMsg(
-        'Support chat is temporarily unavailable. Email us at support@bookwebsite.com or try again later.',
+        `Support request failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please email support@bookwebsite.com directly.`,
       );
     }
   };
@@ -39,6 +50,7 @@ export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onCl
   const handleClose = () => {
     setStatus('idle');
     setResponseMsg('');
+    setAgentReply('');
     setEmail('');
     setSubject('');
     setBody('');
@@ -46,113 +58,99 @@ export function ContactSupportModal({ isOpen, onClose }: { isOpen: boolean; onCl
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-off/80 backdrop-blur-sm"
-        >
-          <motion.div
-            initial={{ scale: 0.95, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.95, y: 20 }}
-            className="w-full max-w-lg bg-surface border border-border rounded-2xl shadow-elite overflow-hidden relative"
+    <AppDialog
+      open={isOpen}
+      onOpenChange={(open) => { if (!open) handleClose(); }}
+      title="AI Support Agent"
+      description="Contact support via the email-agent proxy"
+    >
+      <div className="flex items-center gap-3 mb-6 -mt-2">
+        <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+          <Mail className="w-5 h-5" />
+        </div>
+        <p className="text-sm text-muted">Powered by our email-agent service</p>
+      </div>
+
+      {status === 'success' ? (
+        <div className="flex flex-col items-center justify-center py-4 text-center">
+          <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+          <h4 className="text-lg font-bold text-text mb-4">Agent Response</h4>
+          <div className="mb-6 p-4 rounded-lg bg-off border border-border text-left text-muted text-sm max-h-48 overflow-y-auto w-full">
+            {agentReply || responseMsg}
+          </div>
+          <p className="text-xs text-muted mb-6">
+            For further assistance, email us at <span className="text-accent font-mono">support@bookwebsite.com</span>
+          </p>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="min-h-11 px-6 py-2 bg-text text-white rounded-full text-sm font-medium hover:bg-accent transition-colors"
           >
-            <button
-              onClick={handleClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-off text-text2 hover:text-text transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            Close
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1.5">Email Address</label>
+            <input
+              type="email"
+              required
+              className="w-full min-h-11 px-4 py-3 bg-off border border-border rounded-xl text-text placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              placeholder="jane@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1.5">Subject</label>
+            <input
+              type="text"
+              required
+              className="w-full min-h-11 px-4 py-3 bg-off border border-border rounded-xl text-text placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              placeholder="e.g. Question about pricing"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1.5">Message</label>
+            <textarea
+              required
+              rows={4}
+              className="w-full px-4 py-3 bg-off border border-border rounded-xl text-base text-text placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none"
+              placeholder="How does your coverage compare?"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
+          </div>
 
-            <motion.div className="p-8">
-              <motion.div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-text">Email Support</h3>
-                  <p className="text-sm text-text2">Opens your mail app (AI agent in Phase 3)</p>
-                </div>
-              </motion.div>
+          {status === 'error' && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex gap-2 items-start">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{responseMsg || 'Failed to process request. Please email support@bookwebsite.com.'}</span>
+            </div>
+          )}
 
-              {status === 'success' ? (
-                <motion.div className="flex flex-col items-center justify-center py-8 text-center">
-                  <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-                  <h4 className="text-lg font-bold text-text mb-2">Ready to Send</h4>
-                  <p className="text-text2 mb-6 max-w-[80%]">{responseMsg}</p>
-                  <button
-                    onClick={handleClose}
-                    className="mt-6 px-6 py-2 bg-text text-white rounded-full text-sm font-medium hover:bg-text2 transition-colors"
-                  >
-                    Close
-                  </button>
-                </motion.div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text2 mb-1.5">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      className="w-full px-4 py-3 bg-off border border-border rounded-xl text-text placeholder-text2/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
-                      placeholder="jane@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text2 mb-1.5">Subject</label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full px-4 py-3 bg-off border border-border rounded-xl text-text placeholder-text2/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
-                      placeholder="e.g. Question about pricing"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text2 mb-1.5">Message</label>
-                    <textarea
-                      required
-                      rows={4}
-                      className="w-full px-4 py-3 bg-off border border-border rounded-xl text-text placeholder-text2/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none"
-                      placeholder="How does your coverage compare?"
-                      value={body}
-                      onChange={(e) => setBody(e.target.value)}
-                    />
-                  </div>
-
-                  {status === 'error' && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-                      {responseMsg ||
-                        'Support is temporarily unavailable. Email support@bookwebsite.com directly.'}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={status === 'loading'}
-                    className="w-full mt-2 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent2 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    {status === 'loading' ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <span>Open in Email App</span>
-                        <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
-                </form>
-              )}
-            </motion.div>
-          </motion.div>
-        </motion.div>
+          <button
+            type="submit"
+            disabled={status === 'loading'}
+            className="w-full min-h-11 mt-2 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent2 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {status === 'loading' ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Contacting Agent...</span>
+              </>
+            ) : (
+              <>
+                <span>Send to Agent</span>
+                <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </form>
       )}
-    </AnimatePresence>
+    </AppDialog>
   );
 }

@@ -232,30 +232,6 @@ export const DesignSystemManager: React.FC = () => {
                                      ))}
                                   </div>
                                </div>
-
-                               <div className="space-y-6">
-                                  <h4 className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Color mode</h4>
-                                  <p className="text-[12px] text-muted/70 leading-relaxed">
-                                    Published site: <strong className="text-text">Light</strong> or <strong className="text-text">Dark</strong> forces that theme for every visitor. <strong className="text-text">System</strong> follows the visitor&apos;s OS (and later, an optional site toggle).
-                                  </p>
-                                  <div className="flex border border-border/40 rounded-xl overflow-hidden bg-white p-1 shadow-sm">
-                                    {(['light', 'dark', 'system'] as const).map((mode) => (
-                                      <button
-                                        key={mode}
-                                        type="button"
-                                        onClick={() => setForm({ ...form, colorScheme: mode })}
-                                        className={cn(
-                                          'flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg',
-                                          (form.colorScheme ?? 'system') === mode
-                                            ? 'bg-text text-white shadow-lg shadow-black/10'
-                                            : 'text-muted/40 hover:bg-off/30 hover:text-text'
-                                        )}
-                                      >
-                                        {mode}
-                                      </button>
-                                    ))}
-                                  </div>
-                               </div>
                           </section>
                         </div>
                     )}
