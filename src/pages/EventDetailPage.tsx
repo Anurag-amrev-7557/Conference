@@ -112,7 +112,7 @@ export function EventDetailPage() {
         }}
       />
       <JsonLd graph={jsonLd} />
-      <div className="event-detail-page overflow-x-hidden">
+      <div className="event-detail-page overflow-x-hidden public-page-shell public-inner-page">
         <Navbar />
 
         <main className="event-detail">

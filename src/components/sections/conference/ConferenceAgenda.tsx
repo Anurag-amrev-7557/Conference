@@ -1,79 +1,129 @@
-import { useState } from 'react';
-import { cn } from '../../../lib/utils';
+import { useEffect, useId, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { cn } from '../../../lib/utils'
+import { useConferenceContent } from '../../../hooks/useConferenceContent'
+import type { ConferenceAgendaSession } from '../../../lib/websiteData'
+import { ConferenceSectionHeader } from './ConferenceSectionHeader'
+import { ConferenceSectionShell } from './ConferenceSectionShell'
 
-const SCHEDULE = {
-  day1: [
-    { time: "09:00 AM", title: "Opening Keynote: The AI Imperative", speaker: "David Kim, NeuralNet", track: "Main Stage" },
-    { time: "10:30 AM", title: "Generative AI in the Enterprise", speaker: "Elena Rostova, Quantum Data", track: "Enterprise" },
-    { time: "11:45 AM", title: "Ethics and Governance Workshop", speaker: "Dr. Sarah Chen, GlobalTech", track: "Ethics" },
-    { time: "01:00 PM", title: "Networking Lunch", speaker: "", track: "Networking" },
-    { time: "02:30 PM", title: "Building Scalable AI Infrastructure", speaker: "Michael Rivera, Innovate AI", track: "Technical" },
-  ],
-  day2: [
-    { time: "09:30 AM", title: "Day 2 Kickoff: State of Open Source", speaker: "Guest Panel", track: "Main Stage" },
-    { time: "11:00 AM", title: "AI-Driven Customer Experiences", speaker: "Marketing Leaders", track: "Enterprise" },
-    { time: "01:00 PM", title: "AI Awards & Closing Remarks", speaker: "David Kim", track: "Main Stage" },
-  ]
-};
+function isAgendaBreak(session: ConferenceAgendaSession) {
+  const track = session.track?.toLowerCase() ?? ''
+  return (
+    !session.speaker?.trim() &&
+    (track.includes('network') || track.includes('break') || track.includes('lunch'))
+  )
+}
 
 export function ConferenceAgenda() {
-  const [activeDay, setActiveDay] = useState<'day1' | 'day2'>('day1');
+  const { agenda, sections } = useConferenceContent()
+  const copy = sections.agenda
+  const baseId = useId()
+  const [activeDayId, setActiveDayId] = useState(agenda[0]?.id ?? '')
+
+  useEffect(() => {
+    if (agenda.length === 0) {
+      setActiveDayId('')
+      return
+    }
+    if (!agenda.some((day) => day.id === activeDayId)) {
+      setActiveDayId(agenda[0].id)
+    }
+  }, [agenda, activeDayId])
+
+  const activeDay = agenda.find((day) => day.id === activeDayId) ?? agenda[0]
+  const sessions = activeDay?.sessions ?? []
+  const panelId = `${baseId}-panel`
 
   return (
-    <section className="bg-black text-white py-24 relative">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl text-white md:text-5xl font-serif font-bold mb-4">Agenda</h2>
-          <p className="text-white/60 text-lg">Two days packed with insights, strategies, and networking.</p>
-        </div>
+    <ConferenceSectionShell
+      id="conference-agenda"
+      sectionClass="conference-agenda-section"
+      visibleClass="conference-agenda-section--visible"
+      variant="white"
+    >
+      <ConferenceSectionHeader
+        copy={copy}
+        fallback={
+          <>
+            Full <span className="italic editorial-accent">Agenda</span>
+          </>
+        }
+        ledeFallback="Two days. Zero fluff. Just the sessions worth your calendar."
+      />
 
-        <div className="flex justify-center gap-4 mb-12">
-          <button 
-            onClick={() => setActiveDay('day1')}
-            className={cn(
-              "px-8 py-3 rounded-full font-semibold transition-all duration-300",
-              activeDay === 'day1' ? "bg-white text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
-            )}
-          >
-            Day 1 (Oct 14)
-          </button>
-          <button 
-            onClick={() => setActiveDay('day2')}
-            className={cn(
-              "px-8 py-3 rounded-full font-semibold transition-all duration-300",
-              activeDay === 'day2' ? "bg-white text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
-            )}
-          >
-            Day 2 (Oct 15)
-          </button>
-        </div>
+      {agenda.length === 0 ? (
+        <p className="conference-agenda-empty">Agenda coming soon.</p>
+      ) : (
+        <>
+          <div className="conference-agenda__tabs" role="tablist" aria-label="Agenda days">
+            {agenda.map((day) => {
+              const tabId = `${baseId}-tab-${day.id}`
+              const isActive = activeDayId === day.id
 
-        <div className="space-y-4">
-          {SCHEDULE[activeDay].map((session, idx) => (
-            <div 
-              key={idx} 
-              className="group flex flex-col md:flex-row md:items-center gap-6 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/40 transition-colors"
-            >
-              <div className="md:w-32 shrink-0">
-                <span className="text-xl font-medium text-white/80">{session.time}</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl md:text-2xl font-serif text-white font-bold mb-2 group-hover:text-white transition-colors">
-                  {session.title}
-                </h3>
-                {session.speaker && (
-                  <p className="text-white/60 font-medium">{session.speaker}</p>
-                )}
-              </div>
-              <div className="shrink-0 mt-4 md:mt-0">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/10 text-white/80">
-                  {session.track}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+              return (
+                <button
+                  key={day.id}
+                  id={tabId}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={panelId}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveDayId(day.id)}
+                  className={cn(
+                    'conference-agenda__tab',
+                    isActive && 'conference-agenda__tab--active',
+                  )}
+                >
+                  {day.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div
+            id={panelId}
+            role="tabpanel"
+            aria-labelledby={`${baseId}-tab-${activeDayId}`}
+            className="conference-agenda__panel"
+          >
+            {sessions.length === 0 ? (
+              <p className="conference-agenda-empty conference-agenda-empty--inset">
+                Sessions for this day will be posted soon.
+              </p>
+            ) : (
+              <ol className="conference-agenda__sessions list-none p-0 m-0">
+                {sessions.map((session, idx) => {
+                  const isBreak = isAgendaBreak(session)
+
+                  return (
+                    <li
+                      key={session.id}
+                      className={cn(
+                        'conference-agenda-card',
+                        isBreak && 'conference-agenda-card--break',
+                      )}
+                      style={{ '--session-i': idx } as CSSProperties}
+                    >
+                      <span className="conference-agenda-card__time">{session.time}</span>
+
+                      <div className="conference-agenda-card__main">
+                        {session.track ? (
+                          <p className="conference-agenda-card__track">{session.track}</p>
+                        ) : null}
+                        <h3 className="conference-agenda-card__title">{session.title}</h3>
+                        {session.speaker?.trim() ? (
+                          <p className="conference-agenda-card__speaker">{session.speaker}</p>
+                        ) : null}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </div>
+        </>
+      )}
+    </ConferenceSectionShell>
+  )
 }

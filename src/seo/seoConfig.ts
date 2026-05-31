@@ -8,6 +8,7 @@ import {
   routeDefaults,
   type PublicRoutePath,
 } from './routes'
+import { pickRouteSeoOverride } from './routeSeoLegacy'
 import type { PageSeo, ResolvePageSeoInput } from './types'
 
 export function normalizeCanonicalPath(pathname: string): string {
@@ -56,7 +57,7 @@ function routeOverride(
   pathname: PublicRoutePath,
   data: ResolvePageSeoInput['data'],
 ): (typeof routeDefaults)[PublicRoutePath] {
-  const cms = data.settings.routeSeo?.[pathname]
+  const cms = pickRouteSeoOverride(data.settings.routeSeo, pathname)
   const code = routeDefaults[pathname]
   return {
     title: cms?.title ?? code.title,
@@ -172,11 +173,53 @@ function missingBlogSlugSeo(data: ResolvePageSeoInput['data']): PageSeo {
   )
 }
 
-function adminSeo(data: ResolvePageSeoInput['data']): PageSeo {
+const ADMIN_ROUTE_META: Record<
+  string,
+  { page: string; description: string }
+> = {
+  '/admin': { page: 'Sign in', description: 'Admin sign-in for the content management system.' },
+  '/admin/dashboard': {
+    page: 'Dashboard',
+    description: 'Overview of site content, publishing status, and workspace shortcuts.',
+  },
+  '/admin/homepage': {
+    page: 'Book page',
+    description: 'Edit the /home marketing page hero, stats, showcase, perks, sections, and visibility.',
+  },
+  '/admin/design': {
+    page: 'Brand & theme',
+    description: 'Manage brand colors, typography, theme tokens, and identity.',
+  },
+  '/admin/media': {
+    page: 'Media library',
+    description: 'Upload and manage images for the public site.',
+  },
+  '/admin/blogs': {
+    page: 'Blog workspace',
+    description: 'Create articles and configure the blog listing page and SEO.',
+  },
+  '/admin/events': {
+    page: 'Events workspace',
+    description: 'Manage events, calendar listings, page hero, and SEO.',
+  },
+  '/admin/settings': {
+    page: 'Site settings',
+    description: 'Global SEO defaults, navigation, scripts, and structured data.',
+  },
+  '/admin/conference': {
+    page: 'Homepage',
+    description: 'Edit the public homepage (summit landing) content and publish settings.',
+  },
+}
+
+function adminSeo(data: ResolvePageSeoInput['data'], pathname: string): PageSeo {
   const site = data.settings.seo
-  const title = site.title ? `Admin — ${site.title}` : 'Admin'
-  const description = site.description
-  const canonical = absoluteUrl(normalizeCanonicalPath('/admin'))
+  const normalized = normalizeCanonicalPath(pathname.startsWith('/admin') ? pathname : `/admin${pathname}`)
+  const meta = ADMIN_ROUTE_META[normalized] ?? ADMIN_ROUTE_META['/admin/dashboard']
+  const siteName = site.title?.trim() || 'Superhumanly'
+  const title = `${meta.page} | CMS — ${siteName}`
+  const description = meta.description
+  const canonical = absoluteUrl('/admin')
   return basePageSeo(
     {
       title,
@@ -210,11 +253,7 @@ export function resolvePageSeo({ pathname, data, article, event }: ResolvePageSe
   const normalizedPath = normalizeCanonicalPath(pathname)
 
   if (isAdminPath(normalizedPath) || normalizedPath === '/dashboard') {
-    return adminSeo(data)
-  }
-
-  if (normalizedPath === '/community') {
-    return staticMarketingSeo('/community', data, 'noindex,nofollow')
+    return adminSeo(data, normalizedPath === '/dashboard' ? '/admin/dashboard' : normalizedPath)
   }
 
   const blogSlug = parseBlogSlug(normalizedPath)

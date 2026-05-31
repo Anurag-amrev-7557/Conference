@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
@@ -11,18 +11,24 @@ import { contentPatchSchema } from '../schemas/content';
 import { articleCreateSchema, articleUpdateSchema } from '../schemas/article';
 import { eventCreateSchema, eventUpdateSchema } from '../schemas/event';
 import {
-  communityAdminCreateSchema,
-  communityAdminUpdateSchema,
-  communityPinSchema,
-} from '../schemas/community';
+  registrationAdminCreateSchema,
+  registrationUpdateSchema,
+} from '../schemas/registration';
+import { getConferenceRegistrationSettings } from '../lib/conferenceRegistrationSettings';
+import {
+  conferenceRegistrations,
+  type ConferenceRegistrationRow,
+} from '../lib/conferenceRegistrations';
 import { getJwtSecret } from '../lib/jwtSecret';
 import { sanitizeArticleHtml, validateCustomCss } from '../lib/sanitize';
+import { embedHomepageInSettingsPatch, expandHomepageFromSettings } from '../lib/homepageContent';
+import { publicAssetUrl } from '../lib/apiPublicUrl';
+import { getMediaUploadDir, getOgUploadDir } from '../lib/uploadPaths';
+import { isSafeMediaFilename, listMediaFiles } from '../lib/listMediaFiles';
+import { deepMergeObjects, safeParseJsonRecord } from '../lib/mergePatch';
+import { backupDatabase } from '../lib/backupDatabase';
 
 const router = Router();
-
-/** Repo-root public/og — served by Vite/static host at /og/{file} */
-const OG_UPLOAD_DIR = join(__dirname, '../../../public/og');
-const MEDIA_UPLOAD_DIR = join(__dirname, '../../../public/media');
 
 const ALLOWED_OG_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
@@ -80,15 +86,16 @@ router.post('/og-image', (req, res, next) => {
   }
 
   try {
-    await mkdir(OG_UPLOAD_DIR, { recursive: true });
+    const ogDir = getOgUploadDir();
+    await mkdir(ogDir, { recursive: true });
     const filename = `${randomUUID()}.jpg`;
-    const outPath = join(OG_UPLOAD_DIR, filename);
+    const outPath = join(ogDir, filename);
     const buffer = await sharp(file.buffer)
       .resize(1200, 630, { fit: 'cover', position: 'centre' })
       .jpeg({ quality: 85 })
       .toBuffer();
     await writeFile(outPath, buffer);
-    res.json({ url: `/og/${filename}` });
+    res.json({ url: publicAssetUrl(`/og/${filename}`) });
   } catch {
     res.status(500).json({ error: 'Failed to process image.' });
   }
@@ -116,18 +123,49 @@ router.post('/media-image', (req, res, next) => {
   }
 
   try {
-    await mkdir(MEDIA_UPLOAD_DIR, { recursive: true });
+    const mediaDir = getMediaUploadDir();
+    await mkdir(mediaDir, { recursive: true });
     const ext = file.mimetype === 'image/png' ? 'png' : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
     const filename = `${randomUUID()}.${ext}`;
-    const outPath = join(MEDIA_UPLOAD_DIR, filename);
+    const outPath = join(mediaDir, filename);
     let pipeline = sharp(file.buffer).resize(1920, 1920, { fit: 'inside', withoutEnlargement: true });
     if (ext === 'png') pipeline = pipeline.png();
     else if (ext === 'webp') pipeline = pipeline.webp({ quality: 85 });
     else pipeline = pipeline.jpeg({ quality: 85 });
     await writeFile(outPath, await pipeline.toBuffer());
-    res.json({ url: `/media/${filename}` });
+    res.json({ url: publicAssetUrl(`/media/${filename}`) });
   } catch {
     res.status(500).json({ error: 'Failed to process image.' });
+  }
+});
+
+// GET /api/v1/admin/media — list uploaded library images
+router.get('/media', async (_req, res) => {
+  try {
+    const items = await listMediaFiles();
+    res.json({ items });
+  } catch {
+    res.status(500).json({ error: 'Failed to list media.' });
+  }
+});
+
+// DELETE /api/v1/admin/media/:filename
+router.delete('/media/:filename', async (req, res) => {
+  const { filename } = req.params;
+  if (!isSafeMediaFilename(filename)) {
+    return res.status(400).json({ error: 'Invalid filename.' });
+  }
+
+  const filePath = join(getMediaUploadDir(), filename);
+  try {
+    await unlink(filePath);
+    res.json({ success: true });
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT') {
+      return res.status(404).json({ error: 'File not found.' });
+    }
+    res.status(500).json({ error: 'Failed to delete file.' });
   }
 });
 
@@ -145,9 +183,23 @@ router.get('/me', (req: Request, res: Response) => {
   });
 });
 
+// POST /api/v1/admin/backup — snapshot SQLite CMS database to UPLOAD_ROOT/backups/
+router.post('/backup', async (_req, res) => {
+  try {
+    const result = await backupDatabase();
+    if (!result) {
+      return res.status(400).json({ error: 'Backup is only available for SQLite file databases.' });
+    }
+    res.json({ success: true, backupPath: result.backupPath, pruned: result.pruned });
+  } catch {
+    res.status(500).json({ error: 'Backup failed.' });
+  }
+});
+
 // PATCH /api/v1/admin/content
 router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
-  const { hero, settings, appearance, stats, pillars, perks } = req.body;
+  const expanded = embedHomepageInSettingsPatch(expandHomepageFromSettings(req.body));
+  const { hero, settings, appearance, stats, pillars, perks } = expanded;
 
   if (settings && typeof settings === 'object' && settings !== null && 'customCss' in settings) {
     const cssCheck = validateCustomCss((settings as Record<string, unknown>).customCss);
@@ -159,11 +211,26 @@ router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
   }
 
   try {
-    const updated = await prisma.siteContent.update({
+    const existing = await prisma.siteContent.findUnique({ where: { id: 'global' } });
+    const mergedSettings =
+      settings && typeof settings === 'object'
+        ? deepMergeObjects(safeParseJsonRecord(existing?.settings), settings as Record<string, unknown>)
+        : undefined;
+
+    const updated = await prisma.siteContent.upsert({
       where: { id: 'global' },
-      data: {
+      create: {
+        id: 'global',
+        hero: JSON.stringify(hero ?? {}),
+        settings: JSON.stringify(mergedSettings ?? settings ?? {}),
+        appearance: JSON.stringify(appearance ?? {}),
+        stats: JSON.stringify(stats ?? []),
+        pillars: JSON.stringify(pillars ?? []),
+        perks: JSON.stringify(perks ?? []),
+      },
+      update: {
         hero: hero ? JSON.stringify(hero) : undefined,
-        settings: settings ? JSON.stringify(settings) : undefined,
+        settings: mergedSettings ? JSON.stringify(mergedSettings) : undefined,
         appearance: appearance ? JSON.stringify(appearance) : undefined,
         stats: stats ? JSON.stringify(stats) : undefined,
         pillars: pillars ? JSON.stringify(pillars) : undefined,
@@ -269,68 +336,73 @@ router.delete('/events/:id', async (req, res) => {
   }
 });
 
-// --- Community Management ---
+// --- Summit registrations (CRM) ---
 
-router.post('/community/posts', validateBody(communityAdminCreateSchema), async (req, res) => {
+function mapRegistration(r: ConferenceRegistrationRow) {
+  return {
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  };
+}
+
+router.post('/registrations', validateBody(registrationAdminCreateSchema), async (req, res) => {
   try {
-    const post = await prisma.communityPost.create({
-      data: req.body,
-      include: { comments: true },
+    const regSettings = await getConferenceRegistrationSettings();
+    const { name, email, phone, linkedIn, designation, status, ticketPriceCents } = req.body;
+    const record = await conferenceRegistrations.create({
+      name,
+      email: email.toLowerCase(),
+      phone,
+      linkedIn: linkedIn ?? '',
+      designation,
+      ticketPriceCents: ticketPriceCents ?? regSettings.ticketPriceCents,
+      status: status ?? 'pending',
     });
-    res.json(post);
+    res.status(201).json(mapRegistration(record));
   } catch {
-    res.status(500).json({ error: 'Failed to create community post.' });
+    res.status(500).json({ error: 'Failed to create registration.' });
   }
 });
 
-router.put(
-  '/community/posts/:id',
-  validateBody(communityAdminUpdateSchema),
-  async (req, res) => {
-    try {
-      const post = await prisma.communityPost.update({
-        where: { id: req.params.id },
-        data: req.body,
-        include: { comments: true },
-      });
-      res.json(post);
-    } catch {
-      res.status(500).json({ error: 'Failed to update community post.' });
-    }
-  }
-);
-
-router.delete('/community/posts/:id', async (req, res) => {
+router.get('/registrations', async (_req, res) => {
   try {
-    await prisma.communityPost.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
+    const items = await conferenceRegistrations.findMany();
+    res.json({ items: items.map(mapRegistration), total: items.length });
   } catch {
-    res.status(500).json({ error: 'Failed to delete community post.' });
+    res.status(500).json({ error: 'Failed to fetch registrations.' });
   }
 });
 
-router.patch(
-  '/community/posts/:id/pin',
-  validateBody(communityPinSchema),
-  async (req, res) => {
-    try {
-      const post = await prisma.communityPost.update({
-        where: { id: req.params.id },
-        data: { isPinned: req.body.pinned },
-      });
-      res.json(post);
-    } catch {
-      res.status(500).json({ error: 'Failed to pin community post.' });
-    }
-  }
-);
-
-router.delete('/community/comments/:id', async (req, res) => {
+router.get('/registrations/:id', async (req, res) => {
   try {
-    await prisma.comment.delete({ where: { id: req.params.id } });
+    const record = await conferenceRegistrations.findUnique(req.params.id);
+    if (!record) return res.status(404).json({ error: 'Registration not found.' });
+    res.json(mapRegistration(record));
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch registration.' });
+  }
+});
+
+router.put('/registrations/:id', validateBody(registrationUpdateSchema), async (req, res) => {
+  try {
+    const data = { ...req.body };
+    if (typeof data.email === 'string') {
+      data.email = data.email.toLowerCase();
+    }
+    const record = await conferenceRegistrations.update(req.params.id, data);
+    res.json(mapRegistration(record));
+  } catch {
+    res.status(500).json({ error: 'Failed to update registration.' });
+  }
+});
+
+router.delete('/registrations/:id', async (req, res) => {
+  try {
+    await conferenceRegistrations.delete(req.params.id);
     res.json({ success: true });
   } catch {
-    res.status(500).json({ error: 'Failed to delete comment.' });
+    res.status(500).json({ error: 'Failed to delete registration.' });
   }
 });
 

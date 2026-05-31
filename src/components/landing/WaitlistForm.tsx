@@ -6,6 +6,7 @@ export type WaitlistFormProps = {
   analyticsLocation?: string
   variant?: "light" | "dark"
   showGuideLabel?: boolean
+  guideLabel?: string
   submitLabel?: string
   placeholder?: string
   successTitle?: string
@@ -17,6 +18,7 @@ export function WaitlistForm({
   analyticsLocation = "waitlist_form",
   variant = "light",
   showGuideLabel = true,
+  guideLabel = "Exclusive guide · Building AI agents",
   submitLabel = "Get the playbook",
   placeholder = "you@company.com",
   successTitle = "You're on the list",
@@ -67,7 +69,7 @@ export function WaitlistForm({
     <div id="cta-form" className={rootClass}>
       <form onSubmit={handleSubmit} className="waitlist-form__form">
         {showGuideLabel ? (
-          <p className="waitlist-form__label">Exclusive guide · Building AI agents</p>
+          <p className="waitlist-form__label">{guideLabel}</p>
         ) : null}
 
         <label className="waitlist-form__field">

@@ -2,6 +2,7 @@ import { useEffect, useRef, type CSSProperties } from "react"
 import { Link } from "react-router-dom"
 import { MapPin, Calendar, User, ArrowRight } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
+import { CmsImage } from "../CmsImage"
 
 export function EventsSection() {
   const { data } = useWebsiteData()
@@ -27,7 +28,7 @@ export function EventsSection() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="events" className="events-section">
+    <section ref={sectionRef} id="events" className="events-section premium-home-section">
       <div className="events-section__ambient" aria-hidden />
 
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">
@@ -98,7 +99,7 @@ export function EventsSection() {
                       </div>
 
                       <div className="events-event-card__media">
-                        <img
+                        <CmsImage
                           src={event.thumbnail}
                           alt=""
                           width={144}

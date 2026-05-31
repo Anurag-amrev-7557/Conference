@@ -11,15 +11,24 @@ import {
   Layout,
   Paintbrush,
   ChevronLeft,
+  ChevronDown,
+  X,
+  Menu,
   Eye,
   EyeOff,
-  MessageSquare,
-  ImageIcon
+  ImageIcon,
+  Mic2,
+  ClipboardList,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWebsiteData } from '../WebsiteDataProvider';
 import { cn } from '../../lib/utils';
+import { useAdminWorkspaceNav } from './admin-workspace-nav';
+import {
+  MOBILE_NAV_SECTIONS,
+  setPendingAdminSection,
+} from './admin-mobile-nav-sections';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -34,7 +43,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, onLog
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Sidebar State
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('admin_sidebar_collapsed');
     return saved === 'true';
@@ -42,11 +50,27 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, onLog
   
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('admin_sidebar_width');
-    return saved ? parseInt(saved, 10) : 280;
+    return saved ? parseInt(saved, 10) : 248;
   });
   
   const [isResizing, setIsResizing] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileNavExpandedPath, setMobileNavExpandedPath] = useState<string | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+    setMobileNavExpandedPath(null);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) setMobileNavExpandedPath(null);
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    document.body.classList.toggle('admin-shell--nav-open', mobileNavOpen);
+    return () => document.body.classList.remove('admin-shell--nav-open');
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     localStorage.setItem('admin_sidebar_collapsed', isCollapsed.toString());
@@ -83,150 +107,334 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, onLog
     };
   }, [resize, stopResizing]);
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Layout, label: 'Page Editor', path: '/admin/pages' },
-    { icon: Paintbrush, label: 'Design System', path: '/admin/design' },
-    { icon: ImageIcon, label: 'Media', path: '/admin/media' },
-    { icon: FileText, label: 'Blog', path: '/admin/blogs' },
-    { icon: MessageSquare, label: 'Community', path: '/admin/community' },
-    { icon: Calendar, label: 'Events', path: '/admin/events' },
-    { icon: Settings2, label: 'Settings', path: '/admin/settings' },
+  const navGroups: {
+    label: string;
+    description: string;
+    items: { icon: React.ElementType; label: string; path: string }[];
+  }[] = [
+    {
+      label: 'Overview',
+      description: 'Health & shortcuts',
+      items: [{ icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' }],
+    },
+    {
+      label: 'Site',
+      description: 'Brand, settings & assets',
+      items: [
+        { icon: Paintbrush, label: 'Brand & theme', path: '/admin/design' },
+        { icon: Settings2, label: 'Site settings', path: '/admin/settings' },
+        { icon: ImageIcon, label: 'Media', path: '/admin/media' },
+      ],
+    },
+    {
+      label: 'Pages',
+      description: 'Route-level content',
+      items: [
+        { icon: Layout, label: 'Book page', path: '/admin/homepage' },
+        { icon: FileText, label: 'Blog', path: '/admin/blogs' },
+        { icon: Calendar, label: 'Events', path: '/admin/events' },
+        { icon: Mic2, label: 'Homepage', path: '/admin/conference' },
+        { icon: ClipboardList, label: 'Registrations', path: '/admin/registrations' },
+      ],
+    },
   ];
 
-  const currentSidebarWidth = isCollapsed ? 80 : sidebarWidth;
+  const currentSidebarWidth = isCollapsed ? 72 : sidebarWidth;
+  const showNavLabels = !isCollapsed || mobileNavOpen;
+  const workspaceSubnav = useAdminWorkspaceNav()?.subnav;
 
   return (
-    <div className="flex h-screen bg-bg overflow-hidden font-sans">
-      {/* Sidebar */}
+    <div
+      className={cn(
+        'admin-shell flex h-screen overflow-hidden',
+        mobileNavOpen && 'admin-shell--nav-open',
+      )}
+    >
+      {mobileNavOpen ? (
+        <button
+          type="button"
+          className="admin-shell__backdrop"
+          aria-label="Close navigation menu"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      ) : null}
+
       <aside 
         ref={sidebarRef}
-        style={{ width: `${currentSidebarWidth}px` }}
-        className="bg-white border-r border-border flex flex-col z-30 relative transition-[width] duration-300 ease-in-out select-none"
+        style={{ width: mobileNavOpen ? undefined : `${currentSidebarWidth}px` }}
+        className={cn(
+          'admin-shell__sidebar flex flex-col z-30 relative transition-[width,transform] duration-300 ease-in-out select-none shrink-0',
+          mobileNavOpen && 'admin-shell__sidebar--mobile-open',
+        )}
       >
-        {/* Resize Handle */}
-        {!isCollapsed && (
-          <div 
+        {!isCollapsed && !mobileNavOpen && (
+          <div
             onMouseDown={startResizing}
-            className={`resize-handle ${isResizing ? 'active' : ''}`} 
+            className={`resize-handle ${isResizing ? 'active' : ''}`}
           />
         )}
 
-        {/* Sidebar Header */}
-        <div className={`p-4 flex items-center justify-between ${isCollapsed ? 'flex-col gap-4' : ''}`}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="w-10 h-10 shrink-0 rounded-xl bg-accent flex items-center justify-center"
-            >
-              <Settings className="w-5 h-5 text-white" />
-            </motion.div>
-            {!isCollapsed && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <h1 className="text-xl font-serif italic text-text mb-0">Admin</h1>
-              </motion.div>
-            )}
+        <div
+          className={cn(
+            'admin-shell__brand',
+            isCollapsed && !mobileNavOpen && 'admin-shell__brand--collapsed',
+          )}
+        >
+          <div className="admin-shell__brand-mark">
+            <Settings className="w-5 h-5 text-white" aria-hidden />
           </div>
-          
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`p-2 rounded-lg hover:bg-off text-text transition-colors ${isCollapsed ? 'rotate-180' : ''}`}
+          {showNavLabels && (
+            <div className="admin-shell__brand-text min-w-0">
+              <p className="admin-shell__brand-title truncate">Superhumanly</p>
+              <p className="admin-shell__brand-sub truncate">CMS</p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(false)}
+            aria-label="Close menu"
+            className="admin-shell__sidebar-close"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <X className="w-5 h-5" aria-hidden />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={cn(
+              'admin-shell__sidebar-collapse',
+              isCollapsed && 'admin-shell__sidebar-collapse--collapsed',
+            )}
+          >
+            <ChevronLeft className="w-4 h-4" aria-hidden />
           </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-bold transition-all duration-300 group ${
-                  isActive
-                    ? 'bg-accent text-white shadow-xl shadow-accent/20'
-                    : 'text-text2 hover:bg-off hover:text-text'
-                } ${isCollapsed ? 'justify-center' : ''}`}
-              >
-                <item.icon className={`w-[18px] h-[18px] shrink-0 transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
-                {!isCollapsed && (
-                  <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="whitespace-nowrap overflow-hidden text-ellipsis">
-                    {item.label}
-                  </motion.span>
-                )}
-              </Link>
-            );
-          })}
+        <nav className="admin-nav" aria-label="Admin navigation">
+          {navGroups.map((group, groupIndex) => (
+            <div
+              key={group.label}
+              className={cn(
+                'admin-nav-group',
+                groupIndex > 0 && 'admin-nav-group--spaced',
+                isCollapsed && !mobileNavOpen && 'admin-nav-group--collapsed',
+              )}
+            >
+              {showNavLabels && (
+                <p className="admin-nav-group__label">{group.label}</p>
+              )}
+              {!showNavLabels && groupIndex > 0 && (
+                <div className="admin-nav-group__rule" aria-hidden />
+              )}
+              <div className="admin-nav-group__items">
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  const staticGroups = MOBILE_NAV_SECTIONS[item.path];
+                  const navGroups =
+                    isActive && workspaceSubnav ? workspaceSubnav.groups : staticGroups;
+                  const activeSectionId =
+                    isActive && workspaceSubnav ? workspaceSubnav.activeId : undefined;
+                  const showMobileDropdown = mobileNavOpen && navGroups != null;
+                  const isDropdownOpen = mobileNavExpandedPath === item.path;
+
+                  if (showMobileDropdown && navGroups) {
+                    const sectionsId = `admin-nav-sections-${item.path.replace(/\//g, '-')}`;
+                    return (
+                      <div key={item.path} className="admin-nav-dropdown">
+                        <button
+                          type="button"
+                          className={cn(
+                            'admin-shell__nav-link admin-nav-dropdown__trigger w-full',
+                            isActive && 'admin-shell__nav-link--active',
+                            isDropdownOpen && 'admin-nav-dropdown__trigger--open',
+                          )}
+                          aria-expanded={isDropdownOpen}
+                          aria-controls={sectionsId}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setMobileNavExpandedPath(isDropdownOpen ? null : item.path);
+                          }}
+                        >
+                          <item.icon className="w-5 h-5 shrink-0" aria-hidden />
+                          <span className="truncate flex-1 text-left">{item.label}</span>
+                          <ChevronDown
+                            className={cn(
+                              'admin-nav-dropdown__chevron w-4 h-4 shrink-0',
+                              isDropdownOpen && 'admin-nav-dropdown__chevron--open',
+                            )}
+                            aria-hidden
+                          />
+                        </button>
+                        <div
+                          id={sectionsId}
+                          className={cn(
+                            'admin-nav-subsections',
+                            isDropdownOpen && 'admin-nav-subsections--open',
+                          )}
+                          role="group"
+                          aria-label={`${item.label} sections`}
+                          hidden={!isDropdownOpen}
+                        >
+                          {navGroups.map((section) => (
+                            <div key={section.label || 'default'} className="admin-nav-subsections__block">
+                              {section.label ? (
+                                <p className="admin-nav-subsections__label">{section.label}</p>
+                              ) : null}
+                              {section.items.map((sub) => {
+                                const subActive = activeSectionId === sub.id;
+                                return (
+                                  <button
+                                    key={sub.id}
+                                    type="button"
+                                    className={cn(
+                                      'admin-nav-subsection',
+                                      subActive && 'admin-nav-subsection--active',
+                                    )}
+                                    aria-current={subActive ? 'true' : undefined}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      if (isActive && workspaceSubnav) {
+                                        workspaceSubnav.onSelect(sub.id);
+                                      } else {
+                                        setPendingAdminSection(item.path, sub.id);
+                                        navigate(item.path);
+                                      }
+                                      setMobileNavOpen(false);
+                                      setMobileNavExpandedPath(null);
+                                    }}
+                                  >
+                                    <sub.icon className="w-4 h-4 shrink-0" aria-hidden />
+                                    <span className="truncate">{sub.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <React.Fragment key={item.path}>
+                      <Link
+                        to={item.path}
+                        title={!showNavLabels ? item.label : undefined}
+                        aria-current={isActive ? 'page' : undefined}
+                        onClick={() => setMobileNavOpen(false)}
+                        className={cn(
+                          'admin-shell__nav-link',
+                          isActive && 'admin-shell__nav-link--active',
+                          !showNavLabels && 'admin-shell__nav-link--icon-only',
+                        )}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" aria-hidden />
+                        {showNavLabels && <span className="truncate">{item.label}</span>}
+                      </Link>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        <div className="p-3 mt-auto border-t border-border space-y-1">
+        <div className="admin-nav-footer">
           <Link
             to="/"
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-bold text-text2 hover:bg-off transition-all group ${isCollapsed ? 'justify-center' : ''}`}
+            title={!showNavLabels ? 'View site' : undefined}
+            className={cn('admin-shell__nav-link', !showNavLabels && 'admin-shell__nav-link--icon-only')}
+            onClick={() => setMobileNavOpen(false)}
           >
-            <Home className="w-[18px] h-[18px] shrink-0 group-hover:scale-110" />
-            {!isCollapsed && <span className="whitespace-nowrap">Live Preview</span>}
+            <Home className="w-5 h-5 shrink-0" aria-hidden />
+            {showNavLabels && <span>View site</span>}
           </Link>
           <button
+            type="button"
             onClick={onLogout}
-            className={`flex items-center cursor-pointer gap-3 px-3 py-3 rounded-xl w-full text-[13px] font-bold text-rose-700 hover:bg-rose-50 transition-all text-left group ${isCollapsed ? 'justify-center' : ''}`}
+            aria-label={!showNavLabels ? 'Sign out' : undefined}
+            className={cn(
+              'admin-shell__nav-link admin-shell__nav-link--danger w-full',
+              !showNavLabels && 'admin-shell__nav-link--icon-only',
+            )}
           >
-            <LogOut className="w-[18px] h-[18px] shrink-0 group-hover:scale-110" />
-            {!isCollapsed && <span className="whitespace-nowrap">Sign Out</span>}
+            <LogOut className="w-5 h-5 shrink-0" aria-hidden />
+            {showNavLabels && <span>Sign out</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-bg">
-        <header className="h-15 shrink-0 bg-white border-b border-border px-4 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-5">
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-xl border border-border hover:border-accent bg-bg flex items-center justify-center transition-all group"
+      <main id="admin-main" className="flex-1 flex flex-col overflow-hidden min-w-0" role="main">
+        <header className="admin-shell__header flex items-center justify-between shrink-0 sticky top-0 z-20">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              type="button"
+              className="admin-shell__menu-btn"
+              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen((open) => !open)}
             >
-              <ArrowLeft className="w-5 h-5 text-text group-hover:text-accent transition-colors" />
+              <Menu className="w-5 h-5" aria-hidden />
             </button>
-            <div className="h-4 w-px bg-border mx-1" />
-            <h2 className="text-2xl font-serif italic text-text tracking-tight mb-0">{title}</h2>
+            <button 
+              type="button"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+              className="w-10 h-10 rounded-lg border border-slate-200 hover:border-slate-300 bg-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5 text-slate-700" />
+            </button>
+            <h1 className="admin-shell__header-title truncate">{title}</h1>
           </div>
 
-          <div className="flex items-center gap-4">
-             {showPreviewToggle && (
-                <button
-                   onClick={togglePreview}
-                   className={cn(
-                      "flex items-center gap-2.5 px-4 py-2 rounded-xl border transition-all duration-500 group",
-                      isPreviewVisible 
-                      ? "bg-accent/5 border-accent/20 text-accent shadow-sm" 
-                      : "bg-off/40 border-border/40 text-muted hover:border-text/20 hover:text-text"
-                   )}
+          {showPreviewToggle && (
+            <button
+              type="button"
+              onClick={togglePreview}
+              aria-pressed={isPreviewVisible}
+              aria-label={isPreviewVisible ? 'Turn preview off' : 'Turn preview on'}
+              className={cn(
+                'admin-shell__preview-toggle flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer',
+                isPreviewVisible 
+                  ? 'bg-accent/10 border-accent/25 text-accent' 
+                  : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900',
+              )}
+            >
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={isPreviewVisible ? 'eye' : 'eye-off'}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex"
                 >
-                   <AnimatePresence mode="wait">
-                      <motion.div
-                         key={isPreviewVisible ? 'eye' : 'eye-off'}
-                         initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
-                         animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                         exit={{ opacity: 0, scale: 0.8, rotate: 10 }}
-                         transition={{ duration: 0.2 }}
-                      >
-                         {isPreviewVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                      </motion.div>
-                   </AnimatePresence>
-                   <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:block">
-                      {isPreviewVisible ? 'Live Preview On' : 'Preview Hidden'}
-                   </span>
-                </button>
-             )}
-          </div>
+                  {isPreviewVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </motion.span>
+              </AnimatePresence>
+              <span className="hidden sm:inline">
+                {isPreviewVisible ? 'Preview on' : 'Preview off'}
+              </span>
+            </button>
+          )}
         </header>
 
-        <div className={`flex-1 overflow-y-auto ${wide ? 'px-0' : 'p-12'}`}>
-          <div className="h-full w-full">
+        <div
+          className={cn(
+            'flex-1 min-h-0',
+            wide
+              ? 'admin-shell__content--wide flex flex-col overflow-hidden'
+              : 'admin-shell__content overflow-y-auto',
+          )}
+        >
+          <div
+            className={cn(
+              wide ? 'admin-workspace admin-workspace--fill' : 'admin-workspace admin-shell__page',
+            )}
+          >
             {children}
           </div>
         </div>

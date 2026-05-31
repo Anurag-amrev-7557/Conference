@@ -247,13 +247,20 @@ Deferred enhancements beyond v1.2 roadmap scope.
 - [ ] **CONF-04:** Develop `ConferenceSpeakers` and `ConferenceAgenda` with interactive elements but no dashboard complexity.
 - [ ] **CONF-05:** Develop `ConferenceTickets` section displaying pricing tiers cleanly in premium cards.
 
+### Conference Admin (CONF-ADM-01 … CONF-ADM-03)
+
+- [x] **CONF-ADM-01:** Add typed `settings.conference` (hero, section headers, speakers, agenda, FAQ, logos) via existing settings PATCH — no new DB column.
+- [x] **CONF-ADM-02:** Seed/merge defaults from current hardcoded conference components.
+- [x] **CONF-ADM-03:** Admin **Conference** screen (3 tabs: Hero | Sections | Lists) + wire public `/conference` + route SEO in Settings.
+
 ## Traceability
 
 ### v1.5 (active)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONF-01 … CONF-05 | Phase 32 | Pending |
+| CONF-01 … CONF-05 | Phase 32–33 | Shipped |
+| CONF-ADM-01 … CONF-ADM-03 | Phase 34 | Shipped |
 
 ### v1.4 (completed)
 

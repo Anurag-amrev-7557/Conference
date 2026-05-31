@@ -4,6 +4,8 @@
  */
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { defaultConferenceContent } from '../../src/lib/conferenceDefaults';
+import { defaultConferenceRegistrationForm } from './lib/registrationDefaults';
 
 const prisma = new PrismaClient();
 
@@ -28,8 +30,6 @@ async function main() {
       subtitle: "Stop wasting hours on manual tasks. Get our exclusive playbook on how to build, deploy, and scale AI agent swarms for your business — starting today.",
       videoUrl: "",
       primaryCtaLabel: "Book a demo",
-      secondaryCtaLabel: "Join founder network",
-      secondaryCtaHref: "/community",
     },
     settings: {
       seo: {
@@ -56,20 +56,26 @@ async function main() {
         },
       },
       sections: {
-        community: {
-          eyebrow: "Community Registry",
-          title: "Join the",
-          titleAccent: "Global Index of Founders.",
-          lede: "An elite network of 2,500+ builders and innovators orchestrating automated business systems. Scale your brand alongside the best.",
-          ctaLabel: "Apply for Access",
-          ctaHref: "/community",
-          founderCountLabel: "2,500+ active founders",
-        },
         finalCta: {
           eyebrow: "Final Registry",
-          title: "Secure Your",
-          titleAccent: "Spot",
+          title: "Secure your",
+          titleAccent: "spot.",
           lede: "The architectural blueprint for automating your business with agentic AI — written for founders who ship, not slide decks.",
+          trustItems: [
+            "2,500+ on the registry",
+            "Free agentic playbook",
+            "No spam, ever",
+          ],
+          ctaLabel: "Register for the summit",
+          ctaHref: "/register",
+          secondaryCtaLabel: "View the agenda",
+          secondaryCtaHref: "#conference-agenda",
+          formNote: "Join 2,500+ founders — playbook in your inbox in minutes.",
+          waitlistSubmitLabel: "Get the playbook",
+          waitlistPlaceholder: "you@company.com",
+          waitlistGuideLabel: "Exclusive guide · Building AI agents",
+          waitlistSuccessTitle: "You're on the list",
+          waitlistSuccessCopy: "Check your inbox — the playbook arrives in a few minutes.",
         },
         whoWeAre: {
           eyebrow: "Who We Are",
@@ -79,6 +85,8 @@ async function main() {
         },
       },
       routeSeo: {},
+      conference: defaultConferenceContent,
+      conferenceRegistration: defaultConferenceRegistrationForm,
       book: {
         title: "The Blueprint for Automating Business with Agentic AI",
         tagline: "The definitive playbook for scaling with AI agent swarms.",
@@ -91,7 +99,6 @@ async function main() {
       navigation: {
         links: [
           { id: "1", name: "The Playbook", href: "/blog" },
-          { id: "2", name: "Founders Hub", href: "/community" },
           { id: "3", name: "Strategy", href: "#who-we-are" },
           { id: "4", name: "Live Training", href: "/events" }
         ],
@@ -101,7 +108,7 @@ async function main() {
           { id: "3", platform: "Instagram", href: "https://instagram.com/superhumanly.ai" },
           { id: "4", platform: "X", href: "https://x.com/superhumanly" }
         ],
-        primaryCta: { label: "Join Now", href: "/#final-cta" },
+        primaryCta: { label: "Join Now", href: "/register" },
       },
       visibility: {
         hero: true,
@@ -110,7 +117,6 @@ async function main() {
         pillars: true,
         perks: true,
         whoWeAre: true,
-        community: true,
         blog: true,
         events: true,
         finalCta: true,
@@ -120,8 +126,9 @@ async function main() {
     },
     appearance: {
       primaryColor: "#0052cc",
-      brandName: "Superhumanly -Thoughts",
-      brandLogoText: "S"
+      brandName: "Superhumanly - Thoughts",
+      brandLogoText: "S",
+      brandLogoUrl: '/media/superhumanly-logo.png',
     },
     stats: [
       { id: "1", value: "2,500+", label: "Business Owners" },
@@ -179,6 +186,13 @@ async function main() {
         description: "Connect with a strictly vetted group of innovators."
       }
     ]
+  };
+
+  (initialData.settings as { homepage?: unknown }).homepage = {
+    hero: initialData.hero,
+    stats: initialData.stats,
+    pillars: initialData.pillars,
+    perks: initialData.perks,
   };
 
   await prisma.siteContent.upsert({

@@ -1,33 +1,99 @@
 import React, { useState, useEffect } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
 import { LivePreview } from './LivePreview';
-import { 
-  Palette, 
-  Type, 
-  Box, 
-  Check,
-  Layers,
-  Save,
-  Loader2,
-  ChevronRight
-} from 'lucide-react';
+import { Palette, Type, Box, Check, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import {
+  AdminField,
+  AdminFormSection,
+  AdminHeaderSave,
+  AdminInput,
+  AdminPageIntro,
+  AdminPanelTabIntro,
+  AdminSubnav,
+} from './admin-ui';
+import { MediaUrlField } from './MediaUrlField';
+import { CONFERENCE_HERO_LOGO } from '../../lib/conferenceDefaults';
+import { useAdminWorkspaceNavRegistry, useApplyPendingAdminSection } from './admin-workspace-nav';
+
+const DESIGN_SUBNAV_GROUPS = [
+  {
+    label: 'Visual',
+    items: [
+      { id: 'colors', label: 'Palette', icon: Palette },
+      { id: 'typography', label: 'Typography', icon: Type },
+      { id: 'tokens', label: 'Theme', icon: Box },
+    ],
+  },
+  {
+    label: 'Identity',
+    items: [{ id: 'branding', label: 'Brand', icon: Layers }],
+  },
+];
+
+const TAB_INTROS: Record<
+  'colors' | 'typography' | 'tokens' | 'branding',
+  { title: string; description: string }
+> = {
+  colors: {
+    title: 'Palette',
+    description: 'Primary brand color for buttons, links, accents, and focus states across the site.',
+  },
+  typography: {
+    title: 'Typography',
+    description: 'Heading and body font families applied to the public marketing site.',
+  },
+  tokens: {
+    title: 'Theme',
+    description: 'Global UI tokens — corner radius and shadow depth for cards and surfaces.',
+  },
+  branding: {
+    title: 'Brand',
+    description: 'Display name and navbar logo shown across the public site.',
+  },
+};
+
+const COLOR_PRESETS = [
+  '#003E99',
+  '#0052cc',
+  '#6366f1',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#111111',
+  '#555555',
+];
+
+const HEADING_FONTS = [
+  { id: 'serif' as const, label: 'Instrument Serif', sample: 'Editorial Excellence' },
+  { id: 'sans' as const, label: 'Plus Jakarta Sans', sample: 'Modern clarity' },
+  { id: 'mono' as const, label: 'JetBrains Mono', sample: 'Technical precision' },
+];
 
 export const DesignSystemManager: React.FC = () => {
-  const { data, updateAppearance, setPreview, isPreviewVisible } = useWebsiteData();
-  const [activePanel, setActivePanel] = useState<'colors' | 'typography' | 'tokens' | 'branding'>('colors');
-  const [form, setForm] = useState(data.appearance);
+  const { sourceData, updateAppearance, setPreview, isPreviewVisible } = useWebsiteData();
+  const [activePanel, setActivePanel] = useState<'colors' | 'typography' | 'tokens' | 'branding'>(
+    'colors',
+  );
+  const [form, setForm] = useState(sourceData.appearance);
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Sync with live preview
+  const appearanceSyncKey = JSON.stringify(sourceData.appearance);
   useEffect(() => {
+    setForm(sourceData.appearance);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when persisted appearance changes
+  }, [appearanceSyncKey]);
+
+  useEffect(() => {
+    if (!isPreviewVisible) {
+      setPreview(null);
+      return;
+    }
     setPreview({ appearance: form });
-    
-    // Cleanup preview on unmount
     return () => setPreview(null);
-  }, [form]);
+  }, [form, isPreviewVisible, setPreview]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -38,264 +104,364 @@ export const DesignSystemManager: React.FC = () => {
     }
   };
 
-  const panels = [
-    { id: 'colors', label: 'Palette', icon: Palette },
-    { id: 'typography', label: 'Typeset', icon: Type },
-    { id: 'tokens', label: 'Themes', icon: Box },
-    { id: 'branding', label: 'Assets', icon: Layers },
-  ];
+  useAdminWorkspaceNavRegistry({
+    groups: DESIGN_SUBNAV_GROUPS,
+    activeId: activePanel,
+    onSelect: (id) => setActivePanel(id as typeof activePanel),
+  });
 
-  const presets = ['#003E99', '#0052cc', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#111111', '#555555'];
+  useApplyPendingAdminSection('/admin/design', (id) =>
+    setActivePanel(id as typeof activePanel),
+  );
+
+  const editorColumn = (
+    <div
+      className={cn(
+        'flex flex-col min-h-0 overflow-hidden bg-[var(--admin-surface)]',
+        isPreviewVisible ? 'w-[520px] shrink-0 border-r border-[var(--admin-border)]' : 'flex-1 admin-page-workspace',
+      )}
+    >
+      <div className={cn('admin-toolbar shrink-0', isPreviewVisible && 'admin-toolbar--compact')}>
+        <div className="admin-toolbar__content">
+          <AdminPageIntro
+            className="mb-0"
+            eyebrow="Site"
+            title="Brand & theme"
+            lede={
+              isPreviewVisible
+                ? 'Live preview updates as you edit.'
+                : 'Colors, typography, theme tokens, and brand identity for the public site.'
+            }
+          />
+        </div>
+        <div className="admin-toolbar__actions">
+          <AdminHeaderSave
+            label="Save brand & theme"
+            saving={isSaving}
+            onClick={handleSave}
+          />
+        </div>
+      </div>
+
+      <div className="admin-page-editor flex flex-1 min-h-0">
+        <AdminSubnav
+          className="admin-subnav--desktop-only"
+          groups={DESIGN_SUBNAV_GROUPS}
+          title="Brand & theme"
+          activeId={activePanel}
+          onSelect={(id) => setActivePanel(id as typeof activePanel)}
+        />
+
+        <div className="admin-panel-body flex-1 min-h-0 overflow-y-auto">
+          <div className="admin-panel-body__inner">
+            <AdminPanelTabIntro
+              title={TAB_INTROS[activePanel].title}
+              description={TAB_INTROS[activePanel].description}
+            />
+
+            <div className="admin-form-stack">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activePanel}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {activePanel === 'colors' && (
+                    <>
+                      <AdminFormSection
+                        title="Primary color"
+                        description="Pick a preset or enter a custom hex value."
+                      >
+                        <div className="admin-color-grid">
+                          {COLOR_PRESETS.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => setForm({ ...form, primaryColor: color })}
+                              className={cn(
+                                'admin-color-swatch',
+                                form.primaryColor.toLowerCase() === color.toLowerCase() &&
+                                  'admin-color-swatch--active',
+                              )}
+                              style={{ backgroundColor: color }}
+                              aria-label={`Use ${color}`}
+                            >
+                              {form.primaryColor.toLowerCase() === color.toLowerCase() && (
+                                <span className="absolute inset-0 flex items-center justify-center">
+                                  <Check className="w-5 h-5 text-white drop-shadow" aria-hidden />
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                        <AdminField label="Custom hex" className="!mb-0 mt-4">
+                          <AdminInput
+                            value={form.primaryColor}
+                            onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
+                            placeholder="#0052cc"
+                            className="font-mono text-sm max-w-xs"
+                          />
+                        </AdminField>
+                      </AdminFormSection>
+                    </>
+                  )}
+
+                  {activePanel === 'typography' && (
+                    <>
+                      <AdminFormSection
+                        title="Heading font"
+                        description="Used for page titles and section headlines."
+                      >
+                        <div className="admin-choice-list">
+                          {HEADING_FONTS.map((font) => (
+                            <button
+                              key={font.id}
+                              type="button"
+                              onClick={() =>
+                                setForm({
+                                  ...form,
+                                  typography: { ...form.typography, headingFont: font.id },
+                                })
+                              }
+                              className={cn(
+                                'admin-choice-list__item',
+                                form.typography.headingFont === font.id &&
+                                  'admin-choice-list__item--active',
+                              )}
+                            >
+                              <p className="admin-choice-list__meta">{font.label}</p>
+                              <p
+                                className="admin-choice-list__sample"
+                                style={{
+                                  fontFamily:
+                                    font.id === 'serif'
+                                      ? 'var(--font-serif, Georgia, serif)'
+                                      : font.id === 'mono'
+                                        ? 'ui-monospace, monospace'
+                                        : 'var(--font-sans)',
+                                }}
+                              >
+                                {font.sample}
+                              </p>
+                              {form.typography.headingFont === font.id && (
+                                <Check
+                                  className="w-4 h-4 text-[var(--admin-primary)] absolute top-5 right-5"
+                                  aria-hidden
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </AdminFormSection>
+
+                      <AdminFormSection title="Body font" description="Paragraph and UI copy.">
+                        <AdminField label="Body typeface">
+                          <select
+                            value={form.typography.bodyFont}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                typography: {
+                                  ...form.typography,
+                                  bodyFont: e.target.value as 'serif' | 'sans' | 'mono',
+                                },
+                              })
+                            }
+                            className="admin-input"
+                          >
+                            <option value="sans">Sans-serif (Plus Jakarta)</option>
+                            <option value="serif">Serif (Instrument)</option>
+                            <option value="mono">Monospace (JetBrains)</option>
+                          </select>
+                        </AdminField>
+                        <AdminField label="Base text size">
+                          <div className="admin-segmented">
+                            {(['small', 'medium', 'large'] as const).map((size) => (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() =>
+                                  setForm({
+                                    ...form,
+                                    typography: { ...form.typography, baseSize: size },
+                                  })
+                                }
+                                className={cn(
+                                  'admin-segmented__item',
+                                  form.typography.baseSize === size && 'admin-segmented__item--active',
+                                )}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                          </div>
+                        </AdminField>
+                      </AdminFormSection>
+                    </>
+                  )}
+
+                  {activePanel === 'tokens' && (
+                    <>
+                      <AdminFormSection title="Corner radius" description="Roundness of buttons and cards.">
+                        <div className="admin-segmented max-w-md">
+                          {(['none', 'sm', 'md', 'lg', 'full'] as const).map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() =>
+                                setForm({ ...form, theme: { ...form.theme, borderRadius: r } })
+                              }
+                              className={cn(
+                                'admin-segmented__item',
+                                form.theme.borderRadius === r && 'admin-segmented__item--active',
+                              )}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </AdminFormSection>
+
+                      <AdminFormSection title="Shadow depth" description="Elevation on cards and panels.">
+                        <div className="admin-shadow-picker">
+                          {(['none', 'soft', 'heavy'] as const).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() =>
+                                setForm({
+                                  ...form,
+                                  theme: { ...form.theme, shadowIntensity: s },
+                                })
+                              }
+                              className={cn(
+                                'admin-shadow-picker__item',
+                                form.theme.shadowIntensity === s && 'admin-shadow-picker__item--active',
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  'admin-shadow-picker__preview',
+                                  s === 'soft' && 'shadow-md',
+                                  s === 'heavy' && 'shadow-xl',
+                                )}
+                              >
+                                <Box
+                                  className={cn(
+                                    'w-4 h-4',
+                                    form.theme.shadowIntensity === s
+                                      ? 'text-[var(--admin-primary)]'
+                                      : 'text-[var(--admin-text-subtle)]',
+                                  )}
+                                  aria-hidden
+                                />
+                              </div>
+                              <p className="admin-shadow-picker__label">{s}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </AdminFormSection>
+
+                      <AdminFormSection title="Button style" description="Default button treatment.">
+                        <div className="admin-segmented max-w-md">
+                          {(['flat', 'outline', 'glass'] as const).map((style) => (
+                            <button
+                              key={style}
+                              type="button"
+                              onClick={() =>
+                                setForm({
+                                  ...form,
+                                  theme: { ...form.theme, buttonStyle: style },
+                                })
+                              }
+                              className={cn(
+                                'admin-segmented__item',
+                                form.theme.buttonStyle === style && 'admin-segmented__item--active',
+                              )}
+                            >
+                              {style}
+                            </button>
+                          ))}
+                        </div>
+                      </AdminFormSection>
+                    </>
+                  )}
+
+                  {activePanel === 'branding' && (
+                    <>
+                      <AdminFormSection
+                        title="Brand identity"
+                        description="Shown in the navbar, footer, and browser tab context."
+                      >
+                        <AdminField label="Brand name">
+                          <AdminInput
+                            value={form.brandName}
+                            onChange={(e) => setForm({ ...form, brandName: e.target.value })}
+                            placeholder="Superhumanly AI"
+                          />
+                        </AdminField>
+                        <MediaUrlField
+                          label="Navbar logo"
+                          value={form.brandLogoUrl ?? ''}
+                          onChange={(url) => setForm({ ...form, brandLogoUrl: url })}
+                          hint={`PNG/WebP with transparent background. Default: ${CONFERENCE_HERO_LOGO}`}
+                        />
+                        <AdminField
+                          label="Legacy logo mark (fallback)"
+                          hint="Used only when no logo image is set — one or two characters."
+                        >
+                          <AdminInput
+                            value={form.brandLogoText}
+                            onChange={(e) => setForm({ ...form, brandLogoText: e.target.value })}
+                            maxLength={2}
+                            className="max-w-[5.5rem] text-center font-semibold"
+                          />
+                        </AdminField>
+                      </AdminFormSection>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-white relative font-sans text-text">
-      {/* Sidebar Controls */}
-      <motion.div 
+    <div className="admin-workspace flex h-full w-full overflow-hidden">
+      <motion.div
         layout
-        animate={{ 
-          width: !isPreviewVisible ? '100%' : (isSidebarCollapsed ? 0 : 520), 
-          opacity: (isSidebarCollapsed && isPreviewVisible) ? 0 : 1 
+        animate={{
+          width: isPreviewVisible ? (isSidebarCollapsed ? 0 : 520) : '100%',
+          opacity: isSidebarCollapsed && isPreviewVisible ? 0 : 1,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         className={cn(
-          "bg-white flex flex-col shrink-0 relative z-10 shadow-premium overflow-hidden",
-          isPreviewVisible ? "border-r border-border/40" : "w-full"
+          'flex min-h-0 overflow-hidden',
+          isPreviewVisible ? 'shrink-0' : 'flex-1 w-full min-w-0',
         )}
       >
-        <div className={cn(
-          "flex flex-col h-full bg-white",
-          !isPreviewVisible ? "max-w-4xl mx-auto w-full border-x border-border/40" : "w-[520px]"
-        )}>
-          <div className="p-5 border-b border-border/40">
-             <div className="flex items-center gap-4 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-off flex items-center justify-center border border-border/40">
-                   <Palette className="w-5 h-5 text-accent" />
-                </div>
-                <span className="text-[11px] font-bold text-accent uppercase tracking-widest">Design System</span>
-             </div>
-             <h3 className="text-4xl font-serif italic text-text mb-4">Style Editor</h3>
-             <p className="text-text2 text-base leading-relaxed opacity-60">Customize your site's global colors, fonts, and core theme elements.</p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto flex flex-col">
-              {/* Tab Selector */}
-              <div className="flex border-b border-border/40 w-full sticky top-0 bg-white z-20">
-                {panels.map((p) => (
-                  <button
-                     key={p.id}
-                     onClick={() => setActivePanel(p.id as any)}
-                     className={cn(
-                       "flex-1 flex flex-col items-center gap-2.5 py-5 transition-all duration-500 relative",
-                       activePanel === p.id 
-                       ? "text-accent bg-accent/[0.02]" 
-                       : "text-muted hover:text-text hover:bg-off/30"
-                     )}
-                  >
-                    <p.icon className={cn("w-4 h-4 transition-transform duration-500", activePanel === p.id ? "scale-110" : "opacity-40")} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">{p.label}</span>
-                    
-                    {activePanel === p.id && (
-                      <motion.div 
-                        layoutId="activeDesignTab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-8 space-y-12">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activePanel}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                    className="space-y-12"
-                  >
-                    {activePanel === 'colors' && (
-                        <div className="space-y-12 animate-fadeInUp">
-                          <section className="space-y-8">
-                              <h4 className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Primary Surface</h4>
-                              
-                              <div className="grid grid-cols-4 gap-4">
-                                {presets.map((color) => (
-                                    <button
-                                      key={color}
-                                      onClick={() => setForm({ ...form, primaryColor: color })}
-                                      className={cn(
-                                        "w-full aspect-square rounded-2xl transition-all relative border border-border/20 shadow-sm",
-                                        form.primaryColor === color ? "ring-2 ring-accent ring-offset-4 scale-105" : "hover:scale-105"
-                                      )}
-                                      style={{ backgroundColor: color }}
-                                    >
-                                      {form.primaryColor === color && (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                          <Check className="w-5 h-5 text-white" />
-                                        </div>
-                                      )}
-                                    </button>
-                                ))}
-                              </div>
-                          </section>
-                        </div>
-                    )}
-
-                    {activePanel === 'typography' && (
-                        <div className="space-y-12 animate-fadeInUp">
-                          <section className="space-y-10">
-                              <div className="space-y-6">
-                                 <h4 className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Heading Font</h4>
-                                 <div className="space-y-2 border border-border/40 bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-border/40">
-                                    {['Instrument Serif', 'Cormorant', 'Georgia'].map((font) => (
-                                       <button 
-                                         key={font}
-                                         onClick={() => setForm({ ...form, typography: { ...form.typography, headingFont: 'serif' }})}
-                                         className={cn(
-                                           "w-full p-10 text-left transition-all group",
-                                           form.typography.headingFont === 'serif' ? "bg-accent/[0.02]" : "hover:bg-off/30"
-                                         )}
-                                       >
-                                          <div className="flex justify-between items-center mb-4">
-                                            <span className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">{font}</span>
-                                            {form.typography.headingFont === 'serif' && <Check className="w-3 h-3 text-accent" />}
-                                          </div>
-                                          <p className="text-3xl leading-tight text-text mb-1" style={{ fontFamily: font }}>Editorial Excellence</p>
-                                          <p className="text-[11px] text-muted/40 italic">A sophisticated serif for architectural titles.</p>
-                                       </button>
-                                    ))}
-                                 </div>
-                              </div>
-
-                              <div className="space-y-4">
-                                 <h4 className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Body Architecture</h4>
-                                 <div className="relative">
-                                    <select 
-                                      value={form.typography.bodyFont}
-                                      onChange={(e) => setForm({ ...form, typography: { ...form.typography, bodyFont: e.target.value as any }})}
-                                      className="w-full bg-[#fafafa] border border-border/40 p-6 font-semibold text-sm appearance-none focus:bg-white transition-all outline-none rounded-xl shadow-sm"
-                                    >
-                                       <option value="sans">Modern Sans-Serif (Plus Jakarta)</option>
-                                       <option value="mono">Developer Monospace (JetBrains)</option>
-                                    </select>
-                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-30">
-                                       <ChevronRight className="w-4 h-4 rotate-90" />
-                                    </div>
-                                 </div>
-                              </div>
-                          </section>
-                        </div>
-                    )}
-
-                    {activePanel === 'tokens' && (
-                        <div className="space-y-12 animate-fadeInUp">
-                          <section className="space-y-12">
-                               <div className="space-y-6">
-                                  <h4 className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Corner Roundness</h4>
-                                  <div className="flex border border-border/40 rounded-xl overflow-hidden bg-white p-1 shadow-sm">
-                                     {['none', 'sm', 'md', 'lg', 'full'].map((r) => (
-                                        <button
-                                          key={r}
-                                          onClick={() => setForm({ ...form, theme: { ...form.theme, borderRadius: r as any }})}
-                                          className={cn(
-                                            "flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg",
-                                            form.theme.borderRadius === r ? "bg-text text-white shadow-lg shadow-black/10" : "text-muted/40 hover:bg-off/30 hover:text-text"
-                                          )}
-                                        >
-                                           {r}
-                                        </button>
-                                     ))}
-                                  </div>
-                               </div>
-
-                               <div className="space-y-6">
-                                  <h4 className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Shadow Profile</h4>
-                                  <div className="grid grid-cols-3 gap-6">
-                                     {['none', 'soft', 'heavy'].map((s) => (
-                                        <button
-                                          key={s}
-                                          onClick={() => setForm({ ...form, theme: { ...form.theme, shadowIntensity: s as any }})}
-                                          className={cn(
-                                            "p-8 border rounded-2xl text-center transition-all group",
-                                            form.theme.shadowIntensity === s ? "bg-white border-accent shadow-premium scale-[1.02]" : "bg-[#fafafa] border-border/20 hover:bg-white hover:scale-[1.02]"
-                                          )}
-                                        >
-                                           <div className={cn(
-                                             "w-10 h-10 mx-auto mb-6 rounded-lg bg-white border border-border/10 flex items-center justify-center transition-all duration-500",
-                                             s === 'heavy' ? "shadow-xl" : s === 'soft' ? "shadow-sm" : ""
-                                           )}>
-                                              <Box className={cn("w-4 h-4", form.theme.shadowIntensity === s ? "text-accent" : "text-muted/20")} />
-                                           </div>
-                                           <p className="text-[9px] font-bold uppercase tracking-widest text-text opacity-40 group-hover:opacity-100">{s}</p>
-                                        </button>
-                                     ))}
-                                  </div>
-                               </div>
-                          </section>
-                        </div>
-                    )}
-
-                    {activePanel === 'branding' && (
-                       <div className="py-24 text-center space-y-10 animate-fadeInUp">
-                          <div className="relative inline-block">
-                            <div className="w-24 h-24 rounded-full border border-border/40 border-dashed animate-spin-slow opacity-40 mx-auto" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                               <Layers className="w-6 h-6 text-accent/30" />
-                            </div>
-                          </div>
-                          <div className="space-y-4">
-                             <h4 className="text-3xl font-serif italic text-text tracking-tight">Identity Vault</h4>
-                             <p className="text-[13px] text-muted max-w-[320px] mx-auto leading-relaxed opacity-60">
-                               Universal brand assets including primary signatures, watermarks, and editorial icons are being consolidated for deployment.
-                             </p>
-                          </div>
-                          <div className="flex items-center justify-center gap-2">
-                             {[1,2,3].map(i => (
-                               <div key={i} className="w-1.5 h-1.5 rounded-full bg-accent/20" />
-                             ))}
-                          </div>
-                       </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              <div className="p-8 border-t border-border/40 bg-white sticky bottom-0">
-                 <button 
-                   onClick={handleSave}
-                   disabled={isSaving}
-                   className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
-                 >
-                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                   Synchronize Branding Protocol
-                 </button>
-              </div>
-          </div>
-        </div>
+        {editorColumn}
       </motion.div>
 
-      {/* Main Studio View */}
       <AnimatePresence>
-         {isPreviewVisible && (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="flex-1 overflow-hidden flex flex-col relative bg-white"
-            >
-               <div className="absolute inset-0 bg-off/5 pointer-events-none" />
-               
-               <div className="flex-1 relative group">
-                  <div className="h-full w-full overflow-hidden relative z-10">
-                     <LivePreview 
-                       onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                       isSidebarCollapsed={isSidebarCollapsed}
-                     />
-                  </div>
-               </div>
-            </motion.div>
-         )}
+        {isPreviewVisible && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="flex-1 min-w-0 overflow-hidden flex flex-col bg-[var(--admin-surface)]"
+          >
+            <LivePreview
+              onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              isSidebarCollapsed={isSidebarCollapsed}
+            />
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

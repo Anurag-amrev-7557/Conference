@@ -65,7 +65,7 @@ export function EventsPage() {
     <>
       <SeoHead seo={seo} />
       <JsonLd graph={jsonLd} />
-      <div className="events-page overflow-x-hidden">
+      <div className="events-page overflow-x-hidden public-page-shell public-inner-page">
         <Navbar />
 
         <CatalogHero
@@ -81,7 +81,7 @@ export function EventsPage() {
           }
         />
 
-        <main className="catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12">
+        <main className="catalog-main premium-catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12">
           <CatalogToolbar
             searchId="events-search-input"
             searchPlaceholder="Search for events"

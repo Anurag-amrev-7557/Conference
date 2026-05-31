@@ -22,8 +22,22 @@ export function renderCatalogTitle(
 export function renderSectionHeading(
   content: SectionBlockContent | undefined,
   fallback: ReactNode,
+  options?: { singleLine?: boolean },
 ): ReactNode {
   if (!content?.title && !content?.titleAccent) return fallback
+  if (options?.singleLine) {
+    return (
+      <>
+        {content.title}
+        {content.titleAccent ? (
+          <>
+            {' '}
+            <span className="italic editorial-accent">{content.titleAccent}</span>
+          </>
+        ) : null}
+      </>
+    )
+  }
   return (
     <>
       {content.title}

@@ -58,14 +58,14 @@ export const OgImageUpload: React.FC<OgImageUploadProps> = ({ value, onChange, g
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'inline-flex items-center gap-2 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-xl border border-border/40 transition-all',
-          uploading ? 'opacity-60 cursor-not-allowed' : 'hover:border-accent hover:text-accent',
+          'admin-btn admin-btn--secondary !min-h-[3rem]',
+          uploading ? 'opacity-60 cursor-not-allowed' : '',
         )}
       >
         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
         {uploading ? 'Uploading…' : 'Upload image'}
       </button>
-      {error ? <p className="text-[11px] text-red-600">{error}</p> : null}
+      {error ? <p className="admin-field__hint !text-red-600">{error}</p> : null}
       {value ? (
         <div className="aspect-[1.91/1] max-w-md rounded-xl overflow-hidden border border-border/40">
           <img src={value} alt="" className="w-full h-full object-cover" />

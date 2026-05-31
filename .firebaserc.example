@@ -1,0 +1,7 @@
+# Copy to .firebaserc and set your Firebase project ID
+# firebase projects:list
+{
+  "projects": {
+    "default": "your-firebase-project-id"
+  }
+}

@@ -1,48 +1,31 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
-  BookOpen,
-  CalendarDays,
   Menu,
-  Sparkles,
-  Users,
   X,
-  type LucideIcon,
 } from "lucide-react"
+import { NavMagneticCta } from "./NavMagneticCta"
 import { useWebsiteData } from "./WebsiteDataProvider"
-import { cn } from "../lib/utils"
+import { cn, formatBrandNameForDisplay } from "../lib/utils"
+import { CONFERENCE_HERO_LOGO_PUBLIC } from "../lib/conferenceDefaults"
+import { resolveMediaUrl } from "../lib/assetUrl"
 import type { NavLink } from "../lib/websiteData"
 
-const getNavLinkClass = (isDark: boolean) =>
-  `inline-flex items-center gap-2 min-h-10 px-3.5 text-[15px] font-semibold transition-colors duration-200 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
-    isDark
-      ? "text-white/80 hover:text-white hover:bg-white/10"
-      : "text-text/85 hover:text-text hover:bg-black/[0.05]"
-  }`
+function getNavLinkClass(isDark: boolean, isActive: boolean, mobile = false) {
+  return cn(
+    "nav-dock__link",
+    isDark && "nav-dock__link--on-hero",
+    isActive && "nav-dock__link--active",
+    mobile && "nav-dock__link--mobile",
+  )
+}
 
-const navIconClass = "h-4 w-4 shrink-0 stroke-[2.25]"
-
-function getNavIcon(link: NavLink): LucideIcon {
-  const href = link.href.toLowerCase()
-  const name = link.name.toLowerCase()
-
-  if (href.includes("blog") || href.includes("playbook") || name.includes("blog") || name.includes("playbook")) {
-    return BookOpen
+function normalizeNavHref(href: string): string {
+  const trimmed = href.trim()
+  if (trimmed === "/conference" || trimmed === "/conference/") {
+    return "/#conference-hero"
   }
-  if (href.includes("community") || href.includes("founder") || name.includes("community") || name.includes("founder")) {
-    return Users
-  }
-  if (href.includes("event") || name.includes("event") || name.includes("training")) {
-    return CalendarDays
-  }
-  if (href.includes("who-we-are") || href.includes("about") || name.includes("about") || name.includes("strategy")) {
-    return Sparkles
-  }
-  if (href.includes("conference") || name.includes("conference")) {
-    return Sparkles
-  }
-
-  return BookOpen
+  return href
 }
 
 export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean }) {
@@ -50,15 +33,43 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
   const { appearance, settings } = data
   const { links, primaryCta } = settings.navigation
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const dockRef = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
-  const isDarkTheme = pathname === "/conference"
+  const [isOverHero, setIsOverHero] = useState(
+    () => pathname === "/" || pathname === "/home" || pathname === "/register",
+  )
+  const dockRef = useRef<HTMLDivElement>(null)
+  const isDarkTheme = isOverHero
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
   const toggleMobileMenu = () => setIsMobileMenuOpen((open) => !open)
 
   const ctaLabel = primaryCta.label
-  const ctaHref = primaryCta.href
+  const ctaHref = normalizeNavHref(primaryCta.href)
+  const matchLink = (candidates: string[]) =>
+    links.find((link) => {
+      const normalized = `${link.name} ${link.href}`.toLowerCase()
+      return candidates.some((candidate) => normalized.includes(candidate))
+    })
+
+  const orderedCoreLinks = [
+    matchLink(["blog", "playbook"]),
+    matchLink(["event"]),
+    matchLink(["about", "who-we-are", "strategy"]),
+  ]
+    .filter(Boolean)
+    .map((link) => ({
+      ...(link as NavLink),
+      href: normalizeNavHref((link as NavLink).href),
+    })) as NavLink[]
+
+  const desktopNavLinks = orderedCoreLinks.map((link, index) => ({
+    ...link,
+    id: `${link.id || "nav"}-${index}`,
+  }))
+  const mobileNavLinks = orderedCoreLinks.map((link, index) => ({
+    ...link,
+    id: `${link.id || "mobile-nav"}-mobile-${index}`,
+  }))
 
   useEffect(() => {
     if (!isMobileMenuOpen) return
@@ -86,6 +97,37 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
     setIsMobileMenuOpen(false)
   }, [pathname])
 
+  useEffect(() => {
+    if (pathname === "/register") {
+      setIsOverHero(true)
+      return
+    }
+
+    const heroSelector =
+      pathname === "/" ? "#conference-hero" : pathname === "/home" ? ".premium-home-hero" : null
+
+    if (!heroSelector) {
+      setIsOverHero(false)
+      return
+    }
+
+    const heroEl = document.querySelector(heroSelector)
+    if (!heroEl) {
+      setIsOverHero(false)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsOverHero(entry.isIntersecting)
+      },
+      { threshold: 0, rootMargin: "-72px 0px 0px 0px" },
+    )
+
+    observer.observe(heroEl)
+    return () => observer.disconnect()
+  }, [pathname])
+
   const getHRef = (href: string) => {
     if (href.startsWith("#")) {
       return pathname === "/" ? href : `/${href}`
@@ -107,43 +149,52 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
   const renderNavCta = (variant: "desktop" | "mobile", onNavigate?: () => void) => {
     const resolvedHref = getHRef(ctaHref)
     const isHash = ctaHref.startsWith("#") || (ctaHref.startsWith("/#") && pathname === "/")
+    const useMagnetic = variant === "desktop"
 
     const linkClass = cn(
-      variant === "desktop"
-        ? "btn-nav-cta shrink-0"
-        : "btn-cta-primary w-full min-h-[3.25rem] text-[15px] justify-center",
+      variant === "desktop" ? "shrink-0" : "w-full min-h-[3.25rem] text-[15px] justify-center",
+      isDarkTheme && "btn-nav-cta--on-hero",
     )
 
-    const sharedProps = {
-      className: linkClass,
-      onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
-        if (isHash || resolvedHref.startsWith("#")) {
-          handleLinkClick(e, ctaHref.startsWith("#") ? ctaHref : ctaHref.replace(/^\//, ""))
-        }
-        onNavigate?.()
-      },
+    const handleCtaClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (isHash || resolvedHref.startsWith("#")) {
+        handleLinkClick(e, ctaHref.startsWith("#") ? ctaHref : ctaHref.replace(/^\//, ""))
+      }
+      onNavigate?.()
     }
 
     if (isHash || resolvedHref.startsWith("#")) {
       return (
-        <a href={resolvedHref} {...sharedProps}>
-          {ctaLabel}
-        </a>
+        <NavMagneticCta
+          href={resolvedHref}
+          label={ctaLabel}
+          className={linkClass}
+          magnetic={useMagnetic}
+          onClick={handleCtaClick}
+        />
       )
     }
 
     if (resolvedHref.startsWith("http") || resolvedHref.startsWith("mailto:")) {
       return (
-        <a href={resolvedHref} className={linkClass} onClick={() => onNavigate?.()}>
-          {ctaLabel}
-        </a>
+        <NavMagneticCta
+          href={resolvedHref}
+          label={ctaLabel}
+          className={linkClass}
+          magnetic={useMagnetic}
+          onClick={() => onNavigate?.()}
+        />
       )
     }
 
     return (
-      <Link to={resolvedHref} className={linkClass} onClick={() => onNavigate?.()}>
-        {ctaLabel}
-      </Link>
+      <NavMagneticCta
+        to={resolvedHref}
+        label={ctaLabel}
+        className={linkClass}
+        magnetic={useMagnetic}
+        onClick={() => onNavigate?.()}
+      />
     )
   }
 
@@ -151,28 +202,9 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
     const resolvedHref = getHRef(link.href)
     const isExternal = resolvedHref.startsWith("http") || resolvedHref.startsWith("mailto:")
     const isSection = link.href.startsWith("#") || (link.href.startsWith("/#") && pathname !== "/")
-    const Icon = getNavIcon(link)
+    const isActive = !isExternal && !isSection && pathname === resolvedHref
 
-    const mobileClass =
-      `nav-mobile-link group w-full min-h-[3.25rem] px-3.5 rounded-xl inline-flex items-center gap-3 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 ${
-        isDarkTheme
-          ? "text-white hover:bg-white/10"
-          : "text-text hover:bg-black/[0.04]"
-      }`
-    const linkClass = mobile ? mobileClass : getNavLinkClass(isDarkTheme)
-
-    const content = (
-      <>
-        {mobile ? (
-          <span className="nav-mobile-link__icon" aria-hidden>
-            <Icon className="h-[1.05rem] w-[1.05rem] stroke-[2.25]" />
-          </span>
-        ) : (
-          <Icon className={navIconClass} aria-hidden />
-        )}
-        <span className={mobile ? "flex-1 text-left" : undefined}>{link.name}</span>
-      </>
-    )
+    const linkClass = getNavLinkClass(isDarkTheme, isActive, mobile)
 
     if (isExternal || isSection) {
       return (
@@ -185,7 +217,7 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
           }}
           className={linkClass}
         >
-          {content}
+          {link.name}
         </a>
       )
     }
@@ -194,10 +226,12 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
       <Link
         key={link.id}
         to={resolvedHref}
-        onClick={() => mobile && closeMobileMenu()}
+        onClick={() => {
+          if (mobile) closeMobileMenu()
+        }}
         className={linkClass}
       >
-        {content}
+        {link.name}
       </Link>
     )
   }
@@ -226,26 +260,33 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
           isMobileMenuOpen && "nav-dock--open",
         )}
       >
-        <div className="nav-dock__bar flex items-center justify-between gap-3 py-2 pl-4 sm:pl-5 pr-2.5 sm:pr-3 min-h-14 sm:min-h-[3.75rem] md:grid md:grid-cols-[1fr_auto_1fr] md:items-stretch md:gap-4">
+        <div className="nav-dock__bar flex items-center justify-between gap-3 py-2 pl-4 sm:pl-5 pr-2.5 sm:pr-3 min-h-14 sm:min-h-[3.75rem] md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-5 lg:gap-6">
           <Link
             to="/"
             className="flex items-center gap-2.5 min-w-0 shrink-0 md:justify-self-start md:self-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 rounded-lg"
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-serif italic text-sm shrink-0 transition-transform duration-200 group-hover:scale-[1.04] ${isDarkTheme ? 'bg-white text-black' : 'bg-text text-white'}`}>
-              {appearance.brandLogoText}
-            </div>
-            <span className={`hidden sm:block text-base font-semibold tracking-[-0.02em] truncate max-w-[10rem] md:max-w-[12rem] lg:max-w-none ${isDarkTheme ? 'text-white' : 'text-text'}`}>
-              {appearance.brandName}
+            <img
+              src={resolveMediaUrl(appearance.brandLogoUrl, CONFERENCE_HERO_LOGO_PUBLIC)}
+              alt={appearance.brandName || "Superhumanly AI"}
+              className="nav-dock__brand-logo h-10 sm:h-11 w-auto max-w-[14rem] object-contain object-left shrink-0 transition-transform duration-200 group-hover:scale-[1.04]"
+            />
+            <span
+              className={cn(
+                "text-[14px] sm:text-[15px] leading-none font-semibold tracking-[-0.02em]",
+                "md:truncate md:max-w-[12rem] lg:max-w-none",
+                isDarkTheme ? "text-white" : "text-text",
+              )}
+            >
+              {formatBrandNameForDisplay(appearance.brandName)}
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center justify-center gap-1 justify-self-center self-center" aria-label="Main">
-            {links.map((link) => renderNavLink(link))}
-            {renderNavLink({ id: 'conf-nav', name: 'Conference', href: '/conference' })}
+          <nav className="hidden md:flex items-center justify-center gap-1.5 lg:gap-2 justify-self-center self-center h-full" aria-label="Main">
+            {desktopNavLinks.map((link) => renderNavLink(link))}
           </nav>
 
           <div className="flex items-stretch justify-end justify-self-end min-w-0 h-full md:h-auto">
-            <div className="hidden md:flex h-full items-stretch">{renderNavCta("desktop")}</div>
+            <div className="hidden md:flex h-full items-stretch md:pl-1 lg:pl-2">{renderNavCta("desktop")}</div>
 
             <button
               type="button"
@@ -282,7 +323,7 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
         <div
           id="mobile-nav-menu"
           className={cn(
-            "nav-dock__drawer md:hidden", 
+            "nav-dock__drawer md:hidden",
             isMobileMenuOpen && "nav-dock__drawer--open",
             isDarkTheme && "bg-black/40"
           )}
@@ -290,10 +331,9 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
         >
           <div className="nav-dock__drawer-inner">
             <nav className="nav-dock__menu flex flex-col gap-0.5 px-2.5 pb-2.5" aria-label="Mobile">
-              {links.map((link) => (
+              {mobileNavLinks.map((link) => (
                 <div key={link.id}>{renderNavLink(link, true)}</div>
               ))}
-              <div key="conf-nav-mobile">{renderNavLink({ id: 'conf-nav-mobile', name: 'Conference', href: '/conference' }, true)}</div>
             </nav>
 
             <div className="nav-dock__cta px-2.5 pb-3 pt-1">

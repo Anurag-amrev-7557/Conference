@@ -1,50 +1,143 @@
 import React, { useState, useEffect } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
-import { LivePreview } from './LivePreview';
+import type { WebsiteData } from '../../lib/websiteData';
 import { 
   Eye, 
   EyeOff, 
-  Save, 
   Layout, 
   Sparkles,
   BarChart3,
   Users,
   Target,
-  Loader2,
   Trash2,
-  Plus
+  Plus,
+  Type,
+  Globe,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { pillarIcons, perkIcons } from '../WebsiteDataProvider';
+import { HomepageSeoPanel } from './PageWorkspacePanel';
+import { AdminWorkspaceShell } from './AdminWorkspaceShell';
+import { SectionCopyFields, FinalCtaFields } from './admin-workspace-fields';
+import {
+  AdminButton,
+  AdminField,
+  AdminFieldGrid,
+  AdminFormSection,
+  AdminHeaderSave,
+  AdminInput,
+  AdminPageIntro,
+  AdminTextarea,
+} from './admin-ui';
+import type { WorkspaceSaveConfig } from './admin-workspace-save';
+import { HOMEPAGE_TAB_INTROS } from './workspaceTabIntros';
+import { useApplyPendingAdminSection } from './admin-workspace-nav';
+
+const TAB_SAVE_LABELS: Record<
+  'hero' | 'stats' | 'showcase' | 'perks' | 'sections' | 'visibility',
+  string
+> = {
+  hero: 'Save hero',
+  stats: 'Save stats',
+  showcase: 'Save showcase',
+  perks: 'Save perks',
+  sections: 'Save sections',
+  visibility: 'Save visibility',
+};
+
+function formatVisibilityKey(key: string) {
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+}
+
+const SECTION_LABELS: Record<'whoWeAre', string> = {
+  whoWeAre: 'Who we are',
+};
+
+const HOMEPAGE_SUBNAV_GROUPS = [
+  {
+    label: 'Content',
+    items: [
+      { id: 'hero', label: 'Hero', icon: Sparkles },
+      { id: 'stats', label: 'Stats', icon: BarChart3 },
+      { id: 'showcase', label: 'Showcase', icon: Target },
+      { id: 'perks', label: 'Perks', icon: Users },
+      { id: 'sections', label: 'Sections', icon: Type },
+    ],
+  },
+  {
+    label: 'Publish',
+    items: [
+      { id: 'visibility', label: 'Visibility', icon: Layout },
+      { id: 'seo', label: 'SEO', icon: Globe },
+    ],
+  },
+];
 
 export const PageEditor: React.FC = () => {
-  const { data, updateHero, updateStats, updatePillars, updatePerks, updateSettings, setPreview, isPreviewVisible } = useWebsiteData();
-  const [activeTab, setActiveTab] = useState<'hero' | 'stats' | 'showcase' | 'perks' | 'visibility'>('hero');
+  const {
+    sourceData,
+    updateHero,
+    updateStats,
+    updatePillars,
+    updatePerks,
+    updateSettings,
+    setPreview,
+    isPreviewVisible,
+  } = useWebsiteData();
+  const [activeTab, setActiveTab] = useState<
+    'hero' | 'stats' | 'showcase' | 'perks' | 'sections' | 'visibility' | 'seo'
+  >('hero');
   const [isSaving, setIsSaving] = useState(false);
 
-  const [heroForm, setHeroForm] = useState(data.hero);
-  const [statsForm, setStatsForm] = useState(data.stats);
-  const [pillarsForm, setPillarsForm] = useState(data.pillars);
-  const [perksForm, setPerksForm] = useState(data.perks);
-  const [visibilityForm, setVisibilityForm] = useState(data.settings.visibility);
+  const [heroForm, setHeroForm] = useState(sourceData.hero);
+  const [statsForm, setStatsForm] = useState(sourceData.stats);
+  const [pillarsForm, setPillarsForm] = useState(sourceData.pillars);
+  const [perksForm, setPerksForm] = useState(sourceData.perks);
+  const [sectionsForm, setSectionsForm] = useState(sourceData.settings.sections ?? {});
+  const [visibilityForm, setVisibilityForm] = useState(sourceData.settings.visibility);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [panelSave, setPanelSave] = useState<WorkspaceSaveConfig | null>(null);
 
-  // Sync with live preview
   useEffect(() => {
+    setSectionsForm(sourceData.settings.sections ?? {});
+  }, [sourceData.settings.sections]);
+
+  useEffect(() => {
+    const homepage = sourceData.settings.homepage;
+    if (!homepage) return;
+    setHeroForm(homepage.hero);
+    setStatsForm(homepage.stats);
+    setPillarsForm(homepage.pillars);
+    setPerksForm(homepage.perks);
+  }, [sourceData.settings.homepage]);
+
+  useEffect(() => {
+    if (!isPreviewVisible) {
+      setPreview(null);
+      return;
+    }
     setPreview({
       hero: heroForm,
       stats: statsForm,
       pillars: pillarsForm,
       perks: perksForm,
       settings: {
-        ...data.settings,
-        visibility: visibilityForm
-      }
+        sections: sectionsForm,
+        visibility: visibilityForm,
+      } as WebsiteData['settings'],
     });
-
     return () => setPreview(null);
-  }, [heroForm, statsForm, pillarsForm, perksForm, visibilityForm, data.settings]);
+  }, [
+    heroForm,
+    statsForm,
+    pillarsForm,
+    perksForm,
+    sectionsForm,
+    visibilityForm,
+    isPreviewVisible,
+    setPreview,
+  ]);
 
   const handleSave = async (type: string) => {
     setIsSaving(true);
@@ -53,518 +146,481 @@ export const PageEditor: React.FC = () => {
       if (type === 'stats') await updateStats(statsForm);
       if (type === 'pillars') await updatePillars(pillarsForm);
       if (type === 'perks') await updatePerks(perksForm);
-      if (type === 'visibility') await updateSettings({ ...data.settings, visibility: visibilityForm });
+      if (type === 'visibility') {
+        const { community: _community, ...visibility } = visibilityForm as typeof visibilityForm & {
+          community?: boolean;
+        };
+        await updateSettings({ ...sourceData.settings, visibility });
+      }
+      if (type === 'sections') {
+        const { community: _community, ...sections } = (sectionsForm ?? {}) as NonNullable<
+          typeof sectionsForm
+        > & { community?: unknown };
+        await updateSettings({ ...sourceData.settings, sections });
+      }
     } finally {
       setIsSaving(false);
     }
   };
 
-  const tabs = [
-    { id: 'hero', label: 'Hero', icon: Sparkles },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
-    { id: 'showcase', label: 'Showcase', icon: Target },
-    { id: 'perks', label: 'Community', icon: Users },
-    { id: 'visibility', label: 'Visibility', icon: Layout },
-  ];
+  const headerSave =
+    activeTab === 'seo' && panelSave ? (
+      <AdminHeaderSave
+        label={panelSave.label}
+        saving={panelSave.saving}
+        onClick={panelSave.onSave}
+      />
+    ) : activeTab !== 'seo' ? (
+      <AdminHeaderSave
+        label={TAB_SAVE_LABELS[activeTab]}
+        saving={isSaving}
+        onClick={() => handleSave(activeTab)}
+      />
+    ) : undefined;
+
+  useApplyPendingAdminSection('/admin/homepage', (id) =>
+    setActiveTab(id as typeof activeTab),
+  );
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-bg relative font-sans text-text">
-      {/* Background Grid */}
-      <div className="absolute inset-0 bg-grid-studio opacity-[0.03] pointer-events-none" />
+    <AdminWorkspaceShell
+      isPreviewVisible={isPreviewVisible}
+      isSidebarCollapsed={isSidebarCollapsed}
+      onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      toolbar={
+        <AdminPageIntro
+          className="mb-0"
+          eyebrow="Pages"
+          title="Book page"
+          lede="Marketing page at /home — hero, stats, showcase, perks, section copy, visibility, and SEO."
+        />
+      }
+      subnav={{
+        groups: HOMEPAGE_SUBNAV_GROUPS,
+        title: 'Book page',
+        activeId: activeTab,
+        onSelect: (id) => setActiveTab(id as typeof activeTab),
+      }}
+      tabIntro={HOMEPAGE_TAB_INTROS[activeTab]}
+      headerAction={headerSave}
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {activeTab === 'hero' && (
+            <>
+              <AdminFormSection
+                title="Tagline & CTAs"
+                description="Eyebrow text and button labels above the fold."
+              >
+                <AdminField label="Eyebrow / tagline">
+                  <AdminInput
+                    value={heroForm.tagline}
+                    onChange={(e) => setHeroForm({ ...heroForm, tagline: e.target.value })}
+                  />
+                </AdminField>
+                <AdminField label="Primary CTA label">
+                  <AdminInput
+                    value={heroForm.primaryCtaLabel ?? ''}
+                    onChange={(e) =>
+                      setHeroForm({ ...heroForm, primaryCtaLabel: e.target.value })
+                    }
+                  />
+                </AdminField>
+              </AdminFormSection>
 
-      {/* Sidebar Controls */}
-      <motion.div 
-        layout
-        animate={{ 
-          width: !isPreviewVisible ? '100%' : (isSidebarCollapsed ? 0 : 520), 
-          opacity: (isSidebarCollapsed && isPreviewVisible) ? 0 : 1 
-        }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={cn(
-          "bg-white flex flex-col shrink-0 relative z-10 shadow-premium overflow-hidden",
-          isPreviewVisible ? "border-r border-border" : "w-full"
-        )}
-      >
-        <div className={cn(
-          "flex flex-col h-full bg-white",
-          !isPreviewVisible ? "max-w-4xl mx-auto w-full border-x border-border/40" : "w-[520px]"
-        )}> 
-          <div className="p-5">
-             <div className="flex items-center gap-4 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-off flex items-center justify-center border border-border">
-                   <Layout className="w-5 h-5 text-accent" />
-                </div>
-                <span className="text-[11px] font-bold text-accent uppercase tracking-widest">Page Editor</span>
-             </div>
-             <h3 className="text-4xl font-serif italic text-text mb-4">Edit Page</h3>
-             <p className="text-text2 text-base leading-relaxed">Edit your landing page content, visibility settings, and key website statistics.</p>
-          </div>
+              <AdminFormSection title="Headline" description="Main hero title and accent line.">
+                <AdminField label="Headline">
+                  <AdminTextarea
+                    rows={3}
+                    value={heroForm.headline}
+                    onChange={(e) => setHeroForm({ ...heroForm, headline: e.target.value })}
+                    placeholder="The Art of building AI Products"
+                  />
+                </AdminField>
+                <AdminField label="Headline accent">
+                  <AdminInput
+                    value={heroForm.headlineAccent}
+                    onChange={(e) =>
+                      setHeroForm({ ...heroForm, headlineAccent: e.target.value })
+                    }
+                    placeholder="-Agentic AI"
+                  />
+                </AdminField>
+                <AdminField label="Summary">
+                  <AdminTextarea
+                    rows={4}
+                    value={heroForm.subtitle}
+                    onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
+                  />
+                </AdminField>
+              </AdminFormSection>
 
-          <div className="flex-1 overflow-y-auto">
-             {/* Tab Navigation */}
-             <div className="flex border-b border-border/40 w-full sticky top-0 bg-white z-20">
-                {tabs.map((tab) => (
-                  <button
-                     key={tab.id}
-                     onClick={() => setActiveTab(tab.id as any)}
-                     className={cn(
-                       "flex-1 flex flex-col items-center gap-2.5 py-5 transition-all duration-500 relative",
-                       activeTab === tab.id 
-                       ? "text-accent bg-accent/[0.02]" 
-                       : "text-muted hover:text-text hover:bg-off/30"
-                     )}
-                  >
-                    <tab.icon className={cn("w-4 h-4 transition-transform duration-500", activeTab === tab.id ? "scale-110" : "opacity-40")} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">{tab.label}</span>
-                    
-                    {activeTab === tab.id && (
-                      <motion.div 
-                        layoutId="activeTab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
-                      />
-                    )}
-                  </button>
-                ))}
-             </div>
+              <AdminFormSection title="Video" description="Optional YouTube embed beside the hero.">
+                <AdminField
+                  label="YouTube embed URL"
+                  hint="Use an embed URL (youtube.com/embed/…), not a watch link."
+                >
+                  <AdminInput
+                    value={heroForm.videoUrl}
+                    onChange={(e) => setHeroForm({ ...heroForm, videoUrl: e.target.value })}
+                    placeholder="https://www.youtube.com/embed/…"
+                    className="font-mono text-sm"
+                  />
+                </AdminField>
+              </AdminFormSection>
 
-             <div className="p-8 space-y-12">
-               <AnimatePresence mode="wait">
-                 <motion.div
-                   key={activeTab}
-                   initial={{ opacity: 0, y: 10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   exit={{ opacity: 0, y: -10 }}
-                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                   className="space-y-12"
-                 >
-                   {activeTab === 'hero' && (
-                     <div className="space-y-10 animate-fadeInUp">
-                       <div className="space-y-4">
-                         <h4 className="text-xl font-bold text-text">Eyebrow / Tagline</h4>
-                         <input
-                           type="text"
-                           value={heroForm.tagline}
-                           onChange={(e) => setHeroForm({ ...heroForm, tagline: e.target.value })}
-                           className="w-full bg-[#fafafa] border border-border/40 p-5 text-sm focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                         />
-                       </div>
-
-                       <div className="grid grid-cols-1 gap-4">
-                         <div className="space-y-2">
-                           <h4 className="text-sm font-bold text-text">Primary CTA label</h4>
-                           <input
-                             type="text"
-                             value={heroForm.primaryCtaLabel ?? ''}
-                             onChange={(e) => setHeroForm({ ...heroForm, primaryCtaLabel: e.target.value })}
-                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
-                           />
-                         </div>
-                         <div className="space-y-2">
-                           <h4 className="text-sm font-bold text-text">Secondary CTA label</h4>
-                           <input
-                             type="text"
-                             value={heroForm.secondaryCtaLabel ?? ''}
-                             onChange={(e) => setHeroForm({ ...heroForm, secondaryCtaLabel: e.target.value })}
-                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
-                           />
-                         </div>
-                         <div className="space-y-2">
-                           <h4 className="text-sm font-bold text-text">Secondary CTA link</h4>
-                           <input
-                             type="text"
-                             value={heroForm.secondaryCtaHref ?? ''}
-                             onChange={(e) => setHeroForm({ ...heroForm, secondaryCtaHref: e.target.value })}
-                             placeholder="/community"
-                             className="w-full bg-[#fafafa] border border-border/40 p-4 text-sm rounded-xl"
-                           />
-                         </div>
-                       </div>
-
-                       <div className="space-y-4">
-                         <h4 className="text-xl font-bold text-text">Main Heading</h4>
-                         <textarea 
-                           value={heroForm.headline}
-                           onChange={(e) => setHeroForm({ ...heroForm, headline: e.target.value })}
-                           placeholder="The Art of building AI Products"
-                           className="w-full bg-[#fafafa] border border-border/40 p-8 min-h-[140px] resize-none font-serif italic text-3xl leading-tight focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                         />
-                       </div>
-
-                       <div className="space-y-4">
-                         <h4 className="text-xl font-bold text-text">Heading Accent</h4>
-                         <input 
-                           type="text"
-                           value={heroForm.headlineAccent}
-                           onChange={(e) => setHeroForm({ ...heroForm, headlineAccent: e.target.value })}
-                           placeholder="-Agentic AI"
-                           className="w-full bg-[#fafafa] border border-border/40 p-6 font-serif italic text-xl focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                         />
-                       </div>
-
-                       <div className="space-y-4">
-                         <h4 className="text-xl font-bold text-text">Summary Paragraph</h4>
-                         <textarea 
-                           value={heroForm.subtitle}
-                           onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
-                           className="w-full bg-[#fafafa] border border-border/40 p-8 min-h-[160px] resize-none text-base leading-relaxed opacity-80 focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                         />
-                       </div>
-
-                       <div className="space-y-4">
-                         <h4 className="text-xl font-bold text-text">Promotional Video URL (YouTube Embed)</h4>
-                         <input 
-                           type="text"
-                           value={heroForm.videoUrl}
-                           onChange={(e) => setHeroForm({ ...heroForm, videoUrl: e.target.value })}
-                           placeholder="https://www.youtube.com/embed/..."
-                           className="w-full bg-[#fafafa] border border-border/40 p-6 font-mono text-sm text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                         />
-                         <p className="text-[10px] text-muted-foreground ml-2 opacity-50">Enter a YouTube embed URL to display alongside the hero text.</p>
-                       </div>
-
-                       <button 
-                         onClick={() => handleSave('hero')}
-                         disabled={isSaving}
-                         className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
-                       >
-                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                         Save Hero Changes
-                       </button>
-                     </div>
-                   )}
-
-                   {activeTab === 'visibility' && (
-                      <div className="space-y-10 animate-fadeInUp">
-                         <div className="border border-border/40 bg-white rounded-2xl divide-y divide-border/40 overflow-hidden shadow-sm">
-                            {Object.entries(visibilityForm).map(([key, value]) => (
-                               <div key={key} className="flex items-center justify-between p-8 hover:bg-[#fafafa] transition-colors group">
-                                  <div className="flex items-center gap-6">
-                                     <div className={cn(
-                                       "w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-500",
-                                       value ? "bg-accent/5 border-accent/20 text-accent" : "bg-off/40 border-border/40 text-muted/40"
-                                     )}>
-                                        {value ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                                     </div>
-                                     <div>
-                                        <span className="text-[14px] font-semibold text-text block mb-1 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                                        <span className="text-[9px] font-bold text-muted/40 uppercase tracking-widest">{value ? 'Visible' : 'Hidden'}</span>
-                                     </div>
-                                  </div>
-                                  <button 
-                                    onClick={() => setVisibilityForm({ ...visibilityForm, [key as any]: !value } as any)}
-                                    className={cn(
-                                      "w-11 h-6 rounded-full relative transition-all duration-500 p-1 border",
-                                      value ? "bg-accent border-accent" : "bg-border/20 border-border/40"
-                                    )}
-                                  >
-                                     <motion.div 
-                                       animate={{ x: value ? 20 : 0 }}
-                                       className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" 
-                                     />
-                                   </button>
-                               </div>
-                            ))}
-                         </div>
-                         <button 
-                           onClick={() => handleSave('visibility')}
-                           className="w-full py-5 bg-accent text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-accent2 transition-all shadow-xl shadow-accent/20 active:scale-[0.98] rounded-xl"
-                         >
-                           <Save className="w-4 h-4" />
-                           Synchronize Visibility
-                         </button>
-                      </div>
-                   )}
-
-                   {activeTab === 'stats' && (
-                     <div className="space-y-10 animate-fadeInUp">
-                       <div className="border border-border/40 bg-white rounded-2xl divide-y divide-border/40 overflow-hidden shadow-sm">
-                         {statsForm.map((stat, index) => (
-                           <div key={stat.id} className="p-8 space-y-8 hover:bg-[#fafafa] transition-colors">
-                              <div className="flex items-center justify-between">
-                                 <span className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Metric {index + 1}</span>
-                                 <div className="w-8 h-8 rounded-lg bg-off flex items-center justify-center border border-border/40">
-                                   <BarChart3 className="w-3.5 h-3.5 text-accent" />
-                                 </div>
-                              </div>
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                 <div className="space-y-2">
-                                   <label className="text-[9px] font-bold text-muted uppercase tracking-widest">Statistical Value</label>
-                                   <input 
-                                     type="text"
-                                     value={stat.value}
-                                     onChange={(e) => {
-                                       const newStats = [...statsForm];
-                                       newStats[index].value = e.target.value;
-                                       setStatsForm(newStats);
-                                     }}
-                                     className="w-full bg-[#fafafa]/50 border border-border/40 p-5 font-mono text-xl focus:bg-white transition-all outline-none rounded-lg"
-                                   />
-                                 </div>
-                                 <div className="space-y-2">
-                                   <label className="text-[9px] font-bold text-muted uppercase tracking-widest">Label Reference</label>
-                                   <input 
-                                     type="text"
-                                     value={stat.label}
-                                     onChange={(e) => {
-                                       const newStats = [...statsForm];
-                                       newStats[index].label = e.target.value;
-                                       setStatsForm(newStats);
-                                     }}
-                                     className="w-full bg-[#fafafa]/50 border border-border/40 p-5 font-serif italic text-lg focus:bg-white transition-all outline-none rounded-lg"
-                                   />
-                                 </div>
-                              </div>
-                           </div>
-                         ))}
-                       </div>
-                       <button 
-                         onClick={() => handleSave('stats')}
-                         disabled={isSaving}
-                         className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
-                       >
-                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                         Save Statistics
-                       </button>
-                     </div>
-                   )}
-
-                   {activeTab === 'showcase' && (
-                     <div className="space-y-10 animate-fadeInUp">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-xl font-bold text-text">Book Showcase Items</h4>
-                            <button 
-                              onClick={() => setPillarsForm([...pillarsForm, { id: Math.random().toString(), iconName: 'Database', title: 'New Pillar', description: 'Description here', prompt: 'Prompt here', color: 'text-blue-500' }])}
-                              className="p-2 bg-accent/5 text-accent rounded-lg border border-accent/20 hover:bg-accent/10 transition-all"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-6">
-                           {pillarsForm.map((pillar, index) => (
-                             <div key={pillar.id} className="p-8 border border-border/40 rounded-2xl bg-white shadow-sm space-y-8 group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                   <button 
-                                     onClick={() => setPillarsForm(pillarsForm.filter(p => p.id !== pillar.id))}
-                                     className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                   >
-                                      <Trash2 className="w-4 h-4" />
-                                   </button>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-8">
-                                   <div className="space-y-3">
-                                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Icon Type</label>
-                                      <select 
-                                        value={pillar.iconName}
-                                        onChange={(e) => {
-                                          const newPillars = [...pillarsForm];
-                                          newPillars[index].iconName = e.target.value as any;
-                                          setPillarsForm(newPillars);
-                                        }}
-                                        className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-sm focus:bg-white outline-none"
-                                      >
-                                         {Object.keys(pillarIcons).map(icon => (
-                                           <option key={icon} value={icon}>{icon}</option>
-                                         ))}
-                                      </select>
-                                   </div>
-                                   <div className="space-y-3">
-                                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Color Theme</label>
-                                      <input 
-                                        type="text"
-                                        value={pillar.color}
-                                        onChange={(e) => {
-                                          const newPillars = [...pillarsForm];
-                                          newPillars[index].color = e.target.value;
-                                          setPillarsForm(newPillars);
-                                        }}
-                                        placeholder="text-blue-500"
-                                        className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-sm focus:bg-white outline-none"
-                                      />
-                                   </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                   <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Title</label>
-                                   <input 
-                                     type="text"
-                                     value={pillar.title}
-                                     onChange={(e) => {
-                                       const newPillars = [...pillarsForm];
-                                       newPillars[index].title = e.target.value;
-                                       setPillarsForm(newPillars);
-                                     }}
-                                     className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-base font-bold focus:bg-white outline-none"
-                                   />
-                                </div>
-
-                                <div className="space-y-3">
-                                   <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Description</label>
-                                   <textarea 
-                                     value={pillar.description}
-                                     onChange={(e) => {
-                                       const newPillars = [...pillarsForm];
-                                       newPillars[index].description = e.target.value;
-                                       setPillarsForm(newPillars);
-                                     }}
-                                     className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-sm min-h-[80px] focus:bg-white outline-none"
-                                   />
-                                </div>
-
-                                <div className="space-y-3">
-                                   <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Terminal Prompt</label>
-                                   <input 
-                                     type="text"
-                                     value={pillar.prompt}
-                                     onChange={(e) => {
-                                       const newPillars = [...pillarsForm];
-                                       newPillars[index].prompt = e.target.value;
-                                       setPillarsForm(newPillars);
-                                     }}
-                                     className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-xs font-mono text-accent focus:bg-white outline-none"
-                                   />
-                                </div>
-                             </div>
-                           ))}
-                        </div>
-
-                        <button 
-                          onClick={() => handleSave('pillars')}
-                          disabled={isSaving}
-                          className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
-                        >
-                          {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                          Save Showcase Data
-                        </button>
-                     </div>
-                   )}
-
-                   {activeTab === 'perks' && (
-                     <div className="space-y-10 animate-fadeInUp">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-xl font-bold text-text">Community Perks</h4>
-                            <button 
-                              onClick={() => setPerksForm([...perksForm, { id: Math.random().toString(), iconName: 'Zap', title: 'New Perk', label: 'LABEL', description: 'Description' }])}
-                              className="p-2 bg-accent/5 text-accent rounded-lg border border-accent/20 hover:bg-accent/10 transition-all"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-6">
-                           {perksForm.map((perk, index) => (
-                             <div key={perk.id} className="p-8 border border-border/40 rounded-2xl bg-white shadow-sm space-y-6 group relative">
-                                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                   <button 
-                                     onClick={() => setPerksForm(perksForm.filter(p => p.id !== perk.id))}
-                                     className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                   >
-                                      <Trash2 className="w-4 h-4" />
-                                   </button>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-8">
-                                   <div className="space-y-3">
-                                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Icon</label>
-                                      <select 
-                                        value={perk.iconName}
-                                        onChange={(e) => {
-                                          const newPerks = [...perksForm];
-                                          newPerks[index].iconName = e.target.value as any;
-                                          setPerksForm(newPerks);
-                                        }}
-                                        className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-sm"
-                                      >
-                                         {Object.keys(perkIcons).map(icon => (
-                                           <option key={icon} value={icon}>{icon}</option>
-                                         ))}
-                                      </select>
-                                   </div>
-                                   <div className="space-y-3">
-                                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Accent Label</label>
-                                      <input 
-                                        type="text"
-                                        value={perk.label}
-                                        onChange={(e) => {
-                                          const newPerks = [...perksForm];
-                                          newPerks[index].label = e.target.value;
-                                          setPerksForm(newPerks);
-                                        }}
-                                        className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-[10px] font-black tracking-widest uppercase text-accent"
-                                      />
-                                   </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                   <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Headline</label>
-                                   <input 
-                                     type="text"
-                                     value={perk.title}
-                                     onChange={(e) => {
-                                       const newPerks = [...perksForm];
-                                       newPerks[index].title = e.target.value;
-                                       setPerksForm(newPerks);
-                                     }}
-                                     className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-lg font-bold"
-                                   />
-                                </div>
-
-                                <div className="space-y-3">
-                                   <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Description</label>
-                                   <textarea 
-                                     value={perk.description}
-                                     onChange={(e) => {
-                                       const newPerks = [...perksForm];
-                                       newPerks[index].description = e.target.value;
-                                       setPerksForm(newPerks);
-                                     }}
-                                     className="w-full bg-[#fafafa] border border-border/40 p-4 rounded-xl text-sm min-h-[80px]"
-                                   />
-                                </div>
-                             </div>
-                           ))}
-                        </div>
-
-                        <button 
-                          onClick={() => handleSave('perks')}
-                          disabled={isSaving}
-                          className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
-                        >
-                          {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                          Save Community Perks
-                        </button>
-                     </div>
-                   )}
-                 </motion.div>
-               </AnimatePresence>
-               </div>
-            </div>
-         </div>
-       </motion.div>
-
-       {/* Main Studio View */}
-       <AnimatePresence>
-          {isPreviewVisible && (
-             <motion.div 
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: 20 }}
-               className="flex-1 overflow-hidden flex flex-col relative bg-white"
-             >
-                <div className="absolute inset-0 bg-off/5 pointer-events-none" />
-                
-                <div className="flex-1 relative group">
-                   <div className="h-full w-full overflow-hidden relative z-10">
-                      <LivePreview 
-                        onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                        isSidebarCollapsed={isSidebarCollapsed}
-                      />
-                   </div>
-                </div>
-             </motion.div>
+            </>
           )}
-       </AnimatePresence>
-    </div>
+
+          {activeTab === 'visibility' && (
+            <>
+              <AdminFormSection
+                title="Section visibility"
+                description="Toggle which blocks appear on the /home marketing page."
+              >
+                <div className="admin-list-editor">
+                  {Object.entries(visibilityForm)
+                    .filter(([key]) => key !== 'community')
+                    .map(([key, value]) => (
+                    <div key={key} className="admin-list-editor__row">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div
+                          className={cn(
+                            'w-10 h-10 rounded-xl flex items-center justify-center border shrink-0',
+                            value
+                              ? 'bg-[color-mix(in_srgb,var(--admin-primary)_8%,white)] border-[color-mix(in_srgb,var(--admin-primary)_25%,var(--admin-border))] text-[var(--admin-primary)]'
+                              : 'bg-[var(--admin-surface-muted)] border-[var(--admin-border)] text-[var(--admin-text-subtle)]',
+                          )}
+                        >
+                          {value ? (
+                            <Eye className="w-4 h-4" aria-hidden />
+                          ) : (
+                            <EyeOff className="w-4 h-4" aria-hidden />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[var(--admin-text)] m-0">
+                            {formatVisibilityKey(key)}
+                          </p>
+                          <p className="admin-field__hint m-0">
+                            {value ? 'Visible on /home' : 'Hidden from /home'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Toggle ${formatVisibilityKey(key)}`}
+                        onClick={() =>
+                          setVisibilityForm({
+                            ...visibilityForm,
+                            [key]: !value,
+                          } as typeof visibilityForm)
+                        }
+                        aria-pressed={value}
+                        className={cn('admin-toggle', value && 'admin-toggle--on')}
+                      >
+                        <span className="admin-toggle__knob" aria-hidden />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </AdminFormSection>
+            </>
+          )}
+
+          {activeTab === 'seo' && <HomepageSeoPanel onSaveReady={setPanelSave} />}
+
+          {activeTab === 'stats' && (
+            <>
+              <AdminFormSection
+                title="Metrics"
+                description="Values and labels in the stats row below the hero."
+              >
+                <div className="admin-list-editor">
+                  {statsForm.map((stat, index) => (
+                    <div key={stat.id} className="admin-list-editor__row !items-start">
+                      <div className="admin-list-editor__fields">
+                        <p className="text-[var(--admin-type-caption)] font-semibold text-[var(--admin-text-subtle)] uppercase tracking-wide m-0 mb-2">
+                          Metric {index + 1}
+                        </p>
+                        <AdminFieldGrid columns={2}>
+                          <AdminField label="Value">
+                            <AdminInput
+                              value={stat.value}
+                              onChange={(e) => {
+                                const newStats = [...statsForm];
+                                newStats[index].value = e.target.value;
+                                setStatsForm(newStats);
+                              }}
+                              className="font-mono"
+                            />
+                          </AdminField>
+                          <AdminField label="Label">
+                            <AdminInput
+                              value={stat.label}
+                              onChange={(e) => {
+                                const newStats = [...statsForm];
+                                newStats[index].label = e.target.value;
+                                setStatsForm(newStats);
+                              }}
+                            />
+                          </AdminField>
+                        </AdminFieldGrid>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AdminFormSection>
+            </>
+          )}
+
+          {activeTab === 'showcase' && (
+            <>
+              <AdminFormSection
+                title="Showcase pillars"
+                description="Book showcase cards — icon, copy, and terminal prompt."
+                action={
+                  <AdminButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setPillarsForm([
+                        ...pillarsForm,
+                        {
+                          id: Math.random().toString(),
+                          iconName: 'Database',
+                          title: 'New pillar',
+                          description: 'Description here',
+                          prompt: 'Prompt here',
+                          color: 'text-blue-500',
+                        },
+                      ])
+                    }
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add pillar
+                  </AdminButton>
+                }
+              >
+                <div className="admin-list-editor">
+                  {pillarsForm.map((pillar, index) => (
+                    <div key={pillar.id} className="admin-list-editor__row !items-start">
+                      <div className="admin-list-editor__fields">
+                        <AdminFieldGrid columns={2}>
+                          <AdminField label="Icon">
+                            <select
+                              value={pillar.iconName}
+                              onChange={(e) => {
+                                const newPillars = [...pillarsForm];
+                                newPillars[index].iconName = e.target.value as (typeof pillar)['iconName'];
+                                setPillarsForm(newPillars);
+                              }}
+                              className="admin-input"
+                            >
+                              {Object.keys(pillarIcons).map((icon) => (
+                                <option key={icon} value={icon}>
+                                  {icon}
+                                </option>
+                              ))}
+                            </select>
+                          </AdminField>
+                          <AdminField label="Color class">
+                            <AdminInput
+                              value={pillar.color}
+                              onChange={(e) => {
+                                const newPillars = [...pillarsForm];
+                                newPillars[index].color = e.target.value;
+                                setPillarsForm(newPillars);
+                              }}
+                              placeholder="text-blue-500"
+                            />
+                          </AdminField>
+                        </AdminFieldGrid>
+                        <AdminField label="Title">
+                          <AdminInput
+                            value={pillar.title}
+                            onChange={(e) => {
+                              const newPillars = [...pillarsForm];
+                              newPillars[index].title = e.target.value;
+                              setPillarsForm(newPillars);
+                            }}
+                          />
+                        </AdminField>
+                        <AdminField label="Description">
+                          <AdminTextarea
+                            rows={2}
+                            value={pillar.description}
+                            onChange={(e) => {
+                              const newPillars = [...pillarsForm];
+                              newPillars[index].description = e.target.value;
+                              setPillarsForm(newPillars);
+                            }}
+                          />
+                        </AdminField>
+                        <AdminField label="Terminal prompt">
+                          <AdminInput
+                            value={pillar.prompt}
+                            onChange={(e) => {
+                              const newPillars = [...pillarsForm];
+                              newPillars[index].prompt = e.target.value;
+                              setPillarsForm(newPillars);
+                            }}
+                            className="font-mono text-sm"
+                          />
+                        </AdminField>
+                      </div>
+                      <AdminButton
+                        type="button"
+                        variant="danger"
+                        className="admin-list-editor__remove"
+                        aria-label="Remove pillar"
+                        onClick={() => setPillarsForm(pillarsForm.filter((p) => p.id !== pillar.id))}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </AdminButton>
+                    </div>
+                  ))}
+                </div>
+              </AdminFormSection>
+            </>
+          )}
+
+          {activeTab === 'sections' && (
+            <>
+              <FinalCtaFields
+                value={sectionsForm?.finalCta}
+                onChange={(next) =>
+                  setSectionsForm({
+                    ...sectionsForm,
+                    finalCta: next,
+                  })
+                }
+              />
+              {(['whoWeAre'] as const).map((key) => (
+                <SectionCopyFields
+                  key={key}
+                  title={SECTION_LABELS[key]}
+                  showCta={false}
+                  value={sectionsForm?.[key]}
+                  onChange={(next) =>
+                    setSectionsForm({
+                      ...sectionsForm,
+                      [key]: next,
+                    })
+                  }
+                />
+              ))}
+            </>
+          )}
+
+          {activeTab === 'perks' && (
+            <>
+              <AdminFormSection
+                title="Perk cards"
+                description="Feature cards in the homepage perks section."
+                action={
+                  <AdminButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setPerksForm([
+                        ...perksForm,
+                        {
+                          id: Math.random().toString(),
+                          iconName: 'Zap',
+                          title: 'New perk',
+                          label: 'LABEL',
+                          description: 'Description',
+                        },
+                      ])
+                    }
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add perk
+                  </AdminButton>
+                }
+              >
+                <div className="admin-list-editor">
+                  {perksForm.map((perk, index) => (
+                    <div key={perk.id} className="admin-list-editor__row !items-start">
+                      <div className="admin-list-editor__fields">
+                        <AdminFieldGrid columns={2}>
+                          <AdminField label="Icon">
+                            <select
+                              value={perk.iconName}
+                              onChange={(e) => {
+                                const newPerks = [...perksForm];
+                                newPerks[index].iconName = e.target.value as (typeof perk)['iconName'];
+                                setPerksForm(newPerks);
+                              }}
+                              className="admin-input"
+                            >
+                              {Object.keys(perkIcons).map((icon) => (
+                                <option key={icon} value={icon}>
+                                  {icon}
+                                </option>
+                              ))}
+                            </select>
+                          </AdminField>
+                          <AdminField label="Accent label">
+                            <AdminInput
+                              value={perk.label}
+                              onChange={(e) => {
+                                const newPerks = [...perksForm];
+                                newPerks[index].label = e.target.value;
+                                setPerksForm(newPerks);
+                              }}
+                            />
+                          </AdminField>
+                        </AdminFieldGrid>
+                        <AdminField label="Headline">
+                          <AdminInput
+                            value={perk.title}
+                            onChange={(e) => {
+                              const newPerks = [...perksForm];
+                              newPerks[index].title = e.target.value;
+                              setPerksForm(newPerks);
+                            }}
+                          />
+                        </AdminField>
+                        <AdminField label="Description">
+                          <AdminTextarea
+                            rows={2}
+                            value={perk.description}
+                            onChange={(e) => {
+                              const newPerks = [...perksForm];
+                              newPerks[index].description = e.target.value;
+                              setPerksForm(newPerks);
+                            }}
+                          />
+                        </AdminField>
+                      </div>
+                      <AdminButton
+                        type="button"
+                        variant="danger"
+                        className="admin-list-editor__remove"
+                        aria-label="Remove perk"
+                        onClick={() => setPerksForm(perksForm.filter((p) => p.id !== perk.id))}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </AdminButton>
+                    </div>
+                  ))}
+                </div>
+              </AdminFormSection>
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </AdminWorkspaceShell>
   );
 };
+
+/** @deprecated Use PageEditor — kept for imports during transition */
+export const HomepageEditor = PageEditor;

@@ -14,6 +14,9 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      '/api': 'http://localhost:3001',
+      '/media': 'http://localhost:3001',
+      '/og': 'http://localhost:3001',
       '/sitemap.xml': 'http://localhost:3001',
       '/robots.txt': 'http://localhost:3001',
     },
@@ -21,6 +24,8 @@ export default defineConfig({
   preview: {
     proxy: {
       '/api': 'http://localhost:3001',
+      '/media': 'http://localhost:3001',
+      '/og': 'http://localhost:3001',
       '/sitemap.xml': 'http://localhost:3001',
       '/robots.txt': 'http://localhost:3001',
     },

@@ -1,0 +1,35 @@
+# Render Blueprint — API only. Frontend deploys on Firebase Hosting.
+# Guide: docs/FIREBASE_DEPLOY.md
+
+services:
+  - type: web
+    name: book-website-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm ci && npm run build && npx prisma generate && npx prisma migrate deploy
+    startCommand: npm start
+    healthCheckPath: /health
+    plan: starter
+    disk:
+      name: book-website-uploads
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/var/data/prod.db
+      - key: UPLOAD_ROOT
+        value: /var/data
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SITE_URL
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: ADMIN_ALLOWED_ORIGINS
+        sync: false
+      - key: BACKUP_ON_START
+        value: "1"

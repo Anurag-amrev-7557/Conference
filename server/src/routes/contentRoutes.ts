@@ -2,6 +2,9 @@ import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { sanitizeArticleHtml } from '../lib/sanitize';
 import { getSiteUrl } from '../lib/siteUrl';
+import { validateBody } from '../middleware/validateBody';
+import { registrationCreateSchema } from '../schemas/registration';
+import { getConferenceRegistrationSettings } from '../lib/conferenceRegistrationSettings';
 
 const router = Router();
 
@@ -53,38 +56,24 @@ function mapArticle<T extends { content: string }>(article: T): T {
   return { ...article, content: sanitizeArticleHtml(article.content) };
 }
 
-function mapCommunityPost(p: {
-  id: string;
-  title: string;
-  content: string;
-  authorName: string;
-  authorAvatar: string;
-  authorRole: string | null;
-  category: string;
-  votes: number;
-  createdAt: Date;
-  updatedAt: Date;
-  isPinned: boolean;
-  comments: { id: string; authorName: string; authorAvatar: string; content: string; createdAt: Date }[];
-}) {
-  return {
-    ...p,
-    comments: p.comments.map((c) => ({
-      ...c,
-      author: { name: c.authorName, avatar: c.authorAvatar },
-    })),
-  };
-}
-
 async function fetchSitePayload() {
   const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
+  const hero = safeParse(content?.hero);
+  const stats = safeParse(content?.stats, []);
+  const pillars = safeParse(content?.pillars, []);
+  const perks = safeParse(content?.perks, []);
+  const settings = (safeParse(content?.settings) ?? {}) as Record<string, unknown>;
+  if (!settings.homepage) {
+    settings.homepage = { hero, stats, pillars, perks };
+  }
+  settings.conferenceRegistration = await getConferenceRegistrationSettings();
   return {
     siteUrl: getSiteUrl(),
-    hero: safeParse(content?.hero),
-    stats: safeParse(content?.stats, []),
-    pillars: safeParse(content?.pillars, []),
-    perks: safeParse(content?.perks, []),
-    settings: safeParse(content?.settings),
+    hero,
+    stats,
+    pillars,
+    perks,
+    settings,
     appearance: safeParse(content?.appearance),
   };
 }
@@ -140,27 +129,30 @@ router.get('/events', async (req, res) => {
   }
 });
 
-// GET /api/v1/content/community
-router.get('/community', async (req, res) => {
-  const { limit, offset } = parsePagination(req);
+// POST /api/v1/content/conference-registration
+router.post('/conference-registration', validateBody(registrationCreateSchema), async (req, res) => {
+  const { name, email, phone, linkedIn, designation } = req.body;
   try {
-    const [rows, total] = await Promise.all([
-      prisma.communityPost.findMany({
-        include: {
-          comments: { take: 5, orderBy: { createdAt: 'desc' } },
-        },
-        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
-        take: limit,
-        skip: offset,
-      }),
-      prisma.communityPost.count(),
-    ]);
-    const items = rows.map(mapCommunityPost);
-    res.setHeader('X-Total-Count', String(total));
-    res.json({ items, total });
+    const regSettings = await getConferenceRegistrationSettings();
+    const record = await prisma.conferenceRegistration.create({
+      data: {
+        name,
+        email: email.toLowerCase(),
+        phone,
+        linkedIn: linkedIn ?? '',
+        designation,
+        ticketPriceCents: regSettings.ticketPriceCents,
+        status: 'pending',
+      },
+    });
+    res.status(201).json({
+      id: record.id,
+      success: true,
+      message: 'Registration received.',
+    });
   } catch (error) {
-    console.error('Community fetch error:', error);
-    res.status(500).json({ error: 'Failed to fetch community posts.' });
+    console.error('Registration create error:', error);
+    res.status(500).json({ error: 'Failed to submit registration.' });
   }
 });
 
@@ -168,20 +160,15 @@ router.get('/community', async (req, res) => {
 router.get('/', async (_req, res) => {
   try {
     const site = await fetchSitePayload();
-    const [articlesRes, eventsRes, communityRes] = await Promise.all([
+    const [articlesRes, eventsRes] = await Promise.all([
       prisma.article.findMany({ orderBy: { publishedAt: 'desc' } }),
       prisma.event.findMany({ orderBy: { day: 'asc' } }),
-      prisma.communityPost.findMany({
-        include: { comments: { take: 5, orderBy: { createdAt: 'desc' } } },
-        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
-      }),
     ]);
 
     res.json({
       ...site,
       articles: articlesRes.map(mapArticle),
       events: eventsRes.map(mapEvent),
-      communityPosts: communityRes.map(mapCommunityPost),
     });
   } catch (error) {
     console.error('Content fetch error:', error);

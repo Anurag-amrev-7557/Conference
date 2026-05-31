@@ -35,7 +35,7 @@ jobs:
         run: npm run lint
 
       - name: Frontend build
-        run: npm run build
+        run: PRERENDER_SKIP=1 npm run build:no-prerender
 
       - name: Server build
         run: cd server && npm run build

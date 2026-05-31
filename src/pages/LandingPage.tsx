@@ -3,7 +3,6 @@ import { HeroSection } from "../components/sections/HeroSection"
 import { WhoWeAreSection } from "../components/sections/WhoWeAreSection"
 import { EventsSection } from "../components/sections/EventsSection"
 import { BlogSection } from "../components/sections/BlogSection"
-import { CommunitySection } from "../components/sections/CommunitySection"
 import { FinalCTA } from "../components/sections/FinalCTA"
 import { Footer } from "../components/Footer"
 import { useWebsiteData } from "../components/WebsiteDataProvider"
@@ -28,12 +27,12 @@ export function LandingPage() {
     <>
     <SeoHead seo={seo} />
     <JsonLd graph={jsonLd} />
-    <main className="relative bg-white min-h-screen overflow-x-hidden">
+    <main className="relative bg-white min-h-screen overflow-x-hidden public-page-shell landing-page-overhaul">
       <div className="noise-texture" />
 
       {/* Hero + book share one continuous surface (grid, tint, bg) */}
       {visibility.hero || visibility.showcase ? (
-        <div className="landing-flow">
+        <div className="landing-flow public-flow-stack">
           {visibility.hero && <HeroSection onBookDemo={() => setIsModalOpen(true)} />}
           {visibility.showcase && (
             <Suspense fallback={<section className="min-h-[40vh] bg-transparent" aria-hidden />}>
@@ -42,9 +41,6 @@ export function LandingPage() {
           )}
         </div>
       ) : null}
-
-      {/* Community */}
-      {visibility.community && <CommunitySection />}
 
       {/* Who We Are */}
       {visibility.whoWeAre && <WhoWeAreSection />}

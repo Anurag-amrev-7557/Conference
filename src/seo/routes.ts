@@ -1,4 +1,4 @@
-export const PUBLIC_ROUTE_PATHS = ['/', '/blog', '/events', '/community'] as const
+export const PUBLIC_ROUTE_PATHS = ['/', '/home', '/blog', '/events', '/register'] as const
 
 export type PublicRoutePath = (typeof PUBLIC_ROUTE_PATHS)[number]
 
@@ -10,6 +10,11 @@ export interface RouteDefaultSeo {
 
 export const routeDefaults: Record<PublicRoutePath, RouteDefaultSeo> = {
   '/': {
+    title: 'Superhumanly Summit 2026 | The Premier AI Conference',
+    description:
+      'Join industry leaders for a two-day immersion into the future of artificial intelligence and enterprise transformation.',
+  },
+  '/home': {
     title: 'Superhumanly Monograph — Agentic AI Playbook',
     description:
       'Discover the definitive playbook for building AI agents and automating business workflows.',
@@ -24,10 +29,9 @@ export const routeDefaults: Record<PublicRoutePath, RouteDefaultSeo> = {
     description:
       'Join workshops and live sessions on agentic AI, workflow automation, and founder strategy.',
   },
-  '/community': {
-    title: 'Founders Hub — Superhumanly Community',
-    description:
-      'Connect with innovators building agentic systems and sharing playbooks in a vetted network.',
+  '/register': {
+    title: 'Register — Superhumanly Summit 2026',
+    description: 'Reserve your summit pass for $20. Name, email, and attendee type — done in one form.',
   },
 }
 
@@ -36,6 +40,7 @@ export function isAdminPath(pathname: string): boolean {
 }
 
 export function isPublicMarketingPath(pathname: string): boolean {
+  if (pathname === '/register') return true
   if ((PUBLIC_ROUTE_PATHS as readonly string[]).includes(pathname)) {
     return true
   }

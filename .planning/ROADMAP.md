@@ -7,7 +7,7 @@
 - ⏸️ **v1.2 Apple-Grade Premium Experience** — Phases 17–23 (paused after planning; see archived phase details below)
 - ⏸️ **v1.3 Marketing Integration & Admin Production Readiness** — Phases 24–27 (paused; marketing deferred)
 - ✅ **v1.4 Book Production & CMS Command Center** — Phases 28–31 (complete 2026-05-21)
-- 🚀 **v1.5 Conference Launch** — Phases 32–33 (active)
+- 🚀 **v1.5 Conference Launch** — Phases 32–34 (active)
 
 ## Overview
 
@@ -15,7 +15,7 @@
 
 **v1.4** makes the book website production-ready: hardened SEO/crawl/prerender/deploy paths, expanded `SiteContent` for all visitor-visible copy, admin editors for media/SEO/scripts/community moderation, and release smoke checks.
 
-**Product order:** **Phase 32** Conference UI Development → **Phase 33** Integration & Final Polish.
+**Product order:** **Phase 32** Conference UI Development → **Phase 33** Integration & Navigation → **Phase 34** Conference Admin CRM.
 
 **v1.1** (complete) delivered crawlable SEO, prerender, admin SEO tools. **v1.3** (paused) covers marketing-stack integration when resumed.
 
@@ -23,6 +23,7 @@
 
 - [x] **Phase 32: Conference UI Development** — Build out `ConferencePage` and all supporting sections (Hero, Social Proof, Speakers, Agenda, Tickets) with dark-theme styling.
 - [x] **Phase 33: Integration & Navigation** — Add routing, link in global Navbar, verify responsive behavior and contrast.
+- [x] **Phase 34: Conference Admin** — `settings.conference` + slim 3-tab editor; public page wired (no DB migration).
 
 ## Phase Details (v1.5)
 
@@ -37,6 +38,20 @@
 **Goal:** Route the conference page and ensure it looks premium across all breakpoints.
 **Requirements:** CONF-01
 **Depends on:** Phase 32
+
+### Phase 34: Conference Admin
+
+**Goal:** Admins edit conference hero, section copy, and lists (speakers, agenda, FAQ, logos) from one CRM screen; `/conference` reads `settings.conference`.
+**Requirements:** CONF-ADM-01 … CONF-ADM-03
+**Depends on:** Phase 29–30, Phase 32–33
+**Success Criteria:**
+
+  1. Admin → **Conference** → edit hero + lists → Save → refresh `/conference` shows changes.
+  2. `/conference` SEO editable under Settings → Route SEO.
+  3. No Prisma migration; uses existing `settings` PATCH.
+
+**Plans:** 2 plans (34-01 wire + seed, 34-02 admin UI)
+**UI hint:** yes
 
 ## Phases (v1.4 — completed)
 
@@ -463,4 +478,4 @@ Plans:
 </details>
 
 ---
-*Roadmap updated: 2026-05-25 — v1.5 Phase 32-33; v1.4 complete*
+*Roadmap updated: 2026-05-28 — v1.5 Phase 34 Conference Admin CRM planned; Phases 32-33 complete*

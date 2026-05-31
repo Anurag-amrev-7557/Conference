@@ -1,0 +1,217 @@
+# Book Website — GitLab CI/CD (monorepo: React SPA + Express API)
+#
+# Pattern mirrors automl-backend / automl-frontend:
+#   verify → build → deploy (manual until AWS staging is provisioned)
+#
+# Required GitLab CI/CD variables (Settings → CI/CD → Variables):
+#   EC2_HOST, EC2_USER, EC2_SSH_PRIVATE_KEY (File), DEPLOY_PATH
+#   S3_FRONTEND_BUCKET, STAGING_VITE_API_URL, STAGING_VITE_ADMIN_PASSWORD
+#   CLOUDFRONT_DISTRIBUTION_ID (optional)
+#
+# See docs/AWS_CICD.md for full setup.
+
+stages:
+  - verify
+  - build
+  - deploy
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
+
+default:
+  image: node:20
+  before_script:
+    - node --version
+    - npm --version
+
+# ─── Verify ───────────────────────────────────────────────────────────────────
+
+verify_frontend:
+  stage: verify
+  cache:
+    key: book-frontend-${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - npm run lint
+    - npx tsc -b
+    - PRERENDER_SKIP=1 npm run build:no-prerender
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+verify_server:
+  stage: verify
+  cache:
+    key: book-server-${CI_COMMIT_REF_SLUG}
+    paths:
+      - server/node_modules/
+  script:
+    - cd server
+    - npm ci
+    - npm run build
+    - npm test
+    - |
+      export DATABASE_URL="file:./prisma/ci-smoke.db"
+      npx prisma migrate deploy
+    - |
+      NODE_ENV=production \
+      JWT_SECRET=ci-smoke-secret \
+      ADMIN_PASSWORD=ci-admin-password \
+      DATABASE_URL="file:./prisma/ci-smoke.db" \
+      node dist/index.js &
+      SERVER_PID=$!
+      trap "kill $SERVER_PID" EXIT
+      for i in $(seq 1 20); do
+        if curl --silent --fail http://127.0.0.1:3001/health > /dev/null; then
+          echo "API health check passed"
+          exit 0
+        fi
+        sleep 1
+      done
+      echo "API health check failed"
+      exit 1
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─── Build ────────────────────────────────────────────────────────────────────
+
+build_frontend:
+  stage: build
+  cache:
+    key: book-frontend-${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+    policy: pull
+  variables:
+    PRERENDER_SKIP: "1"
+  script:
+    - npm ci
+    - |
+      if [ -z "$STAGING_VITE_API_URL" ]; then
+        export VITE_API_URL="https://api.example.com/api/v1"
+        echo "STAGING_VITE_API_URL not set — using placeholder for artifact build"
+      else
+        export VITE_API_URL="$STAGING_VITE_API_URL"
+      fi
+      if [ -n "$STAGING_VITE_ADMIN_PASSWORD" ]; then
+        export VITE_ADMIN_PASSWORD="$STAGING_VITE_ADMIN_PASSWORD"
+      fi
+    - npm run build:staging
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 day
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+build_api_image:
+  stage: build
+  image: docker:27.1.2
+  services:
+    - name: docker:27.1.2-dind
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    IMAGE_REPO: $CI_REGISTRY_IMAGE/api
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - cd server
+    - docker build -t "$IMAGE_REPO:$CI_COMMIT_SHA" .
+    - docker push "$IMAGE_REPO:$CI_COMMIT_SHA"
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "staging" ]; then
+        docker tag "$IMAGE_REPO:$CI_COMMIT_SHA" "$IMAGE_REPO:staging"
+        docker push "$IMAGE_REPO:staging"
+      fi
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$IMAGE_REPO:$CI_COMMIT_SHA" "$IMAGE_REPO:latest"
+        docker push "$IMAGE_REPO:latest"
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─── Deploy (manual until AWS staging exists) ─────────────────────────────────
+
+deploy_frontend_staging:
+  stage: deploy
+  image: amazon/aws-cli:2.17.33
+  needs:
+    - build_frontend
+  before_script:
+    - aws --version
+  script:
+    - test -n "$S3_FRONTEND_BUCKET" || (echo "Set S3_FRONTEND_BUCKET in GitLab CI/CD variables" && exit 1)
+    - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET" --delete --exclude "*.html" --cache-control "public, max-age=31536000, immutable"
+    - chmod +x scripts/upload-spa-routes.sh
+    - ./scripts/upload-spa-routes.sh "$S3_FRONTEND_BUCKET" dist/index.html
+    - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET" --exclude "*" --include "*.html" --cache-control "no-cache, no-store, must-revalidate"
+    - |
+      aws s3 website "s3://$S3_FRONTEND_BUCKET" \
+        --index-document index.html \
+        --error-document index.html || true
+    - |
+      if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+        aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
+      fi
+  environment:
+    name: staging-frontend
+  when: manual
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+
+deploy_api_staging:
+  stage: deploy
+  image: alpine:3.20
+  needs:
+    - build_api_image
+  variables:
+    IMAGE_REPO: $CI_REGISTRY_IMAGE/api
+    API_CONTAINER_NAME: book-website-api
+  before_script:
+    - apk add --no-cache openssh-client bash docker-cli curl
+    - mkdir -p ~/.ssh
+    - cp "$EC2_SSH_PRIVATE_KEY" ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+  script:
+    - test -n "$EC2_HOST" || (echo "Set EC2_HOST in GitLab CI/CD variables" && exit 1)
+    - export APP_IMAGE="$IMAGE_REPO:$CI_COMMIT_SHA"
+    - export REMOTE_DEPLOY_PATH="${DEPLOY_PATH:-/home/ubuntu/book-website}"
+    - |
+      echo "$CI_REGISTRY_PASSWORD" | ssh "$EC2_USER@$EC2_HOST" "
+      set -euo pipefail
+      docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+      docker pull $APP_IMAGE
+      docker rm -f ${API_CONTAINER_NAME} >/dev/null 2>&1 || true
+      docker run -d \
+        --name ${API_CONTAINER_NAME} \
+        --restart unless-stopped \
+        --env-file ${REMOTE_DEPLOY_PATH}/server/.env \
+        -v book-website-data:/var/data \
+        -p 3001:3001 \
+        $APP_IMAGE
+      sleep 3
+      curl -fsS http://127.0.0.1:3001/health
+      "
+  environment:
+    name: staging-api
+  when: manual
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'

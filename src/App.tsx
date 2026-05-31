@@ -1,16 +1,17 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { LandingPage } from './pages/LandingPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { AdminPage } from './pages/AdminPage'
-import { CommunityPage } from './pages/CommunityPage'
 import { BlogPage } from './pages/BlogPage'
 import { BlogPostPage } from './pages/BlogPostPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ConferencePage } from './pages/ConferencePage'
+import { ConferenceRegisterPage } from './pages/ConferenceRegisterPage'
 import { Navbar } from './components/Navbar'
+import { ConferenceRevealProvider } from './context/ConferenceRevealContext'
 import { useWebsiteData } from './components/WebsiteDataProvider'
 import { ScrollToHash } from './components/ScrollToHash'
 import { MarketingService } from './lib/marketing'
@@ -109,16 +110,18 @@ function App() {
     <>
       <ThemeSynchronizer />
       <Router>
+        <ConferenceRevealProvider>
         <ScrollToHash />
         <MarketingTracker />
         <div className="min-h-screen bg-off font-sans text-text">
           <div className="noise-texture" />
           <Routes>
-            <Route path="/" element={<><Navbar /><LandingPage /></>} />
+            <Route path="/" element={<><Navbar /><ConferencePage /></>} />
+            <Route path="/home" element={<><Navbar /><LandingPage /></>} />
+            <Route path="/conference" element={<Navigate to="/" replace />} />
+            <Route path="/register" element={<ConferenceRegisterPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:id" element={<EventDetailPage />} />
-            <Route path="/community" element={<CommunityPage />} />
-            <Route path="/conference" element={<><Navbar /><ConferencePage /></>} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
@@ -126,6 +129,7 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
+        </ConferenceRevealProvider>
       </Router>
     </>
   )

@@ -29,7 +29,7 @@ export function CatalogToolbar({
 }: CatalogToolbarProps) {
   const segmentsRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
-  const [indicator, setIndicator] = useState({ x: 0, width: 0 })
+  const [indicator, setIndicator] = useState({ x: 0, y: 0, width: 0, height: 0 })
 
   useLayoutEffect(() => {
     const update = () => {
@@ -38,13 +38,21 @@ export function CatalogToolbar({
       if (!container || !activeBtn) return
       setIndicator({
         x: activeBtn.offsetLeft,
+        y: activeBtn.offsetTop,
         width: activeBtn.offsetWidth,
+        height: activeBtn.offsetHeight,
       })
     }
 
     update()
     window.addEventListener("resize", update)
-    return () => window.removeEventListener("resize", update)
+    const container = segmentsRef.current
+    const ro = container ? new ResizeObserver(update) : null
+    if (container && ro) ro.observe(container)
+    return () => {
+      window.removeEventListener("resize", update)
+      ro?.disconnect()
+    }
   }, [activeFilterId, filters])
 
   return (
@@ -74,7 +82,8 @@ export function CatalogToolbar({
           className="catalog-segments__indicator"
           style={{
             width: indicator.width,
-            transform: `translateX(${indicator.x}px)`,
+            height: indicator.height,
+            transform: `translate(${indicator.x}px, ${indicator.y}px)`,
           }}
           aria-hidden
         />

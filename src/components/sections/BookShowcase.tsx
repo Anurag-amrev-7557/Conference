@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { ArrowRight, BookOpen } from "lucide-react"
 import { useWebsiteData } from "../WebsiteDataProvider"
+import { cn } from "../../lib/utils"
 
 function BookCoverFace({ coverUrl }: { coverUrl?: string }) {
   if (coverUrl) {
@@ -42,7 +43,7 @@ function Book3D({ coverUrl }: { coverUrl?: string }) {
   )
 }
 
-export function BookShowcase() {
+export function BookShowcase({ className }: { className?: string }) {
   const { data } = useWebsiteData()
   const book = data.settings.book
   const { hero } = data
@@ -65,13 +66,16 @@ export function BookShowcase() {
   return (
     <section
       id="book"
-      className="book-section-bg relative w-full pt-10 sm:pt-14 lg:pt-16 pb-16 sm:pb-20 lg:pb-24"
+      className={cn(
+        "book-section-bg relative w-full pt-10 sm:pt-14 lg:pt-16 pb-16 sm:pb-20 lg:pb-24",
+        className,
+      )}
       aria-labelledby="book-section-title"
     >
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
         <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-10 lg:gap-14 xl:gap-16 items-center max-w-[1600px] mx-auto">
-          <div className="flex justify-center lg:justify-start shrink-0">
-            <div role="img" aria-label={coverAlt} className="max-w-full">
+          <div className="flex justify-center shrink-0 w-full lg:w-auto">
+            <div role="img" aria-label={coverAlt} className="max-w-full mx-auto">
               <Book3D coverUrl={coverUrl} />
             </div>
           </div>

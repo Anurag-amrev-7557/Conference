@@ -35,28 +35,37 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSid
               { id: 'tablet', icon: Tablet },
               { id: 'mobile', icon: Smartphone }
             ].map((d) => (
-              <button 
+              <button
                 key={d.id}
-                onClick={() => setDevice(d.id as any)}
+                type="button"
+                aria-label={`${d.id} preview`}
+                aria-pressed={device === d.id}
+                onClick={() => setDevice(d.id as 'desktop' | 'tablet' | 'mobile')}
                 className={`p-1.5 rounded-lg transition-all ${device === d.id ? 'bg-white shadow-sm text-accent' : 'text-muted hover:text-text'}`}
               >
-                <d.icon className="w-4 h-4" />
+                <d.icon className="w-4 h-4" aria-hidden />
               </button>
             ))}
           </div>
           
           <div className="h-4 w-[1px] bg-border/40" />
           
-          <button 
+          <button
+            type="button"
             onClick={onToggleSidebar}
+            aria-label={isSidebarCollapsed ? 'Exit full screen preview' : 'Full screen preview'}
+            aria-pressed={isSidebarCollapsed}
             className={`p-2 rounded-lg transition-all ${isSidebarCollapsed ? 'bg-accent/10 text-accent shadow-inner' : 'text-muted hover:text-text hover:bg-off'}`}
-            title={isSidebarCollapsed ? "Exit Full Screen" : "Full Screen Preview"}
           >
             {isSidebarCollapsed ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
           
-          <button className="p-2 text-muted hover:text-text hover:bg-off rounded-lg transition-all">
-            <RotateCcw className="w-4 h-4" />
+          <button
+            type="button"
+            aria-label="Reset preview"
+            className="p-2 text-muted hover:text-text hover:bg-off rounded-lg transition-all"
+          >
+            <RotateCcw className="w-4 h-4" aria-hidden />
           </button>
         </div>
       </div>

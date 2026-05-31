@@ -1,44 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
-import { LivePreview } from './LivePreview';
 import type { Article } from '../../lib/websiteData';
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Save, 
-  Loader2, 
-  ChevronLeft, 
-  BookOpen, 
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronLeft,
   FileText,
   Globe,
+  Layout,
 } from 'lucide-react';
 import { ArticleSeoTab } from './ArticleSeoTab';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { BlogPageWorkspacePanel } from './PageWorkspacePanel';
+import {
+  AdminButton,
+  AdminField,
+  AdminFormSection,
+  AdminHeaderSave,
+  AdminInput,
+  AdminPageIntro,
+  AdminTextarea,
+} from './admin-ui';
+import type { WorkspaceSaveConfig } from './admin-workspace-save';
+import { MediaUrlField } from './MediaUrlField';
+import { AdminWorkspaceShell } from './AdminWorkspaceShell';
+import { BLOG_TAB_INTROS } from './workspaceTabIntros';
+import { useApplyPendingAdminSection } from './admin-workspace-nav';
 
 export const BlogManager: React.FC = () => {
-  const { data, createArticle, updateArticle, deleteArticle, setPreview, isPreviewVisible } = useWebsiteData();
+  const {
+    data,
+    sourceData,
+    createArticle,
+    updateArticle,
+    deleteArticle,
+    setPreview,
+    isPreviewVisible,
+  } = useWebsiteData();
+  const articlesRef = useRef(sourceData.articles);
+  articlesRef.current = sourceData.articles;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Article>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [editorTab, setEditorTab] = useState<'content' | 'seo'>('content');
+  const [workspaceTab, setWorkspaceTab] = useState<'articles' | 'page' | 'seo'>('articles');
+  const [panelSave, setPanelSave] = useState<WorkspaceSaveConfig | null>(null);
 
-  const storedArticle = editingId ? data.articles.find((a) => a.id === editingId) : undefined;
+  const storedArticle = editingId
+    ? sourceData.articles.find((a) => a.id === editingId)
+    : undefined;
 
-  // Sync with live preview
   useEffect(() => {
-    if (editingId && editForm) {
-      const updatedArticles = data.articles.map(a => 
-        a.id === editingId ? { ...a, ...editForm } : a
-      );
-      setPreview({ articles: updatedArticles });
-    } else {
+    if (!editingId || !isPreviewVisible) {
       setPreview(null);
+      return;
     }
+    setPreview({
+      articles: articlesRef.current.map((a) =>
+        a.id === editingId ? { ...a, ...editForm } : a,
+      ),
+    });
     return () => setPreview(null);
-  }, [editingId, editForm, data.articles]);
+  }, [editingId, editForm, isPreviewVisible, setPreview]);
 
   const handleEdit = (article: Article) => {
     setEditingId(article.id);
@@ -54,18 +80,20 @@ export const BlogManager: React.FC = () => {
       time: '5 MIN',
       excerpt: 'A brief summary of the architectural insights discussed in this piece.',
       content: '# New Article\n\nStart writing your architectural narrative here...',
-      thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2000',
+      thumbnail:
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2000',
       isPublished: false,
       authorName: 'Systems Architect',
       authorRole: 'Lead',
-      authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
+      authorAvatar:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
       publishedAt: new Date().toISOString().split('T')[0],
       seoTitle: '',
       seoDescription: '',
       ogImage: '',
       noindex: false,
     };
-    
+
     try {
       await createArticle(newArticle);
     } catch (err) {
@@ -74,7 +102,7 @@ export const BlogManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Terminate this asset?')) {
+    if (window.confirm('Delete this article?')) {
       try {
         await deleteArticle(id);
         if (editingId === id) setEditingId(null);
@@ -98,325 +126,275 @@ export const BlogManager: React.FC = () => {
     }
   };
 
+  const tabIntroKey = editingId
+    ? editorTab === 'seo'
+      ? 'articleSeo'
+      : 'content'
+    : workspaceTab;
+  const tabIntro = BLOG_TAB_INTROS[tabIntroKey as keyof typeof BLOG_TAB_INTROS];
+
+  useApplyPendingAdminSection('/admin/blogs', (id) => {
+    if (id === 'content' || id === 'seo') return;
+    setWorkspaceTab(id as typeof workspaceTab);
+  });
+
+  const subnav = editingId
+    ? {
+        groups: [
+          {
+            label: 'Article',
+            items: [
+              { id: 'content', label: 'Content', icon: FileText },
+              { id: 'seo', label: 'SEO', icon: Globe },
+            ],
+          },
+        ],
+        activeId: editorTab,
+        onSelect: (id: string) => setEditorTab(id as typeof editorTab),
+      }
+    : {
+        groups: [
+          { label: 'Editorial', items: [{ id: 'articles', label: 'Articles', icon: FileText }] },
+          {
+            label: 'Blog page',
+            items: [
+              { id: 'page', label: 'Page hero', icon: Layout },
+              { id: 'seo', label: 'SEO', icon: Globe },
+            ],
+          },
+        ],
+        activeId: workspaceTab,
+        onSelect: (id: string) => setWorkspaceTab(id as typeof workspaceTab),
+      };
+
   return (
-    <div className="flex h-full w-full overflow-hidden bg-white relative font-sans text-text">
-       {/* Sidebar Controls */}
-       <motion.div 
-        layout
-        animate={{ 
-          width: !isPreviewVisible ? '100%' : (isSidebarCollapsed ? 0 : 520), 
-          opacity: (isSidebarCollapsed && isPreviewVisible) ? 0 : 1 
-        }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={cn(
-          "bg-white flex flex-col shrink-0 relative z-10 shadow-premium overflow-hidden",
-          isPreviewVisible ? "border-r border-border/40" : "w-full"
-        )}
-      >
-        <div className={cn(
-          "flex flex-col h-full bg-white",
-          !isPreviewVisible ? "max-w-4xl mx-auto w-full border-x border-border/40" : "w-[520px]"
-        )}>
-          <div className="p-5 border-b border-border/40">
-             <div className="flex items-center gap-4 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-off flex items-center justify-center border border-border/40">
-                   <BookOpen className="w-5 h-5 text-accent" />
-                </div>
-                <span className="text-[11px] font-bold text-accent uppercase tracking-widest">Architectural Press</span>
-             </div>
-             
-             <AnimatePresence mode="wait">
-                {editingId ? (
-                   <motion.div 
-                     key="edit-header"
-                     initial={{ opacity: 0, x: -10 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     exit={{ opacity: 0, x: 10 }}
-                     className="flex items-center justify-between"
-                   >
-                      <button 
-                        onClick={() => setEditingId(null)}
-                        className="flex items-center gap-2 text-muted hover:text-text transition-colors group"
-                      >
-                         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                         <span className="text-[10px] font-bold uppercase tracking-widest">Repository Archive</span>
-                      </button>
-                      <h3 className="text-2xl font-serif italic text-text tracking-tight shrink-0">Edit Article</h3>
-                   </motion.div>
-                ) : (
-                   <motion.div 
-                     key="list-header"
-                     initial={{ opacity: 0, x: 10 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     exit={{ opacity: 0, x: -10 }}
-                   >
-                      <h3 className="text-4xl font-serif italic text-text mb-4">Blog Articles</h3>
-                      <p className="text-text2 text-base leading-relaxed opacity-60">Manage your stories, insights, and technical narratives.</p>
-                   </motion.div>
-                )}
-             </AnimatePresence>
+    <AdminWorkspaceShell
+      isPreviewVisible={isPreviewVisible}
+      isSidebarCollapsed={isSidebarCollapsed}
+      onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      toolbar={
+        editingId ? (
+          <div className="flex items-center gap-4">
+            <AdminButton
+              variant="ghost"
+              type="button"
+              onClick={() => setEditingId(null)}
+              className="!px-0"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back to articles
+            </AdminButton>
+            <span className="text-[var(--admin-type-label)] font-semibold text-[var(--admin-text)]">
+              Edit article
+            </span>
           </div>
-
-          <div className="flex-1 overflow-y-auto">
-             <AnimatePresence mode="wait">
-                {editingId ? (
-                   <motion.div
-                     key="editor"
-                     initial={{ opacity: 0, y: 10 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     exit={{ opacity: 0, y: -10 }}
-                     className="p-8 space-y-10"
-                   >
-                          <div className="flex gap-2 p-1 bg-[#fafafa] border border-border/40 rounded-xl w-fit">
-                            {(['content', 'seo'] as const).map((tab) => (
-                              <button
-                                key={tab}
-                                type="button"
-                                onClick={() => setEditorTab(tab)}
-                                className={cn(
-                                  'px-5 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all',
-                                  editorTab === tab
-                                    ? 'bg-text text-white shadow-sm'
-                                    : 'text-muted hover:text-text',
-                                )}
-                              >
-                                {tab === 'content' ? 'Content' : 'SEO'}
-                              </button>
-                            ))}
-                          </div>
-
-                          {editorTab === 'seo' ? (
-                            <ArticleSeoTab
-                              editForm={editForm}
-                              setEditForm={setEditForm}
-                              storedArticle={storedArticle}
-                              data={data}
-                            />
-                          ) : (
-                          <div className="space-y-12">
-                             {/* Core Info */}
-                             <div className="space-y-8">
-                                <div className="space-y-4">
-                                   <h4 className="text-xl font-bold text-text">Article Title</h4>
-                                   <input 
-                                     type="text"
-                                     value={editForm.title || ''}
-                                     onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                                     placeholder="The Future of AI Systems"
-                                     className="w-full bg-[#fafafa] border border-border/40 p-5 font-serif italic text-2xl focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                                   />
-                                </div>
-                                <div className="space-y-4">
-                                   <h4 className="text-xl font-bold text-text">URL Slug</h4>
-                                   <input 
-                                     type="text"
-                                     value={editForm.slug || ''}
-                                     onChange={e => setEditForm({ ...editForm, slug: e.target.value })}
-                                     placeholder="future-ai-systems"
-                                     className="w-full bg-[#fafafa] border border-border/40 p-5 font-mono text-xs text-accent focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                                   />
-                                </div>
-                             </div>
-
-                             {/* Metadata */}
-                             <div className="grid grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                   <h4 className="text-xl font-bold text-text">Category</h4>
-                                   <select 
-                                     value={editForm.category || ''}
-                                     onChange={e => setEditForm({ ...editForm, category: e.target.value })}
-                                     className="w-full bg-[#fafafa] border border-border/40 p-5 text-sm font-semibold focus:bg-white transition-all outline-none rounded-xl shadow-sm appearance-none"
-                                   >
-                                      {['RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'].map(c => (
-                                         <option key={c} value={c}>{c}</option>
-                                      ))}
-                                   </select>
-                                </div>
-                                <div className="space-y-4">
-                                   <h4 className="text-xl font-bold text-text">Reading Time</h4>
-                                   <input 
-                                     type="text"
-                                     value={editForm.time || ''}
-                                     onChange={e => setEditForm({ ...editForm, time: e.target.value })}
-                                     placeholder="5 MIN"
-                                     className="w-full bg-[#fafafa] border border-border/40 p-5 text-sm font-semibold focus:bg-white transition-all outline-none rounded-xl shadow-sm"
-                                   />
-                                </div>
-                             </div>
-
-                             {/* Summary */}
-                             <div className="space-y-4">
-                                <h4 className="text-xl font-bold text-text">Short Summary</h4>
-                                <textarea 
-                                  value={editForm.excerpt || ''}
-                                  onChange={e => setEditForm({ ...editForm, excerpt: e.target.value })}
-                                  rows={3}
-                                  className="w-full bg-[#fafafa] border border-border/40 p-6 text-[14px] leading-relaxed italic resize-none focus:bg-white transition-all outline-none rounded-xl shadow-sm"
-                                />
-                             </div>
-
-
-                             {/* Cover */}
-
-                             <div className="space-y-4">
-                                <h4 className="text-xl font-bold text-text">Cover Image</h4>
-                                <div className="relative group/cover">
-                                   <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-off relative shadow-sm">
-                                      <img src={editForm.thumbnail} alt="" className="w-full h-full object-cover group-hover/cover:scale-105 transition-all duration-700" />
-                                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/cover:opacity-100 transition-opacity" />
-                                   </div>
-                                   <input 
-                                     type="text"
-                                     value={editForm.thumbnail || ''}
-                                     onChange={e => setEditForm({ ...editForm, thumbnail: e.target.value })}
-                                     className="mt-4 w-full bg-[#fafafa] border border-border/40 p-4 text-[10px] font-mono text-muted focus:bg-white focus:border-accent transition-all outline-none rounded-xl shadow-sm"
-                                     placeholder="Cover Image URL"
-                                   />
-                                </div>
-                             </div>
-
-                             {/* Content */}
-                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                   <h4 className="text-xl font-bold text-text">Markdown Content</h4>
-                                   <FileText className="w-4 h-4 text-accent/40" />
-                                </div>
-                                <textarea 
-                                  value={editForm.content || ''}
-                                  onChange={e => setEditForm({ ...editForm, content: e.target.value })}
-                                  rows={15}
-                                  className="w-full bg-[#1E1E1E] text-emerald-400 p-8 font-mono text-xs leading-relaxed min-h-[400px] resize-y transition-all outline-none rounded-2xl shadow-xl border border-white/5"
-                                />
-                             </div>
-
-                             {/* Status */}
-                             <div className="p-8 border border-border/40 rounded-2xl bg-[#fafafa] flex items-center justify-between shadow-sm">
-                                <div className="flex items-center gap-6">
-                                   <div className={cn(
-                                     "w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shadow-sm",
-                                     editForm.isPublished ? "bg-accent/5 border-accent/20 text-accent" : "bg-white border-border/40 text-muted/40"
-                                   )}>
-                                      <Globe className="w-5 h-5" />
-                                   </div>
-                                   <div>
-                                      <p className="text-[14px] font-bold text-text uppercase tracking-widest">{editForm.isPublished ? 'Live on Network' : 'Draft Mode'}</p>
-                                      <p className="text-[11px] font-bold text-muted uppercase tracking-tighter mt-1">{editForm.isPublished ? 'Visible to all users' : 'Hidden from the public'}</p>
-                                   </div>
-                                </div>
-                                <button 
-                                  onClick={() => setEditForm({ ...editForm, isPublished: !editForm.isPublished })}
-                                  className={cn(
-                                    "w-12 h-6 rounded-full relative transition-all duration-500 p-1 border shadow-inner",
-                                    editForm.isPublished ? "bg-accent border-accent" : "bg-white border-border/40"
-                                   )}
-                                >
-                                   <motion.div 
-                                     animate={{ x: editForm.isPublished ? 24 : 0 }}
-                                     className="w-4 h-4 bg-white rounded-full shadow-md" 
-                                   />
-                                </button>
-                             </div>
-                          </div>
-                          )}
-
-                      <div className="pt-8 sticky bottom-0 bg-white pb-8">
-                         <button 
-                           onClick={handleSave}
-                           disabled={isSaving}
-                           className="w-full py-5 bg-text text-white text-[11px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98] rounded-xl"
-                         >
-                           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                           Synchronize Manuscript
-                         </button>
-                      </div>
-                   </motion.div>
-                ) : (
-                   <motion.div
-                     key="list"
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     exit={{ opacity: 0 }}
-                     className="p-8 space-y-12"
-                   >
-                      <button 
-                        onClick={handleAddNew}
-                        className="w-full py-8 border-2 border-dashed border-border/40 rounded-[2rem] flex flex-col items-center gap-4 text-muted hover:text-accent hover:border-accent hover:bg-accent/[0.02] transition-all group"
+        ) : (
+          <AdminPageIntro
+            className="mb-0"
+            eyebrow="Blog"
+            title="Blog workspace"
+            lede="Articles, listing page hero, and /blog SEO."
+          />
+        )
+      }
+      subnav={subnav}
+      tabIntro={tabIntro}
+      headerAction={
+        editingId ? (
+          <AdminHeaderSave label="Save article" saving={isSaving} onClick={handleSave} />
+        ) : workspaceTab !== 'articles' && panelSave ? (
+          <AdminHeaderSave
+            label={panelSave.label}
+            saving={panelSave.saving}
+            onClick={panelSave.onSave}
+          />
+        ) : undefined
+      }
+    >
+      <AnimatePresence mode="wait">
+        {editingId ? (
+          <motion.div
+            key="editor"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+          >
+            {editorTab === 'seo' ? (
+              <ArticleSeoTab
+                editForm={editForm}
+                setEditForm={setEditForm}
+                storedArticle={storedArticle}
+                data={data}
+              />
+            ) : (
+              <>
+                <AdminFormSection title="Basics" description="Title, URL, and listing metadata.">
+                  <AdminField label="Article title">
+                    <AdminInput
+                      value={editForm.title || ''}
+                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                      placeholder="The Future of AI Systems"
+                    />
+                  </AdminField>
+                  <AdminField label="URL slug">
+                    <AdminInput
+                      value={editForm.slug || ''}
+                      onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                      placeholder="future-ai-systems"
+                      className="font-mono text-sm"
+                    />
+                  </AdminField>
+                  <div className="admin-field-grid admin-field-grid--2">
+                    <AdminField label="Category">
+                      <select
+                        value={editForm.category || ''}
+                        onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                        className="admin-input"
                       >
-                         <div className="w-12 h-12 rounded-full bg-off flex items-center justify-center border border-border/40 group-hover:scale-110 group-hover:rotate-90 transition-all">
-                            <Plus className="w-5 h-5" />
-                          </div>
-                         <span className="text-[11px] font-bold uppercase tracking-[0.3em]">Initialize New Article</span>
-                      </button>
-
-                      <div className="space-y-4">
-                         <h4 className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.3em] mb-6">Article Repository</h4>
-                         <div className="space-y-3">
-                            {data.articles.map((article) => (
-                               <div 
-                                 key={article.id}
-                                 className="group/item flex items-center gap-6 p-6 border border-border/40 rounded-2xl hover:bg-[#fafafa] hover:border-accent/20 transition-all bg-white"
-                               >
-                                  <div className="w-14 h-14 rounded-xl overflow-hidden border border-border/40 bg-off shrink-0">
-                                     <img src={article.thumbnail} alt="" className="w-full h-full object-cover grayscale opacity-40 group-hover/item:opacity-100 transition-all" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                     <div className="flex items-center gap-3 mb-1.5">
-                                        <span className="text-[9px] font-bold text-accent uppercase tracking-widest">{article.category}</span>
-                                        <div className="w-1 h-1 rounded-full bg-border/40" />
-                                        <div className={cn(
-                                          "w-1.5 h-1.5 rounded-full",
-                                          article.isPublished ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" : "bg-amber-500"
-                                        )} />
-                                     </div>
-                                     <h5 className="font-serif italic text-lg text-text truncate group-hover/item:text-accent transition-colors">{article.title}</h5>
-                                  </div>
-                                  <div className="flex gap-2">
-                                     <button 
-                                       onClick={() => handleEdit(article)}
-                                       className="w-10 h-10 rounded-xl bg-white border border-border/40 flex items-center justify-center text-muted hover:text-accent hover:border-accent hover:bg-white shadow-sm transition-all"
-                                     >
-                                        <Edit2 className="w-4 h-4" />
-                                     </button>
-                                     <button 
-                                       onClick={() => handleDelete(article.id)}
-                                       className="w-10 h-10 rounded-xl bg-white border border-border/40 flex items-center justify-center text-muted hover:text-rose-500 hover:border-rose-200 shadow-sm transition-all"
-                                     >
-                                        <Trash2 className="w-4 h-4" />
-                                     </button>
-                                  </div>
-                               </div>
-                            ))}
-                         </div>
-                      </div>
-                   </motion.div>
-                )}
-             </AnimatePresence>
-          </div>
-        </div>
-       </motion.div>
-
-       {/* Main Studio View */}
-       <AnimatePresence>
-          {isPreviewVisible && (
-             <motion.div 
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: 20 }}
-               className="flex-1 overflow-hidden flex flex-col relative bg-white"
-             >
-                <div className="absolute inset-0 bg-off/5 pointer-events-none" />
-                
-                <div className="flex-1 relative group">
-                   <div className="h-full w-full overflow-hidden relative z-10">
-                      <LivePreview 
-                        onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                        isSidebarCollapsed={isSidebarCollapsed}
+                        {['RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'].map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </AdminField>
+                    <AdminField label="Reading time">
+                      <AdminInput
+                        value={editForm.time || ''}
+                        onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                        placeholder="5 MIN"
                       />
-                   </div>
+                    </AdminField>
+                  </div>
+                  <AdminField label="Short summary">
+                    <AdminTextarea
+                      rows={3}
+                      value={editForm.excerpt || ''}
+                      onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
+                    />
+                  </AdminField>
+                </AdminFormSection>
+
+                <AdminFormSection title="Cover image">
+                  {editForm.thumbnail ? (
+                    <div className="aspect-video rounded-xl overflow-hidden border border-[var(--admin-border)] mb-3 max-w-md">
+                      <img src={editForm.thumbnail} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ) : null}
+                  <MediaUrlField
+                    label="Cover image URL"
+                    value={editForm.thumbnail || ''}
+                    onChange={(url) => setEditForm({ ...editForm, thumbnail: url })}
+                  />
+                </AdminFormSection>
+
+                <AdminFormSection title="Body">
+                  <AdminField label="Markdown content">
+                    <AdminTextarea
+                      rows={15}
+                      value={editForm.content || ''}
+                      onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                      className="font-mono text-sm min-h-[20rem]"
+                    />
+                  </AdminField>
+                </AdminFormSection>
+
+                <AdminFormSection title="Publish">
+                  <div className="flex items-center justify-between gap-4 py-2">
+                    <div>
+                      <p className="font-semibold text-[var(--admin-text)]">
+                        {editForm.isPublished ? 'Published' : 'Draft'}
+                      </p>
+                      <p className="admin-field__hint">
+                        {editForm.isPublished ? 'Visible on /blog' : 'Hidden from the public site'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, isPublished: !editForm.isPublished })}
+                      className={cn(
+                        'w-12 h-7 rounded-full relative transition-all p-1 border shrink-0',
+                        editForm.isPublished
+                          ? 'bg-[var(--admin-primary)] border-[var(--admin-primary)]'
+                          : 'bg-[var(--admin-border)] border-[var(--admin-border-strong)]',
+                      )}
+                      aria-label="Toggle published"
+                    >
+                      <motion.div
+                        animate={{ x: editForm.isPublished ? 20 : 0 }}
+                        className="w-5 h-5 bg-white rounded-full shadow-sm"
+                      />
+                    </button>
+                  </div>
+                </AdminFormSection>
+              </>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            {workspaceTab === 'page' && (
+              <BlogPageWorkspacePanel mode="page" onSaveReady={setPanelSave} />
+            )}
+            {workspaceTab === 'seo' && (
+              <BlogPageWorkspacePanel mode="seo" onSaveReady={setPanelSave} />
+            )}
+
+            {workspaceTab === 'articles' && (
+              <>
+                <AdminButton
+                  type="button"
+                  onClick={() => void handleAddNew()}
+                  className="mb-4 w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  New article
+                </AdminButton>
+
+                <div className="space-y-3">
+                  {data.articles.map((article) => (
+                    <div key={article.id} className="admin-list-card">
+                      <div className="admin-list-card__thumb">
+                        <img src={article.thumbnail} alt="" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="admin-list-card__meta">{article.category}</span>
+                          <span
+                            className={cn(
+                              'w-2 h-2 rounded-full',
+                              article.isPublished ? 'bg-emerald-500' : 'bg-amber-500',
+                            )}
+                            aria-label={article.isPublished ? 'Published' : 'Draft'}
+                          />
+                        </div>
+                        <h3 className="admin-list-card__title truncate">{article.title}</h3>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <AdminButton
+                          variant="secondary"
+                          onClick={() => handleEdit(article)}
+                          className="!min-h-10 !px-3"
+                          aria-label="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </AdminButton>
+                        <AdminButton
+                          variant="danger"
+                          onClick={() => void handleDelete(article.id)}
+                          className="!min-h-10 !px-3"
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </AdminButton>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-             </motion.div>
-          )}
-       </AnimatePresence>
-    </div>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </AdminWorkspaceShell>
   );
 };

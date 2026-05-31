@@ -1,6 +1,5 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
-import { ArrowRight, Play } from "lucide-react"
+import { Play } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 import { MarketingService } from "../../lib/marketing"
 import { HeroAmbient } from "./HeroAmbient"
@@ -12,7 +11,7 @@ export function HeroSection({ onBookDemo }: { onBookDemo: () => void }) {
   const coverUrl = settings.book?.coverImageUrl?.trim()
 
   return (
-    <section className="relative w-full overflow-hidden hero-premium-bg pt-[5.25rem] sm:pt-28 lg:pt-[7.5rem] pb-14 sm:pb-20 lg:pb-24 lg:min-h-[calc(100vh-4rem)] lg:flex lg:items-center">
+    <section className="relative w-full overflow-hidden hero-premium-bg premium-home-section premium-home-hero pt-[5.25rem] sm:pt-28 lg:pt-[7.5rem] pb-14 sm:pb-20 lg:pb-24 lg:min-h-[calc(100vh-4rem)] lg:flex lg:items-center">
       <HeroAmbient />
       <div className="hero-noise pointer-events-none" aria-hidden />
 
@@ -51,19 +50,6 @@ export function HeroSection({ onBookDemo }: { onBookDemo: () => void }) {
               >
                 {hero.primaryCtaLabel?.trim() || "Book a demo"}
               </button>
-              <Link
-                to={hero.secondaryCtaHref?.trim() || "/community"}
-                onClick={() =>
-                  MarketingService.logEvent("cta_click", {
-                    cta_id: "founder_network",
-                    destination: "/community",
-                  })
-                }
-                className="btn-cta-secondary group w-full sm:w-auto justify-center sm:justify-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/15 focus-visible:ring-offset-2"
-              >
-                {hero.secondaryCtaLabel?.trim() || "Join founder network"}
-                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
-              </Link>
             </div>
           </div>
 

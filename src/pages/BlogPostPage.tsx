@@ -105,7 +105,7 @@ export const BlogPostPage: React.FC = () => {
     <SeoHead seo={seo} />
     <JsonLd graph={jsonLd} />
     {article ? (
-    <motion.div className="min-h-screen bg-white overflow-x-hidden">
+    <motion.div className="min-h-screen bg-white overflow-x-hidden public-page-shell public-inner-page public-article-page">
       <Navbar />
       
       {/* Cinematic Reading Progress */}

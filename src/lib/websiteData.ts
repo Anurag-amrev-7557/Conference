@@ -3,6 +3,7 @@
  * Authoritative demo and production content lives in server/src/seed.ts (BACK-06).
  */
 import { BookOpen, Cpu, TrendingUp, MessageSquare, Zap, Shield, Database, Bot, Send } from "lucide-react";
+import type { ConferenceRegistrationFormSettings } from './registrationTypes';
 
 export interface Article {
   id: string;
@@ -98,8 +99,6 @@ export interface HeroContent {
   subtitle: string;
   videoUrl: string;
   primaryCtaLabel?: string;
-  secondaryCtaLabel?: string;
-  secondaryCtaHref?: string;
 }
 
 export interface CatalogHeroContent {
@@ -119,10 +118,131 @@ export interface SectionBlockContent {
   founderCountLabel?: string;
 }
 
+export interface FinalCtaContent extends SectionBlockContent {
+  trustItems?: string[];
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  formNote?: string;
+  waitlistSubmitLabel?: string;
+  waitlistPlaceholder?: string;
+  waitlistGuideLabel?: string;
+  waitlistSuccessTitle?: string;
+  waitlistSuccessCopy?: string;
+}
+
 export interface RouteSeoOverride {
   title?: string;
   description?: string;
   ogImage?: string;
+}
+
+export interface ConferenceMetric {
+  id: string;
+  value: string;
+  label: string;
+}
+
+export interface ConferenceHeroContent {
+  badge: string;
+  badgeLogoUrl?: string;
+  title: string;
+  titleAccent: string;
+  lede: string;
+  dateLabel: string;
+  locationLabel: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+  videoUrl?: string;
+  posterUrl?: string;
+  metrics: ConferenceMetric[];
+}
+
+export interface ConferenceSectionCopy {
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  lede?: string;
+  ctaLabel?: string;
+}
+
+export interface ConferenceVideoContent {
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  lede?: string;
+  videoUrl?: string;
+  posterUrl?: string;
+}
+
+export interface ConferenceSpeaker {
+  id: string;
+  name: string;
+  title: string;
+  company: string;
+  image: string;
+}
+
+export interface ConferenceAgendaSession {
+  id: string;
+  time: string;
+  title: string;
+  speaker: string;
+  track: string;
+}
+
+export interface ConferenceAgendaDay {
+  id: string;
+  label: string;
+  sessions: ConferenceAgendaSession[];
+}
+
+export interface ConferenceFaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface ConferenceLogo {
+  id: string;
+  name: string;
+}
+
+export interface ConferenceTicketTier {
+  id: string;
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  recommended: boolean;
+  ctaLabel?: string;
+}
+
+export interface ConferenceTicketsContent {
+  eyebrow?: string;
+  title?: string;
+  lede?: string;
+  tiers: ConferenceTicketTier[];
+}
+
+export interface ConferenceContent {
+  published?: boolean;
+  hero: ConferenceHeroContent;
+  video?: ConferenceVideoContent;
+  sections: {
+    /** @deprecated Use sponsors — kept for legacy CMS rows */
+    socialProof?: ConferenceSectionCopy;
+    sponsors?: ConferenceSectionCopy;
+    video?: ConferenceSectionCopy;
+    speakers?: ConferenceSectionCopy;
+    agenda?: ConferenceSectionCopy;
+    faq?: ConferenceSectionCopy;
+    tickets?: ConferenceSectionCopy;
+  };
+  tickets?: ConferenceTicketsContent;
+  logos: ConferenceLogo[];
+  speakers: ConferenceSpeaker[];
+  agenda: ConferenceAgendaDay[];
+  faq: ConferenceFaqItem[];
 }
 
 export interface NavLink {
@@ -137,7 +257,15 @@ export interface SocialLink {
   href: string;
 }
 
+export interface HomepageContent {
+  hero: HeroContent;
+  stats: Stat[];
+  pillars: Pillar[];
+  perks: Perk[];
+}
+
 export interface SiteSettings {
+  homepage?: HomepageContent;
   seo: {
     title: string;
     description: string;
@@ -152,11 +280,14 @@ export interface SiteSettings {
     events?: CatalogHeroContent;
   };
   sections?: {
-    community?: SectionBlockContent;
-    finalCta?: SectionBlockContent;
+    finalCta?: FinalCtaContent;
     whoWeAre?: SectionBlockContent;
   };
-  routeSeo?: Partial<Record<'/' | '/blog' | '/events' | '/community', RouteSeoOverride>>;
+  routeSeo?: Partial<
+    Record<'/' | '/home' | '/blog' | '/events' | '/conference' | '/register', RouteSeoOverride>
+  >;
+  conference?: ConferenceContent;
+  conferenceRegistration?: ConferenceRegistrationFormSettings;
   book?: SiteBookSettings;
   navigation: {
     links: NavLink[];
@@ -171,10 +302,10 @@ export interface SiteSettings {
     pillars: boolean;
     whoWeAre: boolean;
     perks: boolean;
-    community: boolean;
     blog: boolean;
     events: boolean;
     finalCta?: boolean;
+    conference?: boolean;
   };
   customCss: string;
   scripts: {
@@ -187,6 +318,7 @@ export interface SiteAppearance {
   primaryColor: string;
   brandName: string;
   brandLogoText: string;
+  brandLogoUrl?: string;
   typography: {
     headingFont: 'serif' | 'sans' | 'mono';
     bodyFont: 'serif' | 'sans' | 'mono';
@@ -199,34 +331,10 @@ export interface SiteAppearance {
   };
 }
 
-export interface CommunityComment {
-  id: string;
-  authorName: string;
-  authorAvatar: string;
-  content: string;
-  createdAt: string;
-  replies?: CommunityComment[];
-}
-
-export interface CommunityPost {
-  id: string;
-  title: string;
-  content: string;
-  authorName: string;
-  authorAvatar: string;
-  authorRole?: string;
-  category: string;
-  votes: number;
-  comments: CommunityComment[];
-  createdAt: string;
-  isPinned?: boolean;
-}
-
 export interface WebsiteData {
   hero: HeroContent;
   articles: Article[];
   events: AppEvent[];
-  communityPosts: CommunityPost[];
   stats: Stat[];
   pillars: Pillar[];
   perks: Perk[];
@@ -242,7 +350,6 @@ export const initialData: WebsiteData = {
     subtitle: "",
     videoUrl: "",
   },
-  communityPosts: [],
   settings: {
     seo: {
       title: "Superhumanly Playbook — Master Agentic AI Automation",
@@ -260,7 +367,6 @@ export const initialData: WebsiteData = {
     navigation: {
       links: [
         { id: "1", name: "Blog", href: "/blog" },
-        { id: "2", name: "Community", href: "/community" },
         { id: "3", name: "About Us", href: "#who-we-are" },
         { id: "4", name: "Events", href: "/events" }
       ],
@@ -272,7 +378,6 @@ export const initialData: WebsiteData = {
       ],
       footerLinks: [
         { id: "f1", name: 'The Playbook', href: '/blog' },
-        { id: "f2", name: 'Founders Hub', href: '/community' },
         { id: "f3", name: 'Strategy', href: '/#who-we-are' },
         { id: "f4", name: 'Live Training', href: '/events' },
         { id: "f5", name: "Join Registry", href: "/#final-cta" }
@@ -286,10 +391,10 @@ export const initialData: WebsiteData = {
       pillars: true,
       whoWeAre: true,
       perks: true,
-      community: true,
       blog: true,
       events: true,
       finalCta: true,
+      conference: true,
     },
     customCss: "",
     scripts: {
@@ -299,7 +404,7 @@ export const initialData: WebsiteData = {
   },
   appearance: {
     primaryColor: "#0052cc",
-    brandName: "Superhumanly -Thoughts",
+    brandName: "Superhumanly - Thoughts",
     brandLogoText: "S",
     typography: {
       headingFont: 'serif',

@@ -153,11 +153,16 @@ export function resolvePageJsonLd(input: {
   const { pathname, data, article } = input
   const graph: JsonLdNode[] = []
 
-  if (isAdminPath(pathname) || pathname === '/dashboard' || pathname === '/community') {
+  if (isAdminPath(pathname) || pathname === '/dashboard') {
     return graph
   }
 
   if (pathname === '/') {
+    graph.push(buildWebSiteSchema(data), buildOrganizationSchema(data))
+    return graph
+  }
+
+  if (pathname === '/home') {
     graph.push(buildWebSiteSchema(data), buildOrganizationSchema(data))
     const book = buildBookSchema(data)
     if (book) graph.push(book)

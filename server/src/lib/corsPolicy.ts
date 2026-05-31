@@ -1,5 +1,6 @@
 import cors from 'cors';
 import type { Request, RequestHandler } from 'express';
+import { getSiteUrl } from './siteUrl';
 
 function parseOrigins(value: string | undefined, fallback: string[]): string[] {
   if (!value?.trim()) {
@@ -15,7 +16,6 @@ function isAdminRoute(path: string): boolean {
 function isPublicApiRoute(path: string): boolean {
   return (
     path.startsWith('/api/v1/content') ||
-    path.startsWith('/api/v1/community') ||
     path.startsWith('/api/v1/marketing')
   );
 }
@@ -23,10 +23,24 @@ function isPublicApiRoute(path: string): boolean {
 /**
  * Split CORS: public vs admin origin lists (SEC-05 D-13–D-15).
  */
+function mergeSiteOrigin(origins: string[]): string[] {
+  if (process.env.NODE_ENV !== 'production') {
+    return origins;
+  }
+  try {
+    const site = getSiteUrl();
+    return [...new Set([...origins, site])];
+  } catch {
+    return origins;
+  }
+}
+
 export function createCorsMiddleware(): RequestHandler {
   const defaultPublic = ['http://localhost:5173', 'http://localhost:5174'];
-  const publicOrigins = parseOrigins(process.env.ALLOWED_ORIGINS, defaultPublic);
-  const adminOrigins = parseOrigins(process.env.ADMIN_ALLOWED_ORIGINS, publicOrigins);
+  const publicOrigins = mergeSiteOrigin(parseOrigins(process.env.ALLOWED_ORIGINS, defaultPublic));
+  const adminOrigins = mergeSiteOrigin(
+    parseOrigins(process.env.ADMIN_ALLOWED_ORIGINS, publicOrigins),
+  );
   const isProduction = process.env.NODE_ENV === 'production';
 
   return (req, res, next) => {

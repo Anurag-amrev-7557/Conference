@@ -54,7 +54,7 @@ describe('resolvePageSeo', () => {
     expect(seo.canonical).toBe('https://example.com/')
     expect(seo.ogUrl).toBe('https://example.com/')
     expect(seo.googleSiteVerification).toBe('gsc-token-123')
-    expect(seo.title).toContain('Monograph')
+    expect(seo.title).toContain('Summit')
   })
 
   it('uses article title pattern and og:type article for published posts', () => {
@@ -110,15 +110,6 @@ describe('resolvePageSeo', () => {
       data: testData(),
     })
     expect(seo.robots).toBe('noindex,nofollow')
-    expect(seo.googleSiteVerification).toBeUndefined()
-  })
-
-  it('noindexes community but still emits marketing fields', () => {
-    const seo = resolvePageSeo({ pathname: '/community', data: testData() })
-    expect(seo.robots).toBe('noindex,nofollow')
-    expect(seo.title).toContain('Community')
-    expect(seo.description.length).toBeGreaterThan(0)
-    expect(seo.ogImage).toMatch(/^https:\/\/example\.com\//)
     expect(seo.googleSiteVerification).toBeUndefined()
   })
 

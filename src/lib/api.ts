@@ -1,3 +1,12 @@
+export type MediaLibraryItem = {
+  filename: string;
+  url: string;
+  size: number;
+  createdAt: string;
+  ext: string;
+};
+
+/** In production (Vercel), set VITE_API_URL to your Render API, e.g. https://api.example.com/api/v1 */
 export const API_BASE =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.PROD
@@ -26,14 +35,7 @@ export const api = {
     return data.items ?? data;
   },
 
-  async getCommunityPosts(limit = 50, offset = 0) {
-    const res = await fetch(`${API_BASE}/content/community?limit=${limit}&offset=${offset}`);
-    if (!res.ok) throw new Error('Failed to fetch community posts');
-    const data = await res.json();
-    return data.items ?? data;
-  },
-
-  /** @deprecated Use split getContentSite + getArticles + getEvents + getCommunityPosts */
+  /** @deprecated Use split getContentSite + getArticles + getEvents */
   async getContent() {
     const res = await fetch(`${API_BASE}/content`);
     if (!res.ok) throw new Error('Failed to fetch content');
@@ -63,6 +65,24 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to upload image');
     return data as { url: string };
+  },
+
+  async listMedia(token: string): Promise<{ items: MediaLibraryItem[] }> {
+    const res = await fetch(`${API_BASE}/admin/media`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load media library');
+    return data as { items: MediaLibraryItem[] };
+  },
+
+  async deleteMedia(token: string, filename: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/admin/media/${encodeURIComponent(filename)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete image');
   },
 
   async uploadOgImage(token: string, file: File): Promise<{ url: string }> {
@@ -175,108 +195,90 @@ export const api = {
     return res.json();
   },
 
-  // Public community
-  async createCommunityPost(post: {
-    title: string;
-    content: string;
-    category: string;
-    authorName: string;
-    authorAvatar: string;
-    authorRole?: string;
+  async submitConferenceRegistration(payload: {
+    name: string;
+    email: string;
+    phone: string;
+    linkedIn?: string;
+    designation: string;
   }) {
-    const res = await fetch(`${API_BASE}/community/posts`, {
+    const res = await fetch(`${API_BASE}/content/conference-registration`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create post');
-    return data;
+    if (!res.ok) throw new Error(data.error || 'Failed to submit registration');
+    return data as { id: string; success: boolean; message: string };
   },
 
-  async addCommunityComment(
-    postId: string,
-    comment: { content: string; authorName: string; authorAvatar: string }
+  async createRegistration(
+    token: string,
+    payload: {
+      name: string;
+      email: string;
+      phone: string;
+      linkedIn?: string;
+      designation: string;
+      status?: string;
+      ticketPriceCents?: number;
+    },
   ) {
-    const res = await fetch(`${API_BASE}/community/posts/${postId}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(comment),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to add comment');
-    return data;
-  },
-
-  async voteCommunityPost(postId: string, visitorId: string) {
-    const res = await fetch(`${API_BASE}/community/posts/${postId}/vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visitorId }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to vote');
-    return data as { voted: boolean; votes: number };
-  },
-
-  // Admin community
-  async createAdminCommunityPost(token: string, post: Record<string, unknown>) {
-    const res = await fetch(`${API_BASE}/admin/community/posts`, {
+    const res = await fetch(`${API_BASE}/admin/registrations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(post),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create post');
-    return data;
+    if (!res.ok) throw new Error(data.error || 'Failed to create registration');
+    return data as import('./registrationTypes').ConferenceRegistrationRecord;
   },
 
-  async deleteAdminCommunityPost(token: string, id: string) {
-    const res = await fetch(`${API_BASE}/admin/community/posts/${id}`, {
-      method: 'DELETE',
+  async listRegistrations(token: string) {
+    const res = await fetch(`${API_BASE}/admin/registrations`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) throw new Error('Failed to delete post');
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load registrations');
+    return data as { items: import('./registrationTypes').ConferenceRegistrationRecord[]; total: number };
   },
 
-  async deleteAdminCommunityComment(token: string, id: string) {
-    const res = await fetch(`${API_BASE}/admin/community/comments/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error('Failed to delete comment');
-    return res.json();
-  },
-
-  async updateAdminCommunityPost(token: string, id: string, body: Record<string, unknown>) {
-    const res = await fetch(`${API_BASE}/admin/community/posts/${id}`, {
+  async updateRegistration(
+    token: string,
+    id: string,
+    payload: Partial<import('./registrationTypes').ConferenceRegistrationRecord>,
+  ) {
+    const res = await fetch(`${API_BASE}/admin/registrations/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update post');
+    if (!res.ok) throw new Error(data.error || 'Failed to update registration');
     return data;
   },
 
-  async pinAdminCommunityPost(token: string, id: string, pinned: boolean) {
-    const res = await fetch(`${API_BASE}/admin/community/posts/${id}/pin`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ pinned }),
+  async deleteRegistration(token: string, id: string) {
+    const res = await fetch(`${API_BASE}/admin/registrations/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to pin post');
+    let data: { error?: string; success?: boolean } = {};
+    const text = await res.text();
+    if (text) {
+      try {
+        data = JSON.parse(text) as { error?: string; success?: boolean };
+      } catch {
+        if (!res.ok) throw new Error('Failed to delete registration');
+      }
+    }
+    if (!res.ok) throw new Error(data.error || 'Failed to delete registration');
     return data;
   },
 };

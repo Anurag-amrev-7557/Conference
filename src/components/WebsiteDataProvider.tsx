@@ -1,12 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { WebsiteData } from '../lib/websiteData';
 import { initialData, pillarIcons, perkIcons } from '../lib/websiteData';
+import { mergeConferenceContent } from '../lib/conferenceDefaults';
+import { defaultConferenceRegistrationForm } from '../lib/registrationDefaults';
+import { buildHomepageGlobalPatch, hydrateHomepage } from '../lib/homepageContent';
+import type { HomepageContent } from '../lib/websiteData';
 import { api } from '../lib/api';
-import { MarketingService } from '../lib/marketing';
 import { setSiteOrigin } from '../seo/siteUrl';
 
 interface WebsiteDataContextType {
+  /** Merged view used by the live preview (includes preview overrides). */
   data: WebsiteData;
+  /** Persisted CMS data without preview overrides — use for editor form sync. */
+  sourceData: WebsiteData;
   loading: boolean;
   updateHero: (hero: WebsiteData['hero']) => Promise<void>;
   updateArticles: (articles: WebsiteData['articles']) => Promise<void>;
@@ -17,10 +23,6 @@ interface WebsiteDataContextType {
   updateEvent: (id: string, event: any) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
   updateEvents: (events: WebsiteData['events']) => Promise<void>;
-  createPost: (post: any) => Promise<void>;
-  addComment: (postId: string, comment: any) => Promise<void>;
-  votePost: (postId: string) => Promise<{ voted: boolean; votes: number }>;
-  updateCommunityPosts: (posts: WebsiteData['communityPosts']) => Promise<void>;
   updateStats: (stats: WebsiteData['stats']) => Promise<void>;
   updatePillars: (pillars: WebsiteData['pillars']) => Promise<void>;
   updatePerks: (perks: WebsiteData['perks']) => Promise<void>;
@@ -43,11 +45,13 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return saved !== 'false'; // Default to true
   });
   const [loading, setLoading] = useState(true);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const [site, articles, events, communityPosts] = await Promise.all([
+      const [site, articles, events] = await Promise.all([
         api.getContentSite().catch((e) => {
           console.error('Failed to fetch site slice:', e);
           return {};
@@ -60,12 +64,8 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           console.error('Failed to fetch events slice:', e);
           return [];
         }),
-        api.getCommunityPosts().catch((e) => {
-          console.error('Failed to fetch community slice:', e);
-          return [];
-        }),
       ]);
-      const remoteData = { ...site, articles, events, communityPosts };
+      const remoteData = { ...site, articles, events };
 
       if (typeof (site as { siteUrl?: string }).siteUrl === 'string') {
         setSiteOrigin((site as { siteUrl: string }).siteUrl);
@@ -91,7 +91,8 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
             merged.settings.seo = { ...initialData.settings.seo, ...remoteData.settings.seo };
           }
           if (remoteData.settings.visibility) {
-            merged.settings.visibility = { ...initialData.settings.visibility, ...remoteData.settings.visibility };
+            const { community: _community, ...visibility } = remoteData.settings.visibility as Record<string, boolean> & { community?: boolean };
+            merged.settings.visibility = { ...initialData.settings.visibility, ...visibility };
           }
           if (remoteData.settings.navigation) {
             merged.settings.navigation = {
@@ -110,22 +111,98 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
             };
           }
           if (remoteData.settings.sections) {
+            const { community: _community, ...sections } = (remoteData.settings.sections ?? {}) as Record<string, unknown> & { community?: unknown };
             merged.settings.sections = {
               ...initialData.settings.sections,
-              ...remoteData.settings.sections,
+              ...sections,
             };
           }
           if (remoteData.settings.routeSeo) {
+            const { '/community': _communitySeo, ...routeSeo } = remoteData.settings.routeSeo as Record<string, unknown>;
             merged.settings.routeSeo = {
               ...initialData.settings.routeSeo,
-              ...remoteData.settings.routeSeo,
+              ...routeSeo,
             };
+          }
+          const { communityPage: _communityPage, ...settingsRest } = merged.settings as typeof merged.settings & { communityPage?: unknown };
+          merged.settings = settingsRest;
+          merged.settings.conference = mergeConferenceContent(remoteData.settings.conference);
+          if (remoteData.settings.conferenceRegistration) {
+            const fromApi = remoteData.settings.conferenceRegistration;
+            const ticketPriceCents =
+              typeof fromApi.ticketPriceCents === 'number'
+                ? fromApi.ticketPriceCents
+                : defaultConferenceRegistrationForm.ticketPriceCents;
+            merged.settings.conferenceRegistration = {
+              ...defaultConferenceRegistrationForm,
+              ...fromApi,
+              ticketPriceCents,
+              fields: {
+                ...defaultConferenceRegistrationForm.fields,
+                ...fromApi.fields,
+                name: {
+                  ...defaultConferenceRegistrationForm.fields.name,
+                  ...fromApi.fields?.name,
+                },
+                email: {
+                  ...defaultConferenceRegistrationForm.fields.email,
+                  ...fromApi.fields?.email,
+                },
+                phone: {
+                  ...defaultConferenceRegistrationForm.fields.phone,
+                  ...fromApi.fields?.phone,
+                },
+                linkedIn: {
+                  ...defaultConferenceRegistrationForm.fields.linkedIn,
+                  ...fromApi.fields?.linkedIn,
+                },
+                designation: {
+                  ...defaultConferenceRegistrationForm.fields.designation,
+                  ...fromApi.fields?.designation,
+                },
+              },
+              designationOptions:
+                fromApi.designationOptions?.length
+                  ? fromApi.designationOptions
+                  : defaultConferenceRegistrationForm.designationOptions,
+              panelStats:
+                fromApi.panelStats?.length
+                  ? fromApi.panelStats
+                  : defaultConferenceRegistrationForm.panelStats,
+              panelQuote: {
+                ...defaultConferenceRegistrationForm.panelQuote,
+                ...fromApi.panelQuote,
+              },
+              trustFooter: {
+                ...defaultConferenceRegistrationForm.trustFooter,
+                ...fromApi.trustFooter,
+                logos:
+                  fromApi.trustFooter?.logos?.length
+                    ? fromApi.trustFooter.logos
+                    : defaultConferenceRegistrationForm.trustFooter.logos,
+              },
+            };
+          } else {
+            merged.settings.conferenceRegistration = defaultConferenceRegistrationForm;
           }
         }
         if (remoteData.hero) {
-          merged.hero = { ...initialData.hero, ...remoteData.hero };
+          const { secondaryCtaHref: _href, secondaryCtaLabel: _label, ...hero } = remoteData.hero as typeof remoteData.hero & {
+            secondaryCtaHref?: string;
+            secondaryCtaLabel?: string;
+          };
+          merged.hero = { ...initialData.hero, ...hero };
         }
-        return merged;
+        if (remoteData.stats) {
+          merged.stats = remoteData.stats;
+        }
+        if (remoteData.pillars) {
+          merged.pillars = remoteData.pillars;
+        }
+        if (remoteData.perks) {
+          merged.perks = remoteData.perks;
+        }
+        return hydrateHomepage(merged);
       });
     } catch (error) {
       console.error('Failed to fetch from backend, using fallback data:', error);
@@ -144,9 +221,8 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const updateGlobal = async (updates: Partial<WebsiteData>) => {
     const token = getAdminToken();
     if (!token) {
-      // In non-admin mode, just update local state (for preview)
-      setData(prev => ({ ...prev, ...updates }));
-      return;
+      setData((prev) => hydrateHomepage({ ...prev, ...updates }))
+      return
     }
 
     try {
@@ -158,7 +234,16 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const updateHero = async (hero: WebsiteData['hero']) => updateGlobal({ hero });
+  const updateHomepage = async (patch: Partial<HomepageContent>) => {
+    let payload!: ReturnType<typeof buildHomepageGlobalPatch>
+    setData((prev) => {
+      payload = buildHomepageGlobalPatch(prev, patch)
+      return hydrateHomepage({ ...prev, ...payload })
+    })
+    await updateGlobal(payload)
+  }
+
+  const updateHero = async (hero: WebsiteData['hero']) => updateHomepage({ hero });
   
   const createArticle = async (article: any) => {
     const token = getAdminToken();
@@ -232,43 +317,6 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const createPost = async (post: any) => {
-    const token = getAdminToken();
-    try {
-      if (token) {
-        await api.createAdminCommunityPost(token, post);
-      } else {
-        await api.createCommunityPost(post);
-      }
-      await fetchContent();
-    } catch (err) {
-      console.error('Failed to create post:', err);
-      throw err;
-    }
-  };
-
-  const addComment = async (postId: string, comment: any) => {
-    try {
-      await api.addCommunityComment(postId, comment);
-      await fetchContent();
-    } catch (err) {
-      console.error('Failed to add comment:', err);
-      throw err;
-    }
-  };
-
-  const votePost = async (postId: string) => {
-    const visitorId = MarketingService.getVisitorId();
-    const result = await api.voteCommunityPost(postId, visitorId);
-    setData((prev) => ({
-      ...prev,
-      communityPosts: prev.communityPosts.map((p) =>
-        p.id === postId ? { ...p, votes: result.votes } : p
-      ),
-    }));
-    return result;
-  };
-
   const updateArticles = async (articles: WebsiteData['articles']) => {
     // Legacy support for array-wide updates
     setData(prev => ({ ...prev, articles }));
@@ -278,23 +326,35 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
      setData(prev => ({ ...prev, events }));
   };
   
-  const updateCommunityPosts = async (communityPosts: WebsiteData['communityPosts']) => {
-    setData(prev => ({ ...prev, communityPosts }));
-  };
-  
-  const updateStats = async (stats: WebsiteData['stats']) => updateGlobal({ stats });
-  const updatePillars = async (pillars: WebsiteData['pillars']) => updateGlobal({ pillars });
-  const updatePerks = async (perks: WebsiteData['perks']) => updateGlobal({ perks });
+  const updateStats = async (stats: WebsiteData['stats']) => updateHomepage({ stats });
+  const updatePillars = async (pillars: WebsiteData['pillars']) => updateHomepage({ pillars });
+  const updatePerks = async (perks: WebsiteData['perks']) => updateHomepage({ perks });
   const updateSettings = async (settings: WebsiteData['settings']) => updateGlobal({ settings });
   const updateAppearance = async (appearance: WebsiteData['appearance']) => updateGlobal({ appearance });
 
-  const setPreview = (preview: Partial<WebsiteData> | null) => {
+  const setPreview = useCallback((preview: Partial<WebsiteData> | null) => {
     if (!preview) {
       setPreviewData(null);
       return;
     }
-    setPreviewData(prev => ({ ...(prev || data), ...preview }));
-  };
+    setPreviewData((prev) => {
+      const base = prev ?? dataRef.current;
+      const next: WebsiteData = {
+        ...base,
+        ...preview,
+        ...(preview.settings != null && {
+          settings: { ...base.settings, ...preview.settings },
+        }),
+        ...(preview.appearance != null && {
+          appearance: { ...base.appearance, ...preview.appearance },
+        }),
+      };
+      if (prev && JSON.stringify(prev) === JSON.stringify(next)) {
+        return prev;
+      }
+      return next;
+    });
+  }, []);
 
   const togglePreview = () => {
     setIsPreviewVisible(prev => {
@@ -313,6 +373,7 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   return (
     <WebsiteDataContext.Provider value={{
       data: previewData || data,
+      sourceData: data,
       loading,
       updateHero,
       updateArticles,
@@ -323,10 +384,6 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateEvent,
       deleteEvent,
       updateEvents,
-      createPost,
-      addComment,
-      votePost,
-      updateCommunityPosts,
       updateStats,
       updatePillars,
       updatePerks,

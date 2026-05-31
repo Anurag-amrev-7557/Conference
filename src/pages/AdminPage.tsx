@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../components/admin/AdminLayout';
 import { BlogManager } from '../components/admin/BlogManager';
-import { CommunityManager } from '../components/admin/CommunityManager';
 import { EventManager } from '../components/admin/EventManager';
 import { PageEditor } from '../components/admin/PageEditor';
 import { SettingsManager } from '../components/admin/SettingsManager';
+import { ConferenceManager } from '../components/admin/ConferenceManager';
+import { RegistrationManager } from '../components/admin/RegistrationManager';
 import { DesignSystemManager } from '../components/admin/DesignSystemManager';
 import { MediaManager } from '../components/admin/MediaManager';
 import { AdminOverview } from '../components/admin/AdminOverview';
+import { AdminWorkspaceNavProvider } from '../components/admin/admin-workspace-nav';
 import { Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { config } from '../lib/config';
@@ -98,43 +100,44 @@ export const AdminPage: React.FC = () => {
     return (
       <>
       <SeoHead seo={seo} />
-      <motion.div className="min-h-screen flex items-center justify-center bg-off p-6 relative">
-        <div className="absolute inset-0 bg-grid-studio opacity-40 pointer-events-none" />
-        
+      <div className="admin-shell admin-auth" data-admin>
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full"
+          className="admin-auth__card"
         >
-          <div className="bg-white/50 backdrop-blur-xl p-12 lg:p-16 border border-border/60 relative z-10">
-            <div className="flex flex-col items-center text-center mb-12">
-              <div className="w-16 h-16 rounded-full border border-border flex items-center justify-center mb-8 shadow-sm">
-                <Lock className="w-6 h-6 text-accent" />
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mb-5 shadow-lg shadow-accent/25">
+                <Lock className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-4xl font-serif italic text-text mb-4 tracking-tight">Admin Dashboard</h1>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-[0.3em]">Sign In Required</p>
+              <h1 className="admin-auth__title">Sign in to CMS</h1>
+              <p className="admin-auth__subtitle">Enter your admin password to continue</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] ml-2">Password</label>
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="admin-field mb-0">
+                <label htmlFor="admin-password" className="admin-field__label">Password</label>
                 <input
+                  id="admin-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-6 py-4 rounded-2xl bg-off border border-border focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-center tracking-widest"
+                  placeholder="Your password"
+                  className="admin-input"
+                  autoComplete="current-password"
                 />
               </div>
 
               {error && (
-                <p className="text-xs font-bold text-rose-500 text-center">{error}</p>
+                <p className="admin-error text-center" role="alert">
+                  {error}
+                </p>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-accent text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-accent2 transition-all shadow-lg shadow-accent/20 group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="admin-btn admin-btn--primary w-full"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -146,10 +149,8 @@ export const AdminPage: React.FC = () => {
                 )}
               </button>
             </form>
-            
-          </div>
         </motion.div>
-      </motion.div>
+      </div>
       </>
     );
   }
@@ -157,28 +158,30 @@ export const AdminPage: React.FC = () => {
   return (
     <>
     <SeoHead seo={seo} />
+    <AdminWorkspaceNavProvider>
     <Routes>
       <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       <Route 
         path="dashboard" 
         element={
-          <AdminLayout title="Dashboard" onLogout={handleLogout} wide={true}>
+          <AdminLayout title="Dashboard" onLogout={handleLogout}>
             <AdminOverview />
           </AdminLayout>
         } 
       />
-      <Route 
-        path="pages" 
+      <Route path="pages" element={<Navigate to="/admin/homepage" replace />} />
+      <Route
+        path="homepage"
         element={
-          <AdminLayout title="Page Editor" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
+          <AdminLayout title="Book page" onLogout={handleLogout} wide showPreviewToggle>
             <PageEditor />
           </AdminLayout>
-        } 
+        }
       />
       <Route 
         path="design" 
         element={
-          <AdminLayout title="Design System" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
+          <AdminLayout title="Brand & theme" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
             <DesignSystemManager />
           </AdminLayout>
         } 
@@ -194,23 +197,15 @@ export const AdminPage: React.FC = () => {
       <Route 
         path="blogs" 
         element={
-          <AdminLayout title="Blog" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
+          <AdminLayout title="Blog workspace" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
             <BlogManager />
-          </AdminLayout>
-        } 
-      />
-      <Route 
-        path="community" 
-        element={
-          <AdminLayout title="Community" onLogout={handleLogout} wide={true}>
-            <CommunityManager />
           </AdminLayout>
         } 
       />
       <Route 
         path="events" 
         element={
-          <AdminLayout title="Events" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
+          <AdminLayout title="Events workspace" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
             <EventManager />
           </AdminLayout>
         } 
@@ -218,12 +213,29 @@ export const AdminPage: React.FC = () => {
       <Route 
         path="settings" 
         element={
-          <AdminLayout title="Settings" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
+          <AdminLayout title="Site settings" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
             <SettingsManager />
           </AdminLayout>
         } 
       />
+      <Route
+        path="conference"
+        element={
+          <AdminLayout title="Homepage" onLogout={handleLogout} wide>
+            <ConferenceManager />
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="registrations"
+        element={
+          <AdminLayout title="Registrations" onLogout={handleLogout} wide>
+            <RegistrationManager />
+          </AdminLayout>
+        }
+      />
     </Routes>
+    </AdminWorkspaceNavProvider>
     </>
   );
 };

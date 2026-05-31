@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Calendar, MapPin, Share2, Globe, ExternalLink } from "lucide-react"
 import type { AppEvent } from "../../lib/websiteData"
+import { CmsImage } from "../CmsImage"
 
 interface EventDetailsDrawerProps {
   event: AppEvent | null
@@ -54,7 +55,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
             <div className="flex-1">
               {/* Event Cover Image */}
               <div className="w-full aspect-square md:aspect-[4/3] relative overflow-hidden">
-                <img
+                <CmsImage
                   src={event.thumbnail}
                   alt={event.title}
                   className="w-full h-full object-cover"

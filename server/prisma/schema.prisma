@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model Admin {
@@ -107,4 +107,17 @@ model Comment {
   createdAt    DateTime      @default(now())
   postId       String
   post         CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model ConferenceRegistration {
+  id               String   @id @default(uuid())
+  name             String
+  email            String
+  phone            String   @default("")
+  linkedIn         String   @default("")
+  designation      String
+  ticketPriceCents Int      @default(2000)
+  status           String   @default("pending")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

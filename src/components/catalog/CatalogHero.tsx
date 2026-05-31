@@ -8,7 +8,7 @@ interface CatalogHeroProps {
 
 export function CatalogHero({ eyebrow, title, lede }: CatalogHeroProps) {
   return (
-    <header className="catalog-hero">
+    <header className="catalog-hero premium-catalog-hero">
       <div className="catalog-hero__pattern" aria-hidden />
       <div className="catalog-hero__glow" aria-hidden />
       <div className="catalog-hero__inner">

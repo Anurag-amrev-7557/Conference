@@ -23,7 +23,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL=file:/app/prisma/prod.db
+      - UPLOAD_ROOT=/app/prisma
       - SITE_URL=${SITE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}

@@ -8,9 +8,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
+    "postinstall": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "ts-node src/seed.ts",
+    "backup:db": "ts-node scripts/backup-db.ts",
+    "cms:restore-registration": "ts-node src/scripts/restoreRegistrationCms.ts",
     "test": "vitest run"
   },
   "prisma": {
@@ -27,6 +30,7 @@
     "isomorphic-dompurify": "^3.13.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "prisma": "^5.12.1",
     "sharp": "^0.34.5",
     "sitemap": "^9.0.1",
     "zod": "^3.24.2"
@@ -39,7 +43,6 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^1.4.12",
     "@types/node": "^20.12.7",
-    "prisma": "^5.12.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5",
     "vitest": "^4.1.6"

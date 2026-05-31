@@ -48,13 +48,22 @@ function splitBrandName(name: string): { lead: string; trail: string | null } {
   return { lead: match[1].trim(), trail: match[2].trim() }
 }
 
-function FooterNavLink({ href, children }: { href: string; children: string }) {
+function FooterNavLink({ href, index, children }: { href: string; index: number; children: string }) {
   const className = "site-footer__link"
+  const num = String(index + 1).padStart(2, "0")
+  const inner = (
+    <>
+      <span className="site-footer__link-num" aria-hidden>
+        {num}
+      </span>
+      <span className="site-footer__link-label">{children}</span>
+    </>
+  )
 
   if (href.startsWith("/")) {
     return (
       <Link to={href} className={className}>
-        {children}
+        {inner}
       </Link>
     )
   }
@@ -62,14 +71,14 @@ function FooterNavLink({ href, children }: { href: string; children: string }) {
   if (href.startsWith("#")) {
     return (
       <a href={href} className={className}>
-        {children}
+        {inner}
       </a>
     )
   }
 
   return (
     <a href={href} className={className} target="_blank" rel="noopener noreferrer">
-      {children}
+      {inner}
     </a>
   )
 }
@@ -102,53 +111,63 @@ export function Footer() {
 
   return (
     <footer ref={footerRef} className="site-footer">
+      <div className="site-footer__mesh" aria-hidden />
+      <div className="site-footer__glow site-footer__glow--left" aria-hidden />
+      <div className="site-footer__glow site-footer__glow--right" aria-hidden />
       <div className="site-footer__ambient" aria-hidden />
+      <p className="site-footer__watermark" aria-hidden>
+        {lead}
+      </p>
 
-      <div className="site-footer__inner w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+      <div className="site-footer__inner">
         <div className="site-footer__grid">
           <div className="site-footer__brand">
+            <div className="site-footer__status">
+              <span className="site-footer__status-dot" aria-hidden />
+              <span className="site-footer__status-label">Registry open</span>
+            </div>
+
             <Link to="/" className="site-footer__mark">
-              <span className="editorial-heading site-footer__mark-text">
-                {lead}
+              <span className="site-footer__mark-text">
+                <span className="site-footer__mark-lead">{lead}</span>
                 {trail ? (
                   <>
                     {" "}
-                    <span className="editorial-accent">{trail}</span>
+                    <span className="site-footer__mark-accent">{trail}</span>
                   </>
                 ) : null}
               </span>
             </Link>
 
-            <p className="editorial-lede site-footer__tagline">
+            <p className="site-footer__tagline">
               Orchestrating the future of automated business systems.
             </p>
 
-            <Link to={primaryCta.href} className="site-footer__registry group">
-              Join the registry
-              <ArrowRight
-                className="site-footer__registry-icon"
-                aria-hidden
-              />
+            <Link to={primaryCta.href} className="site-footer__registry">
+              <span className="site-footer__registry-label">Join the registry</span>
+              <ArrowRight className="site-footer__registry-icon" aria-hidden />
             </Link>
           </div>
 
           <nav className="site-footer__nav" aria-label="Footer">
-            <div className="editorial-eyebrow site-footer__column-head">
-              <span className="editorial-eyebrow__rule" aria-hidden />
+            <div className="site-footer__column-head">
+              <span className="site-footer__head-rule" aria-hidden />
               <h3 className="site-footer__column-title">Section Index</h3>
             </div>
             <ul className="site-footer__links">
-              {footerLinks.map((link) => (
+              {footerLinks.map((link, index) => (
                 <li key={link.id}>
-                  <FooterNavLink href={link.href}>{link.name}</FooterNavLink>
+                  <FooterNavLink href={link.href} index={index}>
+                    {link.name}
+                  </FooterNavLink>
                 </li>
               ))}
             </ul>
           </nav>
 
           <div className="site-footer__social">
-            <div className="editorial-eyebrow site-footer__column-head site-footer__column-head--end">
-              <span className="editorial-eyebrow__rule" aria-hidden />
+            <div className="site-footer__column-head site-footer__column-head--end">
+              <span className="site-footer__head-rule" aria-hidden />
               <h3 className="site-footer__column-title">Connection</h3>
             </div>
             <ul className="site-footer__social-list">
