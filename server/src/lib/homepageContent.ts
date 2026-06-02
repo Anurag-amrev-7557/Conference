@@ -12,10 +12,10 @@ export function expandHomepageFromSettings(body: ContentPatchBody): ContentPatch
   }
   return {
     ...body,
-    hero: body.hero ?? homepage.hero,
-    stats: body.stats ?? homepage.stats,
-    pillars: body.pillars ?? homepage.pillars,
-    perks: body.perks ?? homepage.perks,
+    hero: body.hero ?? (homepage.hero as ContentPatchBody['hero']),
+    stats: body.stats ?? (homepage.stats as ContentPatchBody['stats']),
+    pillars: body.pillars ?? (homepage.pillars as ContentPatchBody['pillars']),
+    perks: body.perks ?? (homepage.perks as ContentPatchBody['perks']),
   }
 }
 
