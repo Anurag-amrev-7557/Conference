@@ -57,6 +57,14 @@ export interface ConferenceRegistrationFormSettings {
     designation: RegistrationFieldCopy;
   };
   designationOptions: RegistrationDesignationOption[];
+  /** Admin inbox for new registration alerts (approve/deny links). */
+  notifyEmail?: string;
+  notifyOnSubmit?: boolean;
+  /** Email registrant when status becomes confirmed or cancelled. */
+  sendRegistrantEmails?: boolean;
+  /** When false, public registration form is closed. */
+  registrationOpen?: boolean;
+  registrationClosedMessage?: string;
 }
 
 export interface ConferenceRegistrationRecord {

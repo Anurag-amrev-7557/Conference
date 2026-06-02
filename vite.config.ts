@@ -6,6 +6,11 @@ import viteCompression from 'vite-plugin-compression'
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    extensionAlias: {
+      '.js': ['.ts', '.tsx', '.js', '.jsx'],
+    },
+  } as import('vite').UserConfig['resolve'],
   plugins: [
     react(),
     tailwindcss(),

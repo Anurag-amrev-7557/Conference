@@ -75,6 +75,17 @@ export function ConferenceSpeakers() {
                       ) : null}
                     </div>
                   )}
+                  {speaker.talkTitle?.trim() ? (
+                    <p className="conference-speaker-card__talk text-sm text-muted mt-2">
+                      {speaker.talkTitle}
+                      {speaker.timeSlot?.trim() ? ` · ${speaker.timeSlot}` : ''}
+                    </p>
+                  ) : null}
+                  {speaker.bio?.trim() ? (
+                    <p className="conference-speaker-card__bio text-sm text-text2 mt-2 leading-relaxed">
+                      {speaker.bio}
+                    </p>
+                  ) : null}
                 </div>
               </article>
             </li>

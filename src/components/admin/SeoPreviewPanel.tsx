@@ -25,8 +25,10 @@ export const SeoPreviewPanel: React.FC<SeoPreviewPanelProps> = ({ seo, slugReady
 
   if (!slugReady || !debouncedSeo) {
     return (
-      <div className="rounded-xl border border-dashed border-border/40 bg-[#fafafa] p-8 text-center">
-        <p className="text-sm text-muted">Add a URL slug to preview search and social snippets.</p>
+      <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-8 text-center">
+        <p className="text-sm font-normal leading-relaxed text-neutral-500 dark:text-neutral-400">
+          Add a URL slug to preview search and social snippets.
+        </p>
       </div>
     )
   }
@@ -56,7 +58,7 @@ export const SeoPreviewPanel: React.FC<SeoPreviewPanelProps> = ({ seo, slugReady
             )}
           </div>
           <div className="border-t border-border/40 p-3 space-y-1">
-            <p className="text-[10px] uppercase text-muted truncate">{host}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 truncate">{host}</p>
             <p className="text-sm font-semibold text-text line-clamp-2">{debouncedSeo.title}</p>
             <p className="text-xs text-muted line-clamp-2">{debouncedSeo.description}</p>
           </div>
@@ -69,7 +71,7 @@ export const SeoPreviewPanel: React.FC<SeoPreviewPanelProps> = ({ seo, slugReady
 function PreviewSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h5 className="text-[10px] font-bold uppercase tracking-widest text-muted">{title}</h5>
+      <h5 className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</h5>
       {children}
     </div>
   )

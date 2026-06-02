@@ -33,7 +33,6 @@ export function AdminConfirmDialog({
         <Dialog.Overlay className="admin-confirm-overlay" />
         <Dialog.Content
           className="admin-confirm-dialog"
-          style={{ backgroundColor: '#ffffff' }}
           onPointerDownOutside={(e) => loading && e.preventDefault()}
           onEscapeKeyDown={(e) => loading && e.preventDefault()}
         >

@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useConferenceContent } from '../../../hooks/useConferenceContent';
 import { defaultConferenceTickets } from '../../../lib/conferenceDefaults';
 
@@ -59,16 +60,16 @@ export function ConferenceTickets() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                className={`w-full h-14 rounded-full font-semibold text-lg transition-all ${
+              <Link
+                to="/register"
+                className={`w-full h-14 rounded-full font-semibold text-lg transition-all flex items-center justify-center ${
                   tier.recommended
                     ? 'bg-text text-white hover:bg-text/90'
                     : 'bg-white text-text border border-black/12 hover:bg-off'
                 }`}
               >
                 {tier.ctaLabel ?? 'Get Tickets'}
-              </button>
+              </Link>
             </div>
           ))}
         </div>

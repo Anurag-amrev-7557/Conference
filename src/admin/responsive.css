@@ -1,0 +1,184 @@
+/* Admin Design System — Responsive Layout Rules */
+
+/* Mobile bottom tab bar */
+.admin-mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .admin-shell__sidebar {
+    display: none !important;
+  }
+
+  .admin-mobile-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--ds-z-sticky);
+    background: var(--ds-surface-elevated);
+    border-top: 1px solid var(--ds-border);
+    padding: var(--ds-space-1) var(--ds-space-2);
+    padding-bottom: max(var(--ds-space-1), env(safe-area-inset-bottom));
+    justify-content: space-around;
+    align-items: center;
+    height: 56px;
+  }
+
+  .admin-mobile-tabbar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: var(--ds-space-1);
+    border-radius: var(--ds-radius-md);
+    color: var(--ds-text-muted);
+    font-size: var(--ds-text-xs);
+    font-weight: var(--ds-font-medium);
+    transition: color var(--ds-duration-base) var(--ds-ease-standard),
+                background var(--ds-duration-base) var(--ds-ease-standard);
+  }
+
+  .admin-mobile-tabbar__item--active {
+    color: var(--ds-primary-700);
+  }
+
+  .admin-shell__content,
+  .admin-shell__content--wide {
+    padding-bottom: calc(56px + var(--ds-space-4));
+  }
+
+  .admin-shell__header {
+    padding-inline: var(--ds-space-4);
+  }
+
+  .admin-shell__header-title {
+    font-size: var(--ds-text-base) !important;
+  }
+
+  /* Tables → card lists */
+  .ds-table-responsive {
+    display: block;
+  }
+
+  .ds-table-responsive thead {
+    display: none;
+  }
+
+  .ds-table-responsive tbody tr {
+    display: block;
+    margin-bottom: var(--ds-space-3);
+    padding: var(--ds-space-4);
+    background: var(--ds-surface-elevated);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-lg);
+  }
+
+  .ds-table-responsive tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--ds-space-1) 0;
+    border: none;
+    font-size: var(--ds-text-sm);
+  }
+
+  .ds-table-responsive tbody td::before {
+    content: attr(data-label);
+    font-weight: var(--ds-font-medium);
+    color: var(--ds-text-muted);
+    margin-right: var(--ds-space-4);
+  }
+
+  /* Modals → full-screen drawers */
+  .ds-modal-mobile-full {
+    position: fixed !important;
+    inset: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Form fields stack */
+  .admin-field-grid,
+  .admin-field-grid--2,
+  .admin-field-grid--3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Action buttons stack */
+  .ds-actions-mobile-stack {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ds-actions-mobile-stack > * {
+    width: 100%;
+  }
+
+  /* Hide split preview */
+  .admin-workspace__preview-pane {
+    display: none !important;
+  }
+
+  .admin-workspace__editor-pane--split {
+    flex: 1 !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .admin-shell__sidebar {
+    width: var(--ds-sidebar-collapsed) !important;
+  }
+
+  .admin-nav-group__label,
+  .admin-shell__brand-text,
+  .admin-shell__nav-link span {
+    display: none;
+  }
+
+  .admin-shell__nav-link {
+    justify-content: center;
+    padding-inline: var(--ds-space-2);
+  }
+
+  .admin-workspace__preview-pane {
+    display: none;
+  }
+
+  .ds-modal-tablet {
+    max-width: 560px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .admin-shell__page {
+    max-width: var(--ds-content-max-width);
+    margin-inline: auto;
+    padding-inline: var(--ds-space-6);
+  }
+}
+
+/* Wide */
+@media (min-width: 1440px) {
+  .admin-shell__page {
+    padding-inline: var(--ds-space-8);
+  }
+}
+
+/* Touch targets */
+@media (pointer: coarse) {
+  .admin-btn,
+  .admin-shell__nav-link,
+  .admin-subnav__item {
+    min-height: 44px;
+  }
+}

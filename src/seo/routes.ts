@@ -1,4 +1,4 @@
-export const PUBLIC_ROUTE_PATHS = ['/', '/home', '/blog', '/events', '/register'] as const
+export const PUBLIC_ROUTE_PATHS = ['/', '/blog', '/events', '/register'] as const
 
 export type PublicRoutePath = (typeof PUBLIC_ROUTE_PATHS)[number]
 
@@ -13,11 +13,6 @@ export const routeDefaults: Record<PublicRoutePath, RouteDefaultSeo> = {
     title: 'Superhumanly Summit 2026 | The Premier AI Conference',
     description:
       'Join industry leaders for a two-day immersion into the future of artificial intelligence and enterprise transformation.',
-  },
-  '/home': {
-    title: 'Superhumanly Monograph — Agentic AI Playbook',
-    description:
-      'Discover the definitive playbook for building AI agents and automating business workflows.',
   },
   '/blog': {
     title: 'Insights & Playbook — Superhumanly Blog',

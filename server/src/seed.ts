@@ -2,10 +2,13 @@
  * BACK-06 single source of truth for demo/production site content.
  * Frontend initialData is skeleton-only; run seed to populate the database.
  */
+import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { defaultConferenceContent } from '../../src/lib/conferenceDefaults';
 import { defaultConferenceRegistrationForm } from './lib/registrationDefaults';
+
+dotenv.config();
 
 const prisma = new PrismaClient();
 
@@ -17,7 +20,8 @@ async function main() {
     update: {},
     create: {
       username: 'admin',
-      password: hashedPassword
+      password: hashedPassword,
+      role: 'super_admin',
     }
   });
 

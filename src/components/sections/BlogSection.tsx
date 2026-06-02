@@ -6,6 +6,7 @@ import { CmsImage } from "../CmsImage"
 
 export function BlogSection() {
   const { data } = useWebsiteData()
+  const preview = data.settings.sections?.blogPreview
   const articles = data.articles.filter((a) => a.isPublished).slice(0, 3)
   const sectionRef = useRef<HTMLElement>(null)
   const layout =
@@ -37,13 +38,24 @@ export function BlogSection() {
         <header className="playbook-section__header flex flex-col items-center text-center max-w-3xl mx-auto mb-12 sm:mb-14 lg:mb-16">
           <div className="editorial-eyebrow editorial-eyebrow--center mb-6 sm:mb-7">
             <span className="editorial-eyebrow__rule" aria-hidden />
-            <span className="section-eyebrow !mb-0 text-muted">The Playbook</span>
+            <span className="section-eyebrow !mb-0 text-muted">
+              {preview?.eyebrow ?? 'The Playbook'}
+            </span>
             <span className="editorial-eyebrow__rule" aria-hidden />
           </div>
 
           <h2 className="editorial-heading editorial-heading--section mb-0">
-            Latest <span className="italic editorial-accent">Automation</span> Strategies
+            {preview?.title ? (
+              preview.title
+            ) : (
+              <>
+                Latest <span className="italic editorial-accent">Automation</span> Strategies
+              </>
+            )}
           </h2>
+          {preview?.lede ? (
+            <p className="editorial-lede mt-4 max-w-2xl mx-auto">{preview.lede}</p>
+          ) : null}
         </header>
 
         {articles.length > 0 ? (
@@ -99,15 +111,18 @@ export function BlogSection() {
           </ul>
         ) : (
           <p className="playbook-section__empty editorial-lede text-center max-w-lg mx-auto">
-            New playbook guides are on the way. Browse the full library for frameworks and
-            strategies.
+            {preview?.emptyState?.trim() ||
+              "New playbook guides are on the way. Browse the full library for frameworks and strategies."}
           </p>
         )}
 
         <div className="playbook-section__footer">
-          <Link to="/blog" className="btn-cta-secondary group">
+          <Link
+            to={preview?.ctaHref?.trim() || "/blog"}
+            className="btn-cta-secondary group"
+          >
             <BookOpen className="w-4 h-4 text-accent" aria-hidden />
-            View playbook
+            {preview?.ctaLabel?.trim() || "View playbook"}
             <ArrowRight
               className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
               aria-hidden

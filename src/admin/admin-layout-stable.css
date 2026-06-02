@@ -1,0 +1,59 @@
+/**
+ * Layout stability — reserve space for dynamic chrome (save status, toolbars, metrics).
+ */
+
+.admin-toolbar {
+  min-height: 3.25rem;
+  align-items: center;
+}
+
+.admin-toolbar__actions {
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 2.5rem;
+}
+
+.admin-header-save {
+  min-width: 9rem;
+  justify-content: center;
+}
+
+.admin-page-metrics-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-team-page__control-actions {
+  align-items: center;
+  min-height: 2.375rem;
+}
+
+.admin-editor-section__header {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.admin-editor-section__action {
+  flex-shrink: 0;
+  min-height: 2.375rem;
+  display: flex;
+  align-items: center;
+}
+
+.admin-catalog-panel {
+  min-height: 12rem;
+}
+
+.admin-panel-body--flush .admin-editor-page-header {
+  flex-shrink: 0;
+}
+
+.admin-dashboard__ops-status {
+  min-height: 1.25rem;
+}

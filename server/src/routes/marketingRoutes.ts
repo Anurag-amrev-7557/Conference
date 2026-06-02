@@ -1,6 +1,9 @@
 import { Router } from 'express';
+import { marketingLimiter } from '../middleware/rateLimiters';
 
 const router = Router();
+
+router.use(marketingLimiter);
 
 function marketingBackendUrl(): string {
   return (process.env.MARKETING_BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');

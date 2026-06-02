@@ -3,20 +3,29 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../components/admin/AdminLayout';
 import { BlogManager } from '../components/admin/BlogManager';
 import { EventManager } from '../components/admin/EventManager';
-import { PageEditor } from '../components/admin/PageEditor';
 import { SettingsManager } from '../components/admin/SettingsManager';
 import { ConferenceManager } from '../components/admin/ConferenceManager';
 import { RegistrationManager } from '../components/admin/RegistrationManager';
 import { DesignSystemManager } from '../components/admin/DesignSystemManager';
 import { MediaManager } from '../components/admin/MediaManager';
 import { AdminOverview } from '../components/admin/AdminOverview';
+import { AdminUsersManager } from '../components/admin/AdminUsersManager';
+import { ProtectedAdminRoute } from '../components/admin/ProtectedAdminRoute';
+import { NewsletterManager } from '../components/admin/NewsletterManager';
 import { AdminWorkspaceNavProvider } from '../components/admin/admin-workspace-nav';
-import { Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { config } from '../lib/config';
-import { api } from '../lib/api';
+import { AdminAuthLogin } from '../components/admin/AdminAuthLogin';
+import { setAdminSession, clearAdminSession } from '../components/admin/useAdminSession';
 import { SeoHead } from '../seo/SeoHead';
 import { usePageSeo } from '../seo/usePageSeo';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ToastProvider } from '../components/admin/ui/Toast';
+import { AutosaveProvider } from '../components/admin/providers/AutosaveProvider';
+import { AdminProviders } from '../components/admin/providers/AdminProviders';
+import { AdminThemeProvider } from '../components/admin/providers/AdminThemeProvider';
+import { UndoRedoProvider } from '../components/admin/providers/UndoRedoProvider';
+import { PageLoader } from '../components/admin/ui/Skeleton';
+import { api } from '../lib/api';
+import { config } from '../lib/config';
 
 export const AdminPage: React.FC = () => {
   const seo = usePageSeo();
@@ -24,9 +33,7 @@ export const AdminPage: React.FC = () => {
   const [sessionChecking, setSessionChecking] = useState(
     !!localStorage.getItem('adminToken')
   );
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [sessionError, setSessionError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,16 +46,20 @@ export const AdminPage: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        await api.getAdminMe(token);
-        if (!cancelled) setIsAuthenticated(true);
+        const me = await api.getAdminMe(token);
+        if (!cancelled) {
+          setIsAuthenticated(true);
+          setAdminSession(me.role, me.username);
+        }
       } catch (err: unknown) {
         const status = (err as { status?: number })?.status;
         if (status === 401 || !cancelled) {
           localStorage.removeItem('adminToken');
           localStorage.removeItem(config.admin.sessionKey);
+          clearAdminSession();
           if (!cancelled) {
             setIsAuthenticated(false);
-            setError('Your session has expired. Please sign in again.');
+            setSessionError('Your session has expired. Please sign in again.');
           }
         }
       } finally {
@@ -61,37 +72,21 @@ export const AdminPage: React.FC = () => {
     };
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    try {
-      const { token } = await api.login(password);
-      setIsAuthenticated(true);
-      localStorage.setItem('adminToken', token);
-      localStorage.setItem(config.admin.sessionKey, 'true');
-    } catch (err: any) {
-      setError(err.message || 'Incorrect administrative password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('adminToken');
     localStorage.removeItem(config.admin.sessionKey);
+    clearAdminSession();
     navigate('/admin');
   };
 
   if (sessionChecking) {
     return (
       <>
-      <SeoHead seo={seo} />
-      <motion.div className="min-h-screen flex items-center justify-center bg-off">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </motion.div>
+        <SeoHead seo={seo} />
+        <div className="admin-shell admin-auth-shell min-h-screen" data-theme="light">
+          <PageLoader variant="dashboard" />
+        </div>
       </>
     );
   }
@@ -99,58 +94,14 @@ export const AdminPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-      <SeoHead seo={seo} />
-      <div className="admin-shell admin-auth" data-admin>
-        <motion.div 
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="admin-auth__card"
-        >
-            <div className="flex flex-col items-center text-center mb-8">
-              <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mb-5 shadow-lg shadow-accent/25">
-                <Lock className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="admin-auth__title">Sign in to CMS</h1>
-              <p className="admin-auth__subtitle">Enter your admin password to continue</p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="admin-field mb-0">
-                <label htmlFor="admin-password" className="admin-field__label">Password</label>
-                <input
-                  id="admin-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Your password"
-                  className="admin-input"
-                  autoComplete="current-password"
-                />
-              </div>
-
-              {error && (
-                <p className="admin-error text-center" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="admin-btn admin-btn--primary w-full"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Sign In
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
-        </motion.div>
-      </div>
+        <SeoHead seo={seo} />
+        <AdminAuthLogin
+          initialError={sessionError}
+          onSuccess={() => {
+            setSessionError('');
+            setIsAuthenticated(true);
+          }}
+        />
       </>
     );
   }
@@ -158,84 +109,125 @@ export const AdminPage: React.FC = () => {
   return (
     <>
     <SeoHead seo={seo} />
+    <AdminThemeProvider>
+    <ToastProvider>
+    <AutosaveProvider>
+    <UndoRedoProvider>
+    <AdminProviders>
     <AdminWorkspaceNavProvider>
+    <ErrorBoundary fallbackTitle="Admin workspace error">
     <Routes>
       <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       <Route 
         path="dashboard" 
         element={
-          <AdminLayout title="Dashboard" onLogout={handleLogout}>
-            <AdminOverview />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="dashboard">
+            <AdminLayout title="Dashboard" onLogout={handleLogout}>
+              <AdminOverview />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         } 
       />
-      <Route path="pages" element={<Navigate to="/admin/homepage" replace />} />
-      <Route
-        path="homepage"
-        element={
-          <AdminLayout title="Book page" onLogout={handleLogout} wide showPreviewToggle>
-            <PageEditor />
-          </AdminLayout>
-        }
-      />
+      <Route path="pages" element={<Navigate to="/admin/conference" replace />} />
+      <Route path="homepage" element={<Navigate to="/admin/conference" replace />} />
       <Route 
         path="design" 
         element={
-          <AdminLayout title="Brand & theme" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
-            <DesignSystemManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="design">
+            <AdminLayout title="Brand & theme" onLogout={handleLogout} wide>
+              <DesignSystemManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         } 
       />
       <Route
         path="media"
         element={
-          <AdminLayout title="Media" onLogout={handleLogout} wide={true}>
-            <MediaManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="media">
+            <AdminLayout title="Media" onLogout={handleLogout} wide>
+              <MediaManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         }
       />
       <Route 
         path="blogs" 
         element={
-          <AdminLayout title="Blog workspace" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
-            <BlogManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="blogs">
+            <AdminLayout title="Blog workspace" onLogout={handleLogout} wide>
+              <BlogManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         } 
       />
       <Route 
         path="events" 
         element={
-          <AdminLayout title="Events workspace" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
-            <EventManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="events">
+            <AdminLayout title="Events workspace" onLogout={handleLogout} wide>
+              <EventManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         } 
       />
       <Route 
         path="settings" 
         element={
-          <AdminLayout title="Site settings" onLogout={handleLogout} wide={true} showPreviewToggle={true}>
-            <SettingsManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="settings">
+            <AdminLayout title="Site settings" onLogout={handleLogout} wide>
+              <SettingsManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         } 
       />
       <Route
         path="conference"
         element={
-          <AdminLayout title="Homepage" onLogout={handleLogout} wide>
-            <ConferenceManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="conference">
+            <AdminLayout title="Summit homepage" onLogout={handleLogout} wide>
+              <ConferenceManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="newsletter"
+        element={
+          <ProtectedAdminRoute pageId="newsletter">
+            <AdminLayout title="Newsletter signups" onLogout={handleLogout} wide>
+              <NewsletterManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="users"
+        element={
+          <ProtectedAdminRoute pageId="users">
+            <AdminLayout title="Team & access" onLogout={handleLogout} wide>
+              <AdminUsersManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         }
       />
       <Route
         path="registrations"
         element={
-          <AdminLayout title="Registrations" onLogout={handleLogout} wide>
-            <RegistrationManager />
-          </AdminLayout>
+          <ProtectedAdminRoute pageId="registrations">
+            <AdminLayout title="Registrations" onLogout={handleLogout} wide>
+              <RegistrationManager />
+            </AdminLayout>
+          </ProtectedAdminRoute>
         }
       />
     </Routes>
+    </ErrorBoundary>
     </AdminWorkspaceNavProvider>
+    </AdminProviders>
+    </UndoRedoProvider>
+    </AutosaveProvider>
+    </ToastProvider>
+    </AdminThemeProvider>
     </>
   );
 };

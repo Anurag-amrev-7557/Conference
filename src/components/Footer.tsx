@@ -88,8 +88,14 @@ export function Footer() {
   const { data } = useWebsiteData()
   const { appearance, settings } = data
   const { socials, footerLinks, primaryCta } = settings.navigation
+  const footer = settings.footer ?? {}
   const { lead, trail } = splitBrandName(appearance.brandName)
   const year = new Date().getFullYear()
+  const tagline = footer.tagline ?? 'Orchestrating the future of automated business systems.'
+  const copyright = footer.copyright ?? `© ${year} Superhumanly AI Playbook.`
+  const registryLabel = footer.registryStatusLabel ?? 'Registry open'
+  const privacyUrl = footer.privacyUrl ?? '#'
+  const termsUrl = footer.termsUrl ?? '#'
 
   useEffect(() => {
     const el = footerRef.current
@@ -124,7 +130,7 @@ export function Footer() {
           <div className="site-footer__brand">
             <div className="site-footer__status">
               <span className="site-footer__status-dot" aria-hidden />
-              <span className="site-footer__status-label">Registry open</span>
+              <span className="site-footer__status-label">{registryLabel}</span>
             </div>
 
             <Link to="/" className="site-footer__mark">
@@ -139,9 +145,7 @@ export function Footer() {
               </span>
             </Link>
 
-            <p className="site-footer__tagline">
-              Orchestrating the future of automated business systems.
-            </p>
+            <p className="site-footer__tagline">{tagline}</p>
 
             <Link to={primaryCta.href} className="site-footer__registry">
               <span className="site-footer__registry-label">Join the registry</span>
@@ -196,14 +200,12 @@ export function Footer() {
         <div className="site-footer__divider" aria-hidden />
 
         <div className="site-footer__bar">
-          <p className="site-footer__copyright">
-            © {year} Superhumanly AI Playbook.
-          </p>
+          <p className="site-footer__copyright">{copyright}</p>
           <nav className="site-footer__legal" aria-label="Legal">
-            <a href="#" className="site-footer__legal-link">
+            <a href={privacyUrl} className="site-footer__legal-link">
               Privacy Policy
             </a>
-            <a href="#" className="site-footer__legal-link">
+            <a href={termsUrl} className="site-footer__legal-link">
               Terms of Service
             </a>
           </nav>

@@ -1,29 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
-import { LivePreview } from './LivePreview';
 import {
   Plus,
-  Trash2,
   Search,
   Navigation,
   FileCode,
+  LayoutTemplate,
+  History,
+  Globe,
+  Share2,
+  BookOpen,
+  MousePointerClick,
+  Menu,
+  Link2,
+  PanelBottom,
+  Cookie,
+  AlertTriangle,
+  Mail,
+  Newspaper,
+  ExternalLink,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { OgImageUpload } from './OgImageUpload';
+import { Link } from 'react-router-dom';
 import {
   AdminButton,
-  AdminField,
   AdminFieldGrid,
-  AdminFormSection,
   AdminHeaderSave,
-  AdminInput,
   AdminPageIntro,
-  AdminPanelTabIntro,
-  AdminSubnav,
-  AdminTextarea,
 } from './admin-ui';
-import { useAdminWorkspaceNavRegistry, useApplyPendingAdminSection } from './admin-workspace-nav';
+import {
+  AdminEditorField,
+  AdminEditorInput,
+  AdminEditorSection,
+  AdminEditorSubsection,
+  AdminEditorFields,
+  AdminEditorTextarea,
+  editorSaveStatusFrom,
+} from './admin-editor-ui';
+import { useApplyPendingAdminSection } from './admin-workspace-nav';
+import { RevisionHistoryPanel } from './RevisionHistoryPanel';
+import { DangerZone, NavLinkEditor, Toggle } from './ui';
+import { OgImageUpload } from './OgImageUpload';
+import { AdminWorkspaceShell } from './AdminWorkspaceShell';
+import { SETTINGS_TAB_INTROS } from './workspaceTabIntros';
+import { useFormHistory, useRegisterUndoRedo } from './providers/UndoRedoProvider';
+import { useAutosave } from './providers/AutosaveProvider';
+import { useToast } from './ui/Toast';
 
 const SETTINGS_SUBNAV_GROUPS = [
   {
@@ -31,39 +53,38 @@ const SETTINGS_SUBNAV_GROUPS = [
     items: [
       { id: 'seo', label: 'SEO', icon: Search },
       { id: 'navigation', label: 'Navigation', icon: Navigation },
+      { id: 'pages', label: 'Site pages', icon: LayoutTemplate },
       { id: 'advanced', label: 'Advanced', icon: FileCode },
     ],
   },
 ];
 
-const TAB_INTROS: Record<'seo' | 'navigation' | 'advanced', { title: string; description: string }> = {
-  seo: {
-    title: 'SEO',
-    description:
-      'Default title, description, and share metadata for the whole site. Individual pages can override these in their workspace.',
-  },
-  navigation: {
-    title: 'Navigation',
-    description: 'Header call-to-action, primary menu links, footer links, and social profile URLs.',
-  },
-  advanced: {
-    title: 'Advanced',
-    description: 'Global CSS overrides and script tags injected into every public page.',
-  },
-};
+const TAB_INTROS = SETTINGS_TAB_INTROS;
 
 export const SettingsManager: React.FC = () => {
-  const { sourceData, updateSettings, setPreview, isPreviewVisible } = useWebsiteData();
-  const [activeTab, setActiveTab] = useState<'seo' | 'navigation' | 'advanced'>('seo');
-  const [form, setForm] = useState(sourceData.settings);
+  const { sourceData, updateSettings, setPreview, isPreviewVisible, refresh } = useWebsiteData();
+  const [activeTab, setActiveTab] = useState<'seo' | 'navigation' | 'pages' | 'advanced'>('seo');
+  const formHistory = useFormHistory(sourceData.settings);
+  const form = formHistory.value;
+  const setForm = formHistory.setValue;
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { registerSaveHandler, markUnsaved, setStatus } = useAutosave();
+  const { toast } = useToast();
+  const isDirty = JSON.stringify(form) !== JSON.stringify(sourceData.settings);
 
   const settingsSyncKey = JSON.stringify(sourceData.settings);
   useEffect(() => {
-    setForm(sourceData.settings);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when persisted settings change, not reference noise
+    formHistory.reset(sourceData.settings);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when persisted settings change
   }, [settingsSyncKey]);
+
+  useRegisterUndoRedo({
+    undo: formHistory.undo,
+    redo: formHistory.redo,
+    canUndo: formHistory.canUndo,
+    canRedo: formHistory.canRedo,
+  });
 
   useEffect(() => {
     if (!isPreviewVisible) {
@@ -74,14 +95,33 @@ export const SettingsManager: React.FC = () => {
     return () => setPreview(null);
   }, [form, isPreviewVisible, setPreview]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
       await updateSettings(form);
+      setStatus('saved');
+      toast({ variant: 'success', title: 'Site settings saved' });
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Save failed',
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [form, updateSettings, setStatus, toast]);
+
+  useEffect(() => {
+    registerSaveHandler(handleSave);
+    return () => registerSaveHandler(null);
+  }, [handleSave, registerSaveHandler]);
+
+  useEffect(() => {
+    if (JSON.stringify(form) !== JSON.stringify(sourceData.settings)) {
+      markUnsaved();
+    }
+  }, [form, sourceData.settings, markUnsaved]);
 
   const updateSocialLink = (id: string, href: string) => {
     setForm({
@@ -93,274 +133,286 @@ export const SettingsManager: React.FC = () => {
     });
   };
 
-  useAdminWorkspaceNavRegistry({
-    groups: SETTINGS_SUBNAV_GROUPS,
-    activeId: activeTab,
-    onSelect: (id) => setActiveTab(id as typeof activeTab),
-  });
-
   useApplyPendingAdminSection('/admin/settings', (id) =>
     setActiveTab(id as typeof activeTab),
   );
 
-  const editorColumn = (
-    <div
-      className={cn(
-        'flex flex-col min-h-0 overflow-hidden bg-[var(--admin-surface)]',
-        isPreviewVisible ? 'w-[520px] shrink-0 border-r border-[var(--admin-border)]' : 'flex-1 admin-page-workspace',
-      )}
-    >
-      <div className={cn('admin-toolbar shrink-0', isPreviewVisible && 'admin-toolbar--compact')}>
-        <div className="admin-toolbar__content">
-          <AdminPageIntro
-            className="mb-0"
-            eyebrow="Site"
-            title="Site settings"
-            lede={
-              isPreviewVisible
-                ? 'Global SEO, navigation, and scripts.'
-                : 'Global SEO defaults, navigation, book schema, and custom scripts. Page-specific SEO lives in each page workspace.'
-            }
-          />
-        </div>
-        <div className="admin-toolbar__actions">
-          <AdminHeaderSave
-            label={
-              activeTab === 'seo'
-                ? 'Save SEO'
-                : activeTab === 'navigation'
-                  ? 'Save navigation'
-                  : 'Save advanced'
-            }
-            saving={isSaving}
-            onClick={handleSave}
-          />
-        </div>
-      </div>
+  const saveLabel =
+    activeTab === 'seo'
+      ? 'Save SEO'
+      : activeTab === 'navigation'
+        ? 'Save navigation'
+        : activeTab === 'pages'
+          ? 'Save site pages'
+          : 'Save advanced';
 
-      <div className="admin-page-editor flex flex-1 min-h-0">
-        <AdminSubnav
-          className="admin-subnav--desktop-only"
-          groups={SETTINGS_SUBNAV_GROUPS}
-          title="Sections"
-          activeId={activeTab}
-          onSelect={(id) => setActiveTab(id as typeof activeTab)}
+  return (
+    <AdminWorkspaceShell
+      editorClassName="admin-book-page"
+      contentEditor
+      isPreviewVisible={isPreviewVisible}
+      isSidebarCollapsed={isSidebarCollapsed}
+      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
+      toolbar={
+        <AdminPageIntro
+          compact
+          className="mb-0"
+          lede={
+            isPreviewVisible
+              ? 'Global SEO, navigation, and scripts — preview updates live.'
+              : 'Global SEO, navigation, site pages, and custom scripts.'
+          }
         />
-
-        <div className="admin-panel-body flex-1 min-h-0 overflow-y-auto">
-          <div className="admin-panel-body__inner">
-            <AdminPanelTabIntro
-              title={TAB_INTROS[activeTab].title}
-              description={TAB_INTROS[activeTab].description}
-            />
-            <div className="admin-form-stack">
-               <AnimatePresence mode="wait">
-                 <motion.div
-                   key={activeTab}
-                   initial={{ opacity: 0, y: 10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   exit={{ opacity: 0, y: -10 }}
-                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                 >
+      }
+      editorHeaderAside={undefined}
+      subnav={{
+        groups: SETTINGS_SUBNAV_GROUPS,
+        title: 'Site settings',
+        activeId: activeTab,
+        onSelect: (id) => setActiveTab(id as typeof activeTab),
+        pageId: 'settings',
+      }}
+      editorHeader={TAB_INTROS[activeTab]}
+      saveStatus={editorSaveStatusFrom(isSaving, isDirty)}
+      headerAction={
+        <>
+          <Link to="/home" target="_blank" rel="noopener noreferrer" className="inline-flex">
+            <AdminButton variant="secondary" className="shrink-0">
+              View site
+              <ExternalLink className="w-4 h-4" />
+            </AdminButton>
+          </Link>
+          <AdminHeaderSave
+            label={saveLabel}
+            saving={isSaving}
+            onClick={() => void handleSave()}
+          />
+        </>
+      }
+    >
                    {activeTab === 'seo' && (
                      <>
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={Globe}
                          title="Search appearance"
                          description="Shown in Google results and browser tabs when a page has no custom title or description."
                        >
-                         <AdminField label="Search engine title">
-                           <AdminInput
-                             value={form.seo.title}
-                             onChange={(e) =>
-                               setForm({ ...form, seo: { ...form.seo, title: e.target.value } })
-                             }
-                             placeholder="Superhumanly AI | The Agentic Playbook"
-                           />
-                         </AdminField>
-                         <AdminField label="Meta description">
-                           <AdminTextarea
-                             rows={4}
-                             value={form.seo.description}
-                             onChange={(e) =>
-                               setForm({ ...form, seo: { ...form.seo, description: e.target.value } })
-                             }
-                             placeholder="A deep-dive into the future of autonomous agent architecture…"
-                           />
-                         </AdminField>
-                       </AdminFormSection>
+                         <AdminEditorSubsection title="Title & description">
+                           <AdminEditorFields className="admin-editor-fields--readable">
+                             <AdminEditorField label="Search engine title">
+                               <AdminEditorInput
+                                 value={form.seo.title}
+                                 onChange={(e) =>
+                                   setForm({ ...form, seo: { ...form.seo, title: e.target.value } })
+                                 }
+                                 placeholder="Superhumanly AI | The Agentic Playbook"
+                               />
+                             </AdminEditorField>
+                             <AdminEditorField label="Meta description">
+                               <AdminEditorTextarea
+                                 rows={4}
+                                 value={form.seo.description}
+                                 onChange={(e) =>
+                                   setForm({ ...form, seo: { ...form.seo, description: e.target.value } })
+                                 }
+                                 placeholder="A deep-dive into the future of autonomous agent architecture…"
+                               />
+                             </AdminEditorField>
+                           </AdminEditorFields>
+                         </AdminEditorSubsection>
+                       </AdminEditorSection>
 
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={Share2}
                          title="Social sharing (Open Graph)"
                          description="Default preview when links are shared on social platforms."
                        >
-                         <AdminField
-                           label="Default share image"
-                           hint="Used when a page has no specific image. Upload resizes to 1200×630 or paste a full HTTPS URL."
-                         >
-                           <AdminInput
-                             value={form.seo.ogImage || ''}
-                             onChange={(e) =>
-                               setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })
-                             }
-                             placeholder="https://…"
-                             className="font-mono text-sm"
-                           />
-                           <OgImageUpload
-                             value={form.seo.ogImage || ''}
-                             onChange={(url) =>
-                               setForm({ ...form, seo: { ...form.seo, ogImage: url } })
-                             }
-                             getToken={() => localStorage.getItem('adminToken') || ''}
-                           />
-                         </AdminField>
-                         <AdminFieldGrid columns={3}>
-                           <AdminField label="og:site_name">
-                             <AdminInput
-                               value={form.seo.ogSiteName || ''}
-                               onChange={(e) =>
-                                 setForm({ ...form, seo: { ...form.seo, ogSiteName: e.target.value } })
-                               }
-                             />
-                           </AdminField>
-                           <AdminField label="og:locale">
-                             <AdminInput
-                               value={form.seo.ogLocale || 'en_US'}
-                               onChange={(e) =>
-                                 setForm({ ...form, seo: { ...form.seo, ogLocale: e.target.value } })
-                               }
-                             />
-                           </AdminField>
-                           <AdminField label="twitter:site">
-                             <AdminInput
-                               value={form.seo.twitterSite || ''}
-                               onChange={(e) =>
-                                 setForm({
-                                   ...form,
-                                   seo: { ...form.seo, twitterSite: e.target.value },
-                                 })
-                               }
-                               placeholder="@handle"
-                             />
-                           </AdminField>
-                         </AdminFieldGrid>
-                       </AdminFormSection>
+                         <AdminEditorSubsection title="Share preview">
+                           <AdminEditorFields className="admin-editor-fields--readable">
+                             <AdminEditorField
+                               label="Default share image"
+                               hint="Used when a page has no specific image. Upload resizes to 1200×630 or paste a full HTTPS URL."
+                             >
+                               <AdminEditorInput
+                                 value={form.seo.ogImage || ''}
+                                 onChange={(e) =>
+                                   setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })
+                                 }
+                                 placeholder="https://…"
+                                 className="font-mono text-sm mb-2"
+                               />
+                               <OgImageUpload
+                                 value={form.seo.ogImage || ''}
+                                 onChange={(url) =>
+                                   setForm({ ...form, seo: { ...form.seo, ogImage: url } })
+                                 }
+                                 getToken={() => localStorage.getItem('adminToken') || ''}
+                               />
+                             </AdminEditorField>
+                           </AdminEditorFields>
+                           <AdminFieldGrid columns={3} className="admin-editor-fields--readable mt-[var(--editor-field-gap)]">
+                             <AdminEditorField label="og:site_name">
+                               <AdminEditorInput
+                                 value={form.seo.ogSiteName || ''}
+                                 onChange={(e) =>
+                                   setForm({ ...form, seo: { ...form.seo, ogSiteName: e.target.value } })
+                                 }
+                               />
+                             </AdminEditorField>
+                             <AdminEditorField label="og:locale">
+                               <AdminEditorInput
+                                 value={form.seo.ogLocale || 'en_US'}
+                                 onChange={(e) =>
+                                   setForm({ ...form, seo: { ...form.seo, ogLocale: e.target.value } })
+                                 }
+                               />
+                             </AdminEditorField>
+                             <AdminEditorField label="twitter:site">
+                               <AdminEditorInput
+                                 value={form.seo.twitterSite || ''}
+                                 onChange={(e) =>
+                                   setForm({
+                                     ...form,
+                                     seo: { ...form.seo, twitterSite: e.target.value },
+                                   })
+                                 }
+                                 placeholder="@handle"
+                               />
+                             </AdminEditorField>
+                           </AdminFieldGrid>
+                         </AdminEditorSubsection>
+                       </AdminEditorSection>
 
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={Search}
                          title="Google Search Console"
                          description="Site-wide ownership verification meta tag."
                        >
-                         <AdminField
-                           label="Verification token"
-                           hint={
-                             <>
-                               Paste only the content value from Search Console (not the full{' '}
-                               <code>&lt;meta&gt;</code> tag). After saving, rebuild with the API on port
-                               3001 so prerender bakes the tag into dist.
-                             </>
-                           }
-                         >
-                           <AdminInput
-                             value={form.seo.googleSiteVerification || ''}
-                             onChange={(e) =>
-                               setForm({
-                                 ...form,
-                                 seo: { ...form.seo, googleSiteVerification: e.target.value },
-                               })
-                             }
-                             placeholder="google-site-verification token"
-                             className="font-mono text-sm"
-                           />
-                         </AdminField>
-                       </AdminFormSection>
+                         <AdminEditorSubsection title="Verification">
+                           <AdminEditorFields className="admin-editor-fields--readable">
+                             <AdminEditorField
+                               label="Verification token"
+                               hint={
+                                 <>
+                                   Paste only the content value from Search Console (not the full{' '}
+                                   <code>&lt;meta&gt;</code> tag). After saving, rebuild with the API on port
+                                   3001 so prerender bakes the tag into dist.
+                                 </>
+                               }
+                             >
+                               <AdminEditorInput
+                                 value={form.seo.googleSiteVerification || ''}
+                                 onChange={(e) =>
+                                   setForm({
+                                     ...form,
+                                     seo: { ...form.seo, googleSiteVerification: e.target.value },
+                                   })
+                                 }
+                                 placeholder="google-site-verification token"
+                                 className="font-mono text-sm"
+                               />
+                             </AdminEditorField>
+                           </AdminEditorFields>
+                         </AdminEditorSubsection>
+                       </AdminEditorSection>
 
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={BookOpen}
                          title="Book structured data"
                          description="Optional schema.org Book markup for rich results on the homepage."
                        >
-                         <AdminField label="Title">
-                           <AdminInput
-                             value={form.book?.title || ''}
-                             onChange={(e) =>
-                               setForm({ ...form, book: { ...form.book, title: e.target.value } })
-                             }
-                             placeholder="Book title"
-                           />
-                         </AdminField>
-                         <AdminField label="Tagline">
-                           <AdminInput
-                             value={form.book?.tagline || ''}
-                             onChange={(e) =>
-                               setForm({ ...form, book: { ...form.book, tagline: e.target.value } })
-                             }
-                             placeholder="Short hook"
-                           />
-                         </AdminField>
-                         <AdminField label="Abstract">
-                           <AdminTextarea
-                             rows={5}
-                             value={form.book?.abstract || ''}
-                             onChange={(e) =>
-                               setForm({ ...form, book: { ...form.book, abstract: e.target.value } })
-                             }
-                             placeholder="Use blank lines between paragraphs"
-                           />
-                         </AdminField>
-                         <AdminFieldGrid columns={2}>
-                           <AdminField label="Author">
-                             <AdminInput
-                               value={form.book?.authorName || ''}
-                               onChange={(e) =>
-                                 setForm({ ...form, book: { ...form.book, authorName: e.target.value } })
-                               }
-                             />
-                           </AdminField>
-                           <AdminField label="ISBN-13">
-                             <AdminInput
-                               value={form.book?.isbn || ''}
-                               onChange={(e) =>
-                                 setForm({ ...form, book: { ...form.book, isbn: e.target.value } })
-                               }
-                               className="font-mono text-sm"
-                             />
-                           </AdminField>
-                           <AdminField label="Cover image URL">
-                             <AdminInput
-                               value={form.book?.coverImageUrl || ''}
-                               onChange={(e) =>
-                                 setForm({
-                                   ...form,
-                                   book: { ...form.book, coverImageUrl: e.target.value },
-                                 })
-                               }
-                               placeholder="https://"
-                               className="font-mono text-sm"
-                             />
-                           </AdminField>
-                           <AdminField label="Publisher">
-                             <AdminInput
-                               value={form.book?.publisherName || ''}
-                               onChange={(e) =>
-                                 setForm({
-                                   ...form,
-                                   book: { ...form.book, publisherName: e.target.value },
-                                 })
-                               }
-                             />
-                           </AdminField>
-                         </AdminFieldGrid>
-                       </AdminFormSection>
+                         <AdminEditorSubsection
+                           title="Book metadata"
+                           description="Title, author, and cover used in JSON-LD on the homepage."
+                         >
+                           <AdminEditorFields className="admin-editor-fields--readable">
+                             <AdminEditorField label="Title">
+                               <AdminEditorInput
+                                 value={form.book?.title || ''}
+                                 onChange={(e) =>
+                                   setForm({ ...form, book: { ...form.book, title: e.target.value } })
+                                 }
+                                 placeholder="Book title"
+                               />
+                             </AdminEditorField>
+                             <AdminEditorField label="Tagline">
+                               <AdminEditorInput
+                                 value={form.book?.tagline || ''}
+                                 onChange={(e) =>
+                                   setForm({ ...form, book: { ...form.book, tagline: e.target.value } })
+                                 }
+                                 placeholder="Short hook"
+                               />
+                             </AdminEditorField>
+                             <AdminEditorField label="Abstract">
+                               <AdminEditorTextarea
+                                 rows={5}
+                                 value={form.book?.abstract || ''}
+                                 onChange={(e) =>
+                                   setForm({ ...form, book: { ...form.book, abstract: e.target.value } })
+                                 }
+                                 placeholder="Use blank lines between paragraphs"
+                               />
+                             </AdminEditorField>
+                             <AdminFieldGrid columns={2}>
+                               <AdminEditorField label="Author">
+                                 <AdminEditorInput
+                                   value={form.book?.authorName || ''}
+                                   onChange={(e) =>
+                                     setForm({ ...form, book: { ...form.book, authorName: e.target.value } })
+                                   }
+                                 />
+                               </AdminEditorField>
+                               <AdminEditorField label="ISBN-13">
+                                 <AdminEditorInput
+                                   value={form.book?.isbn || ''}
+                                   onChange={(e) =>
+                                     setForm({ ...form, book: { ...form.book, isbn: e.target.value } })
+                                   }
+                                   className="font-mono text-sm"
+                                 />
+                               </AdminEditorField>
+                               <AdminEditorField label="Publisher">
+                                 <AdminEditorInput
+                                   value={form.book?.publisherName || ''}
+                                   onChange={(e) =>
+                                     setForm({
+                                       ...form,
+                                       book: { ...form.book, publisherName: e.target.value },
+                                     })
+                                   }
+                                 />
+                               </AdminEditorField>
+                               <AdminEditorField label="Cover image URL" className="admin-editor-field--wide">
+                                 <AdminEditorInput
+                                   value={form.book?.coverImageUrl || ''}
+                                   onChange={(e) =>
+                                     setForm({
+                                       ...form,
+                                       book: { ...form.book, coverImageUrl: e.target.value },
+                                     })
+                                   }
+                                   placeholder="https://"
+                                   className="font-mono text-sm"
+                                 />
+                               </AdminEditorField>
+                             </AdminFieldGrid>
+                           </AdminEditorFields>
+                         </AdminEditorSubsection>
+                       </AdminEditorSection>
                      </>
                    )}
 
                    {activeTab === 'navigation' && (
                      <>
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={MousePointerClick}
                          title="Header primary CTA"
                          description="Pill button in the site header (desktop) and mobile menu."
                        >
                          <AdminFieldGrid columns={2}>
-                           <AdminField label="Button label">
-                             <AdminInput
+                           <AdminEditorField label="Button label">
+                             <AdminEditorInput
                                value={form.navigation.primaryCta?.label ?? 'Join Now'}
                                onChange={(e) =>
                                  setForm({
@@ -376,9 +428,9 @@ export const SettingsManager: React.FC = () => {
                                  })
                                }
                              />
-                           </AdminField>
-                           <AdminField label="Button URL">
-                             <AdminInput
+                           </AdminEditorField>
+                           <AdminEditorField label="Button URL">
+                             <AdminEditorInput
                                value={form.navigation.primaryCta?.href ?? '/#final-cta'}
                                onChange={(e) =>
                                  setForm({
@@ -396,11 +448,12 @@ export const SettingsManager: React.FC = () => {
                                placeholder="/#final-cta"
                                className="font-mono text-sm"
                              />
-                           </AdminField>
+                           </AdminEditorField>
                          </AdminFieldGrid>
-                       </AdminFormSection>
+                       </AdminEditorSection>
 
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={Menu}
                          title="Header menu links"
                          description="Primary navigation items in the site header."
                          action={
@@ -425,61 +478,20 @@ export const SettingsManager: React.FC = () => {
                            </AdminButton>
                          }
                        >
-                         <div className="admin-list-editor">
-                           {form.navigation.links.map((link, idx) => (
-                             <div key={link.id} className="admin-list-editor__row">
-                               <div className="admin-list-editor__fields">
-                                 <AdminField label="Label">
-                                   <AdminInput
-                                     value={link.name}
-                                     onChange={(e) => {
-                                       const newLinks = [...form.navigation.links];
-                                       newLinks[idx].name = e.target.value;
-                                       setForm({
-                                         ...form,
-                                         navigation: { ...form.navigation, links: newLinks },
-                                       });
-                                     }}
-                                   />
-                                 </AdminField>
-                                 <AdminField label="URL path">
-                                   <AdminInput
-                                     value={link.href}
-                                     onChange={(e) => {
-                                       const newLinks = [...form.navigation.links];
-                                       newLinks[idx].href = e.target.value;
-                                       setForm({
-                                         ...form,
-                                         navigation: { ...form.navigation, links: newLinks },
-                                       });
-                                     }}
-                                     className="font-mono text-sm"
-                                   />
-                                 </AdminField>
-                               </div>
-                               <AdminButton
-                                 variant="danger"
-                                 type="button"
-                                 className="admin-list-editor__remove"
-                                 aria-label="Remove link"
-                                 onClick={() =>
-                                   setForm({
-                                     ...form,
-                                     navigation: {
-                                       ...form.navigation,
-                                       links: form.navigation.links.filter((l) => l.id !== link.id),
-                                     },
-                                   })
-                                 }
-                               >
-                                 <Trash2 className="w-4 h-4" />
-                               </AdminButton>
-                             </div>
-                           ))}
-                         </div>
-                       </AdminFormSection>
+                         <NavLinkEditor
+                           links={form.navigation.links}
+                           onChange={(links) =>
+                             setForm({
+                               ...form,
+                               navigation: { ...form.navigation, links },
+                             })
+                           }
+                           emptyLabel="No header links — add one to build your menu."
+                         />
+                       </AdminEditorSection>
 
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={Link2}
                          title="Footer links"
                          description="Links shown in the global site footer."
                          action={
@@ -504,166 +516,363 @@ export const SettingsManager: React.FC = () => {
                            </AdminButton>
                          }
                        >
-                         <div className="admin-list-editor">
-                           {(form.navigation.footerLinks || []).map((link, idx) => (
-                             <div key={link.id} className="admin-list-editor__row">
-                               <div className="admin-list-editor__fields">
-                                 <AdminField label="Label">
-                                   <AdminInput
-                                     value={link.name}
-                                     onChange={(e) => {
-                                       const newLinks = [...(form.navigation.footerLinks || [])];
-                                       newLinks[idx].name = e.target.value;
-                                       setForm({
-                                         ...form,
-                                         navigation: { ...form.navigation, footerLinks: newLinks },
-                                       });
-                                     }}
-                                   />
-                                 </AdminField>
-                                 <AdminField label="URL path">
-                                   <AdminInput
-                                     value={link.href}
-                                     onChange={(e) => {
-                                       const newLinks = [...(form.navigation.footerLinks || [])];
-                                       newLinks[idx].href = e.target.value;
-                                       setForm({
-                                         ...form,
-                                         navigation: { ...form.navigation, footerLinks: newLinks },
-                                       });
-                                     }}
-                                     className="font-mono text-sm"
-                                   />
-                                 </AdminField>
-                               </div>
-                               <AdminButton
-                                 variant="danger"
-                                 type="button"
-                                 className="admin-list-editor__remove"
-                                 aria-label="Remove link"
-                                 onClick={() =>
-                                   setForm({
-                                     ...form,
-                                     navigation: {
-                                       ...form.navigation,
-                                       footerLinks: (form.navigation.footerLinks || []).filter(
-                                         (l) => l.id !== link.id,
-                                       ),
-                                     },
-                                   })
-                                 }
-                               >
-                                 <Trash2 className="w-4 h-4" />
-                               </AdminButton>
-                             </div>
-                           ))}
-                         </div>
-                       </AdminFormSection>
+                         <NavLinkEditor
+                           links={form.navigation.footerLinks || []}
+                           onChange={(footerLinks) =>
+                             setForm({
+                               ...form,
+                               navigation: { ...form.navigation, footerLinks },
+                             })
+                           }
+                           emptyLabel="No footer links yet."
+                         />
+                       </AdminEditorSection>
 
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={Share2}
                          title="Social profiles"
                          description="Profile URLs linked from the footer and sharing blocks."
                        >
                          <AdminFieldGrid columns={2}>
                            {form.navigation.socials.map((social) => (
-                             <AdminField key={social.id} label={social.platform}>
-                               <AdminInput
+                             <AdminEditorField key={social.id} label={social.platform}>
+                               <AdminEditorInput
                                  value={social.href}
                                  onChange={(e) => updateSocialLink(social.id, e.target.value)}
                                  className="font-mono text-sm"
                                />
-                             </AdminField>
+                             </AdminEditorField>
                            ))}
                          </AdminFieldGrid>
-                       </AdminFormSection>
+                       </AdminEditorSection>
+                     </>
+                   )}
+
+                   {activeTab === 'pages' && (
+                     <>
+                       <AdminEditorSection
+                         icon={PanelBottom}
+                         title="Footer"
+                         description="Global footer tagline, copyright, and legal links."
+                       >
+                         <AdminFieldGrid>
+                           <AdminEditorField label="Tagline" className="admin-editor-field--wide">
+                             <AdminEditorInput
+                               value={form.footer?.tagline ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, tagline: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Copyright line" className="admin-editor-field--wide">
+                             <AdminEditorInput
+                               value={form.footer?.copyright ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, copyright: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Registry status label">
+                             <AdminEditorInput
+                               value={form.footer?.registryStatusLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, registryStatusLabel: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Privacy policy URL">
+                             <AdminEditorInput
+                               value={form.footer?.privacyUrl ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, privacyUrl: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Terms of service URL">
+                             <AdminEditorInput
+                               value={form.footer?.termsUrl ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, termsUrl: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                         </AdminFieldGrid>
+                       </AdminEditorSection>
+
+                       <AdminEditorSection
+                         icon={Cookie}
+                         title="Cookie / GDPR banner"
+                         description="Consent banner shown on first visit when enabled."
+                       >
+                         <Toggle
+                           label="Show cookie consent banner"
+                           checked={form.cookieBanner?.enabled === true}
+                           onChange={(checked) =>
+                             setForm({
+                               ...form,
+                               cookieBanner: {
+                                 ...form.cookieBanner,
+                                 enabled: checked,
+                               },
+                             })
+                           }
+                         />
+                         <fieldset
+                           className={cn(
+                             'mt-[var(--ds-space-4)] border-0 p-0 m-0 min-w-0',
+                             form.cookieBanner?.enabled !== true && 'opacity-50 pointer-events-none',
+                           )}
+                           disabled={form.cookieBanner?.enabled !== true}
+                         >
+                         <AdminEditorField label="Banner text">
+                           <AdminEditorTextarea
+                             rows={2}
+                             value={form.cookieBanner?.text ?? ''}
+                             onChange={(e) =>
+                               setForm({
+                                 ...form,
+                                 cookieBanner: { ...form.cookieBanner, text: e.target.value },
+                               })
+                             }
+                           />
+                         </AdminEditorField>
+                         <AdminFieldGrid>
+                           <AdminEditorField label="Accept button label">
+                             <AdminEditorInput
+                               value={form.cookieBanner?.acceptLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   cookieBanner: {
+                                     ...form.cookieBanner,
+                                     acceptLabel: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Policy link URL">
+                             <AdminEditorInput
+                               value={form.cookieBanner?.policyUrl ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   cookieBanner: {
+                                     ...form.cookieBanner,
+                                     policyUrl: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                         </AdminFieldGrid>
+                         </fieldset>
+                       </AdminEditorSection>
+
+                       <AdminEditorSection
+                         icon={AlertTriangle}
+                         title="404 page"
+                         description="Copy and CTA for the not-found route."
+                       >
+                         <AdminFieldGrid>
+                           <AdminEditorField label="Eyebrow">
+                             <AdminEditorInput
+                               value={form.notFound?.eyebrow ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   notFound: { ...form.notFound, eyebrow: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Title">
+                             <AdminEditorInput
+                               value={form.notFound?.title ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   notFound: { ...form.notFound, title: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Message" className="admin-editor-field--wide">
+                             <AdminEditorTextarea
+                               rows={2}
+                               value={form.notFound?.lede ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   notFound: { ...form.notFound, lede: e.target.value },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Primary CTA label">
+                             <AdminEditorInput
+                               value={form.notFound?.primaryCtaLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   notFound: {
+                                     ...form.notFound,
+                                     primaryCtaLabel: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Primary CTA link">
+                             <AdminEditorInput
+                               value={form.notFound?.primaryCtaHref ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   notFound: {
+                                     ...form.notFound,
+                                     primaryCtaHref: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                         </AdminFieldGrid>
+                       </AdminEditorSection>
+
+                       <AdminEditorSection
+                         icon={Mail}
+                         title="Newsletter / waitlist"
+                         description="Controls whether public waitlist signups are accepted."
+                       >
+                         <Toggle
+                           label="Accept waitlist signups"
+                           description="When disabled, POST /content/newsletter returns 403. View signups under Admin → Newsletter."
+                           checked={form.newsletter?.enabled !== false}
+                           onChange={(checked) =>
+                             setForm({
+                               ...form,
+                               newsletter: { ...form.newsletter, enabled: checked },
+                             })
+                           }
+                         />
+                       </AdminEditorSection>
+
+                       <AdminEditorSection
+                         icon={Newspaper}
+                         title="Blog CTA block"
+                         description="Shared call-to-action shown on blog pages."
+                       >
+                         <AdminEditorField label="Headline">
+                           <AdminEditorInput
+                             value={form.blogCta?.title ?? ''}
+                             onChange={(e) =>
+                               setForm({
+                                 ...form,
+                                 blogCta: { ...form.blogCta, title: e.target.value },
+                               })
+                             }
+                           />
+                         </AdminEditorField>
+                         <AdminEditorField label="Description">
+                           <AdminEditorTextarea
+                             rows={3}
+                             value={form.blogCta?.lede ?? ''}
+                             onChange={(e) =>
+                               setForm({
+                                 ...form,
+                                 blogCta: { ...form.blogCta, lede: e.target.value },
+                               })
+                             }
+                           />
+                         </AdminEditorField>
+                         <AdminEditorField label="Button label">
+                           <AdminEditorInput
+                             value={form.blogCta?.buttonLabel ?? ''}
+                             onChange={(e) =>
+                               setForm({
+                                 ...form,
+                                 blogCta: { ...form.blogCta, buttonLabel: e.target.value },
+                               })
+                             }
+                           />
+                         </AdminEditorField>
+                       </AdminEditorSection>
                      </>
                    )}
 
                    {activeTab === 'advanced' && (
                      <>
-                       <AdminFormSection
+                       <AdminEditorSection
+                         icon={FileCode}
                          title="Custom CSS"
                          description="Injected on every public page after the main stylesheet."
                        >
-                         <AdminField label="Global CSS overrides">
-                           <AdminTextarea
+                         <AdminEditorField label="Global CSS overrides">
+                           <AdminEditorTextarea
                              rows={10}
                              value={form.customCss}
                              onChange={(e) => setForm({ ...form, customCss: e.target.value })}
                              placeholder="/* Global overrides */"
-                             className="font-mono text-sm bg-slate-900 text-emerald-400 border-slate-700"
+                             className="admin-code-input admin-code-input--dark font-mono text-sm"
                            />
-                         </AdminField>
-                       </AdminFormSection>
+                         </AdminEditorField>
+                       </AdminEditorSection>
 
-                       <AdminFormSection
-                         title="Script tags"
-                         description="Raw HTML injected into the document head or before closing body."
+                       <DangerZone
+                         title="Script injection"
+                         description="Raw HTML injected into every public page. Incorrect scripts can break the site or introduce security risks."
                        >
-                         <AdminField label="Header scripts">
-                           <AdminTextarea
+                         <AdminEditorField label="Header scripts">
+                           <AdminEditorTextarea
                              rows={4}
                              value={form.scripts.header}
                              onChange={(e) =>
                                setForm({ ...form, scripts: { ...form.scripts, header: e.target.value } })
                              }
-                             className="font-mono text-sm"
+                             className="admin-code-input font-mono text-sm"
                            />
-                         </AdminField>
-                         <AdminField label="Footer scripts">
-                           <AdminTextarea
+                         </AdminEditorField>
+                         <AdminEditorField label="Footer scripts" className="mt-[var(--ds-space-4)]">
+                           <AdminEditorTextarea
                              rows={4}
                              value={form.scripts.footer}
                              onChange={(e) =>
                                setForm({ ...form, scripts: { ...form.scripts, footer: e.target.value } })
                              }
-                             className="font-mono text-sm"
+                             className="admin-code-input font-mono text-sm"
                            />
-                         </AdminField>
-                       </AdminFormSection>
+                         </AdminEditorField>
+                       </DangerZone>
+
+                       <AdminEditorSection
+                         icon={History}
+                         title="Revision history"
+                         description="Restore prior versions of global site content."
+                       >
+                         <RevisionHistoryPanel
+                           entityType="site_content"
+                           entityId="global"
+                           onRestored={() => refresh()}
+                         />
+                       </AdminEditorSection>
                      </>
                    )}
-                 </motion.div>
-               </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="admin-workspace flex h-full w-full overflow-hidden">
-      <motion.div
-        layout
-        animate={{
-          width: isPreviewVisible ? (isSidebarCollapsed ? 0 : 520) : '100%',
-          opacity: isSidebarCollapsed && isPreviewVisible ? 0 : 1,
-        }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={cn(
-          'flex min-h-0 overflow-hidden',
-          isPreviewVisible ? 'shrink-0' : 'flex-1 w-full min-w-0',
-        )}
-      >
-        {editorColumn}
-      </motion.div>
-
-      <AnimatePresence>
-        {isPreviewVisible && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="flex-1 min-w-0 overflow-hidden flex flex-col bg-[var(--admin-surface)]"
-          >
-            <LivePreview
-              onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              isSidebarCollapsed={isSidebarCollapsed}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </AdminWorkspaceShell>
   );
 };

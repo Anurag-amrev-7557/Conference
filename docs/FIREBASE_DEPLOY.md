@@ -50,6 +50,9 @@ Attach a disk **1 GB+** mounted at **`/var/data`**.
 | `API_PUBLIC_URL` | `https://book-website-api.onrender.com` |
 | `SITE_URL` | `https://your-project.web.app` (Firebase URL — update after step 2) |
 | `BACKUP_ON_START` | `1` (optional) |
+| `RESEND_API_KEY` | from [resend.com](https://resend.com) — required for registration emails |
+| `EMAIL_FROM` | `Superhumanly Summit <notifications@yourdomain.com>` |
+| `REGISTRATION_NOTIFY_EMAIL` | fallback admin inbox if not set in Admin CRM |
 
 After you connect a custom Firebase domain, update `SITE_URL` to that URL and redeploy Render.
 
@@ -136,6 +139,21 @@ Firebase Console → Hosting → Add custom domain → then update Render `SITE_
 - [ ] Admin login at `https://your-site.web.app/admin`
 - [ ] Save a change in Conference → Hero → persists after refresh
 - [ ] Upload image in Admin → Media → URL is `https://…onrender.com/media/…`
+- [ ] Submit test registration → admin inbox receives Approve/Deny email → click updates CRM
+
+---
+
+## Registration email (approve / deny from inbox)
+
+Email runs on **Render only** (Firebase Hosting cannot send mail). Uses [Resend](https://resend.com) over HTTPS.
+
+1. Create a Resend account and verify your sending domain (or use their sandbox for testing).
+2. Set Render env: `RESEND_API_KEY`, `EMAIL_FROM`, and optionally `REGISTRATION_NOTIFY_EMAIL`.
+3. In **Admin → Registrations → Form copy → Email notifications**, set the admin notification email and enable alerts.
+
+When someone registers, that inbox gets **Approve** / **Deny** buttons. Clicking hits `GET /api/v1/registrations/review?token=…` on Render, updates SQLite status (`confirmed` / `cancelled`), and optionally emails the registrant. Links expire in 7 days.
+
+`API_PUBLIC_URL` must match your live Render URL so review links work.
 
 ---
 

@@ -55,14 +55,13 @@ export function useRegistrationFormSettings(): ConferenceRegistrationFormSetting
         ...defaultConferenceRegistrationForm.panelQuote,
         ...fromSettings.panelQuote,
       },
-      trustFooter: {
-        ...defaultConferenceRegistrationForm.trustFooter,
-        ...fromSettings.trustFooter,
-        logos:
-          fromSettings.trustFooter?.logos?.length
-            ? fromSettings.trustFooter.logos
-            : defaultConferenceRegistrationForm.trustFooter.logos,
-      },
+      sendRegistrantEmails:
+        fromSettings.sendRegistrantEmails ?? defaultConferenceRegistrationForm.sendRegistrantEmails,
+      registrationOpen:
+        fromSettings.registrationOpen ?? defaultConferenceRegistrationForm.registrationOpen,
+      registrationClosedMessage:
+        fromSettings.registrationClosedMessage ??
+        defaultConferenceRegistrationForm.registrationClosedMessage,
     };
   }, [data.settings.conferenceRegistration]);
 }

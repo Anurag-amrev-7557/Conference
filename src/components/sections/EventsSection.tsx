@@ -3,9 +3,11 @@ import { Link } from "react-router-dom"
 import { MapPin, Calendar, User, ArrowRight } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 import { CmsImage } from "../CmsImage"
+import { renderSectionHeading } from "../../lib/renderSectionTitle"
 
 export function EventsSection() {
   const { data } = useWebsiteData()
+  const preview = data.settings.sections?.eventsPreview
   const events = data.events.filter((e) => e.isPublished)
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -35,13 +37,22 @@ export function EventsSection() {
         <header className="events-section__header flex flex-col items-center text-center max-w-3xl mx-auto mb-12 sm:mb-14 lg:mb-16">
           <div className="editorial-eyebrow editorial-eyebrow--center mb-6 sm:mb-7">
             <span className="editorial-eyebrow__rule" aria-hidden />
-            <span className="section-eyebrow !mb-0 text-muted">Founder Calendar</span>
+            <span className="section-eyebrow !mb-0 text-muted">
+              {preview?.eyebrow?.trim() || "Founder Calendar"}
+            </span>
             <span className="editorial-eyebrow__rule" aria-hidden />
           </div>
 
           <h2 className="editorial-heading editorial-heading--section mb-0">
-            Live Training & <span className="italic editorial-accent">Events</span>
+            {renderSectionHeading(preview, (
+              <>
+                Live Training & <span className="italic editorial-accent">Events</span>
+              </>
+            ))}
           </h2>
+          {preview?.lede ? (
+            <p className="editorial-lede mt-4 max-w-2xl mx-auto">{preview.lede}</p>
+          ) : null}
         </header>
 
         {events.length > 0 ? (
@@ -120,15 +131,18 @@ export function EventsSection() {
           </div>
         ) : (
           <p className="events-section__empty editorial-lede text-center max-w-lg mx-auto">
-            Upcoming founder sessions will appear here. Browse the calendar for past trainings and
-            workshops.
+            {preview?.emptyState?.trim() ||
+              "Upcoming founder sessions will appear here. Browse the calendar for past trainings and workshops."}
           </p>
         )}
 
         <div className="events-section__footer">
-          <Link to="/events" className="btn-cta-secondary group">
+          <Link
+            to={preview?.ctaHref?.trim() || "/events"}
+            className="btn-cta-secondary group"
+          >
             <Calendar className="w-4 h-4 text-accent" aria-hidden />
-            Browse full calendar
+            {preview?.ctaLabel?.trim() || "Browse full calendar"}
             <ArrowRight
               className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
               aria-hidden

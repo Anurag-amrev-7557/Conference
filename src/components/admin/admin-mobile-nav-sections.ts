@@ -17,6 +17,11 @@ import {
   Type,
   Users,
   ClipboardList,
+  LayoutTemplate,
+  Mail,
+  Settings2,
+  Shield,
+  UserPlus,
 } from 'lucide-react'
 import type { WorkspaceSubnavItem } from './admin-workspace-nav'
 
@@ -46,26 +51,23 @@ export const MOBILE_NAV_SECTIONS: Record<string, MobileNavSectionGroup[]> = {
       items: [
         { id: 'seo', label: 'SEO', icon: Search },
         { id: 'navigation', label: 'Navigation', icon: Navigation },
+        { id: 'pages', label: 'Site pages', icon: LayoutTemplate },
         { id: 'advanced', label: 'Advanced', icon: FileCode },
       ],
     },
   ],
-  '/admin/homepage': [
+  '/admin/newsletter': [
     {
-      label: 'Content',
-      items: [
-        { id: 'hero', label: 'Hero', icon: Sparkles },
-        { id: 'stats', label: 'Stats', icon: BarChart3 },
-        { id: 'showcase', label: 'Showcase', icon: Target },
-        { id: 'perks', label: 'Perks', icon: Users },
-        { id: 'sections', label: 'Sections', icon: Type },
-      ],
+      label: 'Audience',
+      items: [{ id: 'signups', label: 'Signups', icon: Mail }],
     },
+  ],
+  '/admin/users': [
     {
-      label: 'Publish',
+      label: 'Team',
       items: [
-        { id: 'visibility', label: 'Visibility', icon: Layout },
-        { id: 'seo', label: 'SEO', icon: Globe },
+        { id: 'team', label: 'Team members', icon: UserPlus },
+        { id: 'permissions', label: 'Role permissions', icon: Shield },
       ],
     },
   ],
@@ -92,25 +94,33 @@ export const MOBILE_NAV_SECTIONS: Record<string, MobileNavSectionGroup[]> = {
   '/admin/registrations': [
     {
       label: 'CRM',
+      items: [{ id: 'submissions', label: 'Submissions', icon: ClipboardList }],
+    },
+    {
+      label: 'Page',
       items: [
-        { id: 'submissions', label: 'Submissions', icon: ClipboardList },
         { id: 'form', label: 'Form copy', icon: FileText },
+        { id: 'operations', label: 'Operations', icon: Settings2 },
+        { id: 'seo', label: 'SEO', icon: Globe },
       ],
     },
   ],
   '/admin/conference': [
     {
-      label: 'Page content',
+      label: 'Summit content',
       items: [
         { id: 'hero', label: 'Hero', icon: Sparkles },
-        { id: 'sections', label: 'Sections', icon: List },
+        { id: 'sections', label: 'Section copy', icon: List },
         { id: 'lists', label: 'Lists', icon: Users },
+        { id: 'embedded', label: 'Embedded blocks', icon: Layers },
       ],
     },
     {
       label: 'Go live',
       items: [
+        { id: 'visibility', label: 'Visibility', icon: Layout },
         { id: 'seo', label: 'SEO', icon: Globe },
+        { id: 'advanced', label: 'Advanced', icon: FileCode },
         { id: 'publish', label: 'Publish', icon: ExternalLink },
       ],
     },

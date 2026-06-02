@@ -36,6 +36,21 @@ export function BookDemoForm() {
 
   const isLocked = phase !== 'idle'
   const headerLede = copy.pageLede.trim() || copy.formSubtitle.trim()
+  const registrationClosed = copy.registrationOpen === false
+
+  if (registrationClosed) {
+    return (
+      <div className="book-demo-form-stage">
+        <div className="book-demo-form-card book-demo-form-card--register p-8 sm:p-10 text-center">
+          <h2 className="book-demo-form-card__title mb-4">Registration closed</h2>
+          <p className="text-white/70 leading-relaxed max-w-md mx-auto">
+            {copy.registrationClosedMessage ||
+              'Registration is currently closed. Check back soon or visit the homepage to join our waitlist.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     if (isLocked) return

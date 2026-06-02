@@ -35,7 +35,7 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { pathname } = useLocation()
   const [isOverHero, setIsOverHero] = useState(
-    () => pathname === "/" || pathname === "/home" || pathname === "/register",
+    () => pathname === "/" || pathname === "/register",
   )
   const dockRef = useRef<HTMLDivElement>(null)
   const isDarkTheme = isOverHero

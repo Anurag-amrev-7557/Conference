@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { LandingPage } from './pages/LandingPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -18,6 +17,8 @@ import { MarketingService } from './lib/marketing'
 import { initWebVitalsReporting } from './lib/reportWebVitals'
 import { useLocation } from 'react-router-dom'
 import { InjectedScripts } from './components/InjectedScripts'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { CookieBanner } from './components/CookieBanner'
 
 function ThemeSynchronizer() {
   const { data } = useWebsiteData();
@@ -99,6 +100,7 @@ function MarketingTracker() {
   }, []); // Static Init
 
   useEffect(() => {
+    if (location.pathname.startsWith('/admin')) return;
     MarketingService.logEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
 
@@ -115,9 +117,10 @@ function App() {
         <MarketingTracker />
         <div className="min-h-screen bg-off font-sans text-text">
           <div className="noise-texture" />
+          <ErrorBoundary fallbackTitle="This page failed to load">
           <Routes>
             <Route path="/" element={<><Navbar /><ConferencePage /></>} />
-            <Route path="/home" element={<><Navbar /><LandingPage /></>} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/conference" element={<Navigate to="/" replace />} />
             <Route path="/register" element={<ConferenceRegisterPage />} />
             <Route path="/events" element={<EventsPage />} />
@@ -128,7 +131,9 @@ function App() {
             <Route path="/admin/*" element={<AdminPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          </ErrorBoundary>
         </div>
+        <CookieBanner />
         </ConferenceRevealProvider>
       </Router>
     </>

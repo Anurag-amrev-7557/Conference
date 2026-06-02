@@ -1,0 +1,143 @@
+/* Admin Design System — Motion & Animation Utilities */
+
+@keyframes ds-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes ds-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+@keyframes ds-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ds-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ds-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ds-drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes ds-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ds-check-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes ds-toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* Page enter transition */
+.ds-page-enter {
+  animation: ds-fade-in-up var(--ds-duration-slow) var(--ds-ease-decelerate) forwards;
+}
+
+/* Skeleton shimmer */
+.ds-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--ds-neutral-100) 25%,
+    var(--ds-neutral-200) 50%,
+    var(--ds-neutral-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: ds-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--ds-radius-md);
+}
+
+/* Shake on error */
+.ds-shake {
+  animation: ds-shake 400ms var(--ds-ease-standard);
+}
+
+/* Transition utilities */
+.ds-transition-fast {
+  transition-duration: var(--ds-duration-fast);
+  transition-timing-function: var(--ds-ease-standard);
+}
+
+.ds-transition-base {
+  transition-duration: var(--ds-duration-base);
+  transition-timing-function: var(--ds-ease-standard);
+}
+
+.ds-transition-slow {
+  transition-duration: var(--ds-duration-slow);
+  transition-timing-function: var(--ds-ease-decelerate);
+}
+
+.ds-transition-spring {
+  transition-duration: 250ms;
+  transition-timing-function: var(--ds-ease-spring);
+}
+
+/* Button press */
+.ds-btn-press:active {
+  transform: scale(0.97);
+  transition: transform var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+/* Input focus ring */
+.ds-focus-ring:focus-visible {
+  outline: none;
+  border-color: var(--ds-primary-600);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ds-primary-600) 25%, transparent);
+  transition: border-color 150ms var(--ds-ease-standard), box-shadow 150ms var(--ds-ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-page-enter,
+  .ds-skeleton,
+  .ds-shake {
+    animation: none !important;
+  }
+  .ds-transition-fast,
+  .ds-transition-base,
+  .ds-transition-slow,
+  .ds-transition-spring {
+    transition-duration: 0.01ms !important;
+  }
+}

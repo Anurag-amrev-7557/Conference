@@ -8,5 +8,8 @@ export const contentPatchSchema = z
     stats: z.array(z.unknown()).optional(),
     pillars: z.array(z.unknown()).optional(),
     perks: z.array(z.unknown()).optional(),
+    version: z.number().int().positive().optional(),
   })
   .strict();
+
+export type ContentPatchBody = z.infer<typeof contentPatchSchema>;

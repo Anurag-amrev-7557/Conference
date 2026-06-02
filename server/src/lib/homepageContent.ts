@@ -1,13 +1,8 @@
 /** Mirror of src/lib/homepageContent.ts — keep PATCH columns in sync with settings.homepage */
 
-export type ContentPatchBody = {
-  hero?: unknown
-  settings?: unknown
-  appearance?: unknown
-  stats?: unknown
-  pillars?: unknown
-  perks?: unknown
-}
+import type { ContentPatchBody } from '../schemas/content';
+
+export type { ContentPatchBody };
 
 export function expandHomepageFromSettings(body: ContentPatchBody): ContentPatchBody {
   const settings = body.settings as { homepage?: Record<string, unknown> } | undefined

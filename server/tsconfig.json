@@ -5,10 +5,6 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": ".",
-    "paths": {
-      "@prisma/client": ["node_modules/.prisma/client"]
-    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

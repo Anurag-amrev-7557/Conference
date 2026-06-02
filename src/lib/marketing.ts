@@ -22,6 +22,8 @@ const CONTRACT_ACTIONS = new Set([
 ]);
 
 export class MarketingService {
+  private static initialized = false;
+
   private static getEmail(): string | null {
     return localStorage.getItem(IDENTITY_STORAGE_KEY);
   }
@@ -56,6 +58,8 @@ export class MarketingService {
   }
 
   static async logEvent(action: string, metadata: Record<string, unknown> = {}, retries = 3) {
+    if (window.location.pathname.startsWith('/admin')) return;
+
     const normalized = action.trim().toLowerCase();
     if (!CONTRACT_ACTIONS.has(normalized)) {
       console.warn(`[Marketing] Skipping non-contract action: ${action}`);
@@ -91,7 +95,11 @@ export class MarketingService {
               },
             }),
           });
-          if (!response.ok) throw new Error(`Webhook status ${response.status}`);
+          if (!response.ok) {
+            const error = new Error(`Webhook status ${response.status}`) as Error & { status?: number };
+            error.status = response.status;
+            throw error;
+          }
         } else {
           const body: Record<string, unknown> = {
             action: normalized,
@@ -109,12 +117,19 @@ export class MarketingService {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           });
-          if (!response.ok) throw new Error(`Events status ${response.status}`);
+          if (!response.ok) {
+            const error = new Error(`Events status ${response.status}`) as Error & { status?: number };
+            error.status = response.status;
+            throw error;
+          }
         }
 
         console.log(`[Marketing] Event '${normalized}' sync successful.`);
       } catch (err) {
-        if (retryCount > 0) {
+        const status = (err as { status?: number })?.status;
+        // Do not retry client/rate-limit errors; only retry transient/network issues.
+        const shouldRetry = retryCount > 0 && (status == null || status >= 500);
+        if (shouldRetry) {
           const delay = Math.pow(2, 3 - retryCount) * 1000;
           console.warn(`[Marketing] Sync failed for '${normalized}'. Retrying in ${delay}ms...`);
           return new Promise((resolve) =>
@@ -163,6 +178,9 @@ export class MarketingService {
   }
 
   static init() {
+    if (this.initialized || window.location.pathname.startsWith('/admin')) return;
+    this.initialized = true;
+
     const email = this.getEmail();
     if (email) {
       console.log(`[Marketing] Resuming journey for ${email}`);

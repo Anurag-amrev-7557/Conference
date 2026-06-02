@@ -11,13 +11,13 @@
     "postinstall": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seed": "ts-node src/seed.ts",
+    "seed": "tsx src/seed.ts",
     "backup:db": "ts-node scripts/backup-db.ts",
     "cms:restore-registration": "ts-node src/scripts/restoreRegistrationCms.ts",
     "test": "vitest run"
   },
   "prisma": {
-    "seed": "ts-node src/seed.ts"
+    "seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",
@@ -44,6 +44,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^20.12.7",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.22.4",
     "typescript": "^5.4.5",
     "vitest": "^4.1.6"
   }

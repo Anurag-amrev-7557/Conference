@@ -67,4 +67,11 @@ export const defaultConferenceRegistrationForm = {
       description: 'Independent founder, operator, or builder',
     },
   ],
+  /** Email that receives new registration alerts with approve/deny links */
+  notifyEmail: '',
+  notifyOnSubmit: true,
+  sendRegistrantEmails: true,
+  registrationOpen: true,
+  registrationClosedMessage:
+    'Registration is closed for this summit. Join our waitlist on the homepage for future events.',
 };

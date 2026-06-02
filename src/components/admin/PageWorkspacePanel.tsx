@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
+import { Globe, Newspaper, Calendar } from 'lucide-react'
 import { useWebsiteData } from '../WebsiteDataProvider'
-import { AdminFormSection } from './admin-ui'
 import { CatalogHeroFields, RouteSeoFields } from './admin-workspace-fields'
+import { AdminEditorFields, AdminEditorSection } from './admin-editor-ui'
 import {
   useRegisterWorkspaceSave,
   type WorkspaceSaveConfig,
@@ -45,16 +46,28 @@ export function BlogPageWorkspacePanel({ mode, onSaveReady }: PanelProps) {
 
   if (mode === 'seo') {
     return (
-      <AdminFormSection title="Search & sharing" description="Applied to the /blog listing URL.">
-        <RouteSeoFields path="/blog" value={routeSeo} onChange={setRouteSeo} />
-      </AdminFormSection>
+      <AdminEditorSection
+        icon={Globe}
+        title="Search & sharing"
+        description="Applied to the /blog listing URL."
+      >
+        <AdminEditorFields>
+          <RouteSeoFields path="/blog" value={routeSeo} onChange={setRouteSeo} />
+        </AdminEditorFields>
+      </AdminEditorSection>
     )
   }
 
   return (
-    <AdminFormSection title="Listing hero" description="Shown above the article grid on /blog.">
-      <CatalogHeroFields value={catalog} onChange={setCatalog} />
-    </AdminFormSection>
+    <AdminEditorSection
+      icon={Newspaper}
+      title="Listing hero"
+      description="Shown above the article grid on /blog."
+    >
+      <AdminEditorFields>
+        <CatalogHeroFields value={catalog} onChange={setCatalog} />
+      </AdminEditorFields>
+    </AdminEditorSection>
   )
 }
 
@@ -91,48 +104,28 @@ export function EventsPageWorkspacePanel({ mode, onSaveReady }: PanelProps) {
 
   if (mode === 'seo') {
     return (
-      <AdminFormSection title="Search & sharing" description="Applied to the /events listing URL.">
-        <RouteSeoFields path="/events" value={routeSeo} onChange={setRouteSeo} />
-      </AdminFormSection>
+      <AdminEditorSection
+        icon={Globe}
+        title="Search & sharing"
+        description="Applied to the /events listing URL."
+      >
+        <AdminEditorFields>
+          <RouteSeoFields path="/events" value={routeSeo} onChange={setRouteSeo} />
+        </AdminEditorFields>
+      </AdminEditorSection>
     )
   }
 
   return (
-    <AdminFormSection title="Listing hero" description="Shown above the calendar on /events.">
-      <CatalogHeroFields value={catalog} onChange={setCatalog} />
-    </AdminFormSection>
+    <AdminEditorSection
+      icon={Calendar}
+      title="Listing hero"
+      description="Shown above the calendar on /events."
+    >
+      <AdminEditorFields>
+        <CatalogHeroFields value={catalog} onChange={setCatalog} />
+      </AdminEditorFields>
+    </AdminEditorSection>
   )
 }
 
-export function HomepageSeoPanel({
-  onSaveReady,
-}: {
-  onSaveReady?: (config: WorkspaceSaveConfig | null) => void
-}) {
-  const { sourceData, updateSettings } = useWebsiteData()
-  const [routeSeo, setRouteSeo] = useState(sourceData.settings.routeSeo?.['/home'] ?? {})
-  const [saving, setSaving] = useState(false)
-
-  const save = useCallback(async () => {
-    setSaving(true)
-    try {
-      await updateSettings({
-        ...sourceData.settings,
-        routeSeo: { ...sourceData.settings.routeSeo, '/home': routeSeo },
-      })
-    } finally {
-      setSaving(false)
-    }
-  }, [sourceData.settings, routeSeo, updateSettings])
-
-  useRegisterWorkspaceSave(
-    onSaveReady,
-    onSaveReady ? { label: 'Save homepage SEO', saving, onSave: save } : null,
-  )
-
-  return (
-    <AdminFormSection title="Search & sharing" description="Applied to the book marketing page (/home).">
-      <RouteSeoFields path="/home" value={routeSeo} onChange={setRouteSeo} />
-    </AdminFormSection>
-  )
-}

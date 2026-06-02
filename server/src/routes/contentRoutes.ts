@@ -5,6 +5,11 @@ import { getSiteUrl } from '../lib/siteUrl';
 import { validateBody } from '../middleware/validateBody';
 import { registrationCreateSchema } from '../schemas/registration';
 import { getConferenceRegistrationSettings } from '../lib/conferenceRegistrationSettings';
+import { notifyAdminOfRegistration } from '../lib/registrationNotifications';
+import { registrationLimiter, newsletterLimiter } from '../middleware/rateLimiters';
+import { scheduledArticleWhere, scheduledEventWhere } from '../lib/publishSchedule';
+import { getNewsletterSettings } from '../lib/newsletterSettings';
+import { newsletterSignupSchema } from '../schemas/newsletter';
 
 const router = Router();
 
@@ -15,6 +20,10 @@ const safeParse = (str: string | null | undefined, fallback: unknown = {}) => {
     return fallback;
   }
 };
+
+function asList<T>(value: unknown, fallback: T[]): T[] {
+  return Array.isArray(value) ? value : fallback;
+}
 
 function parsePagination(req: Request) {
   const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1), 100);
@@ -59,9 +68,9 @@ function mapArticle<T extends { content: string }>(article: T): T {
 async function fetchSitePayload() {
   const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
   const hero = safeParse(content?.hero);
-  const stats = safeParse(content?.stats, []);
-  const pillars = safeParse(content?.pillars, []);
-  const perks = safeParse(content?.perks, []);
+  const stats = asList(safeParse(content?.stats, []), []);
+  const pillars = asList(safeParse(content?.pillars, []), []);
+  const perks = asList(safeParse(content?.perks, []), []);
   const settings = (safeParse(content?.settings) ?? {}) as Record<string, unknown>;
   if (!settings.homepage) {
     settings.homepage = { hero, stats, pillars, perks };
@@ -75,6 +84,7 @@ async function fetchSitePayload() {
     perks,
     settings,
     appearance: safeParse(content?.appearance),
+    contentVersion: content?.version ?? 1,
   };
 }
 
@@ -94,11 +104,12 @@ router.get('/articles', async (req, res) => {
   try {
     const [items, total] = await Promise.all([
       prisma.article.findMany({
+        where: scheduledArticleWhere(),
         orderBy: { publishedAt: 'desc' },
         take: limit,
         skip: offset,
       }),
-      prisma.article.count(),
+      prisma.article.count({ where: scheduledArticleWhere() }),
     ]);
     res.setHeader('X-Total-Count', String(total));
     res.json({ items: items.map(mapArticle), total });
@@ -114,11 +125,12 @@ router.get('/events', async (req, res) => {
   try {
     const [rows, total] = await Promise.all([
       prisma.event.findMany({
+        where: scheduledEventWhere(),
         orderBy: { day: 'asc' },
         take: limit,
         skip: offset,
       }),
-      prisma.event.count(),
+      prisma.event.count({ where: scheduledEventWhere() }),
     ]);
     const items = rows.map(mapEvent);
     res.setHeader('X-Total-Count', String(total));
@@ -130,10 +142,13 @@ router.get('/events', async (req, res) => {
 });
 
 // POST /api/v1/content/conference-registration
-router.post('/conference-registration', validateBody(registrationCreateSchema), async (req, res) => {
+router.post('/conference-registration', registrationLimiter, validateBody(registrationCreateSchema), async (req, res) => {
   const { name, email, phone, linkedIn, designation } = req.body;
   try {
     const regSettings = await getConferenceRegistrationSettings();
+    if (regSettings.registrationOpen === false) {
+      return res.status(403).json({ error: 'Registration is currently closed.' });
+    }
     const record = await prisma.conferenceRegistration.create({
       data: {
         name,
@@ -145,14 +160,41 @@ router.post('/conference-registration', validateBody(registrationCreateSchema), 
         status: 'pending',
       },
     });
+    void notifyAdminOfRegistration(record).catch((err) => {
+      console.error('Registration notify admin failed:', err);
+    });
     res.status(201).json({
       id: record.id,
       success: true,
       message: 'Registration received.',
     });
   } catch (error) {
+    if ((error as { code?: string }).code === 'P2002') {
+      return res.status(409).json({ error: 'This email is already registered for the summit.' });
+    }
     console.error('Registration create error:', error);
     res.status(500).json({ error: 'Failed to submit registration.' });
+  }
+});
+
+// POST /api/v1/content/newsletter — waitlist / playbook signup
+router.post('/newsletter', newsletterLimiter, validateBody(newsletterSignupSchema), async (req, res) => {
+  const { email, source } = req.body;
+  try {
+    const { enabled } = await getNewsletterSettings();
+    if (!enabled) {
+      return res.status(403).json({ error: 'Newsletter signup is currently disabled.' });
+    }
+    const normalized = email.toLowerCase().trim();
+    await prisma.newsletterSignup.upsert({
+      where: { email: normalized },
+      create: { email: normalized, source: source?.trim() || 'waitlist' },
+      update: {},
+    });
+    res.status(201).json({ success: true, message: 'Thanks for subscribing!' });
+  } catch (error) {
+    console.error('Newsletter signup error:', error);
+    res.status(500).json({ error: 'Failed to save signup.' });
   }
 });
 
@@ -161,8 +203,8 @@ router.get('/', async (_req, res) => {
   try {
     const site = await fetchSitePayload();
     const [articlesRes, eventsRes] = await Promise.all([
-      prisma.article.findMany({ orderBy: { publishedAt: 'desc' } }),
-      prisma.event.findMany({ orderBy: { day: 'asc' } }),
+      prisma.article.findMany({ where: { isPublished: true, deletedAt: null }, orderBy: { publishedAt: 'desc' } }),
+      prisma.event.findMany({ where: { isPublished: true, deletedAt: null }, orderBy: { day: 'asc' } }),
     ]);
 
     res.json({

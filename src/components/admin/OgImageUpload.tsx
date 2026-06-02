@@ -65,9 +65,11 @@ export const OgImageUpload: React.FC<OgImageUploadProps> = ({ value, onChange, g
         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
         {uploading ? 'Uploading…' : 'Upload image'}
       </button>
-      {error ? <p className="admin-field__hint !text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="admin-field__hint text-red-600 dark:text-red-400">{error}</p>
+      ) : null}
       {value ? (
-        <div className="aspect-[1.91/1] max-w-md rounded-xl overflow-hidden border border-border/40">
+        <div className="aspect-[1.91/1] max-w-md rounded-xl overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface-muted)]">
           <img src={value} alt="" className="w-full h-full object-cover" />
         </div>
       ) : null}

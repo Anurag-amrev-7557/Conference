@@ -21,9 +21,5 @@ export function pickRouteSeoOverride(
   if (pathname === '/' && hasSeoContent(routeSeo?.['/conference'])) {
     return routeSeo?.['/conference']
   }
-  // Pre-migration: book marketing SEO lived on `/`, summit SEO on `/conference`
-  if (pathname === '/home' && hasSeoContent(routeSeo?.['/conference']) && hasSeoContent(routeSeo?.['/'])) {
-    return routeSeo?.['/']
-  }
   return direct
 }

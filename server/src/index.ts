@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { mkdir } from 'node:fs/promises';
 import prisma from './lib/prisma';
 import contentRoutes from './routes/contentRoutes';
+import registrationPublicRoutes from './routes/registrationPublicRoutes';
 import authRoutes from './routes/authRoutes';
 import adminRoutes from './routes/adminRoutes';
 import marketingRoutes from './routes/marketingRoutes';
@@ -73,6 +74,7 @@ app.use(
 app.use(seoRoutes);
 
 app.use('/api/v1/content', contentRoutes);
+app.use('/api/v1/registrations', registrationPublicRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/marketing', marketingRoutes);
 app.use('/api/v1/admin', adminRoutes);

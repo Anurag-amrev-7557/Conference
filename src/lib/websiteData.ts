@@ -15,6 +15,8 @@ export interface Article {
   content: string;
   thumbnail: string;
   isPublished: boolean;
+  publishAt?: string | null;
+  unpublishAt?: string | null;
   authorName: string;
   authorRole: string;
   authorAvatar: string;
@@ -46,11 +48,16 @@ export interface AppEvent extends EventSeoFields {
   title: string;
   host: string;
   location: string;
+  description?: string;
   tags: EventTag[];
   price: string;
   thumbnail: string;
   status: 'Upcoming' | 'Past';
   isPublished: boolean;
+  publishAt?: string | null;
+  unpublishAt?: string | null;
+  registrationUrl?: string;
+  registrationOpen?: boolean;
   startDate?: string | null;
   endDate?: string | null;
   lat?: number;
@@ -115,7 +122,11 @@ export interface SectionBlockContent {
   lede?: string;
   ctaLabel?: string;
   ctaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
   founderCountLabel?: string;
+  /** Shown when a preview section has no published items (blog/events). */
+  emptyState?: string;
 }
 
 export interface FinalCtaContent extends SectionBlockContent {
@@ -180,6 +191,11 @@ export interface ConferenceSpeaker {
   title: string;
   company: string;
   image: string;
+  bio?: string;
+  talkTitle?: string;
+  timeSlot?: string;
+  linkedIn?: string;
+  twitter?: string;
 }
 
 export interface ConferenceAgendaSession {
@@ -202,9 +218,23 @@ export interface ConferenceFaqItem {
   answer: string;
 }
 
+export interface ConferenceTestimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  company?: string;
+  avatarUrl?: string;
+}
+
 export interface ConferenceLogo {
   id: string;
   name: string;
+  logoUrl?: string;
+  logoAlt?: string;
+  websiteUrl?: string;
+  tier?: string;
+  description?: string;
 }
 
 export interface ConferenceTicketTier {
@@ -224,8 +254,36 @@ export interface ConferenceTicketsContent {
   tiers: ConferenceTicketTier[];
 }
 
+export interface ConferenceVenueContent {
+  eyebrow?: string;
+  title?: string;
+  lede?: string;
+  address?: string;
+  mapEmbedUrl?: string;
+}
+
+export interface ConferenceSectionVisibility {
+  hero?: boolean;
+  countdown?: boolean;
+  speakers?: boolean;
+  video?: boolean;
+  agenda?: boolean;
+  sponsors?: boolean;
+  partners?: boolean;
+  testimonials?: boolean;
+  venue?: boolean;
+  tickets?: boolean;
+  faq?: boolean;
+}
+
 export interface ConferenceContent {
   published?: boolean;
+  eventStartAt?: string;
+  eventTimezone?: string;
+  countdownEnabled?: boolean;
+  /** Per-block toggles for summit homepage sections at /. */
+  sectionVisibility?: ConferenceSectionVisibility;
+  venue?: ConferenceVenueContent;
   hero: ConferenceHeroContent;
   video?: ConferenceVideoContent;
   sections: {
@@ -237,12 +295,16 @@ export interface ConferenceContent {
     agenda?: ConferenceSectionCopy;
     faq?: ConferenceSectionCopy;
     tickets?: ConferenceSectionCopy;
+    partners?: ConferenceSectionCopy;
+    testimonials?: ConferenceSectionCopy;
   };
   tickets?: ConferenceTicketsContent;
   logos: ConferenceLogo[];
+  partners: ConferenceLogo[];
   speakers: ConferenceSpeaker[];
   agenda: ConferenceAgendaDay[];
   faq: ConferenceFaqItem[];
+  testimonials: ConferenceTestimonial[];
 }
 
 export interface NavLink {
@@ -264,6 +326,37 @@ export interface HomepageContent {
   perks: Perk[];
 }
 
+export interface FooterSettings {
+  tagline?: string;
+  copyright?: string;
+  registryStatusLabel?: string;
+  privacyUrl?: string;
+  termsUrl?: string;
+}
+
+export interface CookieBannerSettings {
+  enabled?: boolean;
+  text?: string;
+  acceptLabel?: string;
+  policyUrl?: string;
+}
+
+export interface NotFoundSettings {
+  eyebrow?: string;
+  title?: string;
+  lede?: string;
+  primaryCtaLabel?: string;
+  primaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+}
+
+export interface BlogCtaSettings {
+  title?: string;
+  lede?: string;
+  buttonLabel?: string;
+}
+
 export interface SiteSettings {
   homepage?: HomepageContent;
   seo: {
@@ -282,7 +375,20 @@ export interface SiteSettings {
   sections?: {
     finalCta?: FinalCtaContent;
     whoWeAre?: SectionBlockContent;
+    blogPreview?: SectionBlockContent;
+    eventsPreview?: SectionBlockContent;
+    bookShowcase?: SectionBlockContent;
+    /** Header copy for the homepage perks / community block. */
+    community?: SectionBlockContent;
   };
+  footer?: FooterSettings;
+  cookieBanner?: CookieBannerSettings;
+  notFound?: NotFoundSettings;
+  blogCta?: BlogCtaSettings;
+  newsletter?: {
+    enabled?: boolean;
+  };
+  adminPermissions?: import('./adminPermissions').AdminPermissionsConfig;
   routeSeo?: Partial<
     Record<'/' | '/home' | '/blog' | '/events' | '/conference' | '/register', RouteSeoOverride>
   >;
@@ -296,16 +402,11 @@ export interface SiteSettings {
     primaryCta: { label: string; href: string };
   };
   visibility: {
-    hero: boolean;
-    stats: boolean;
     showcase: boolean;
-    pillars: boolean;
-    whoWeAre: boolean;
-    perks: boolean;
     blog: boolean;
     events: boolean;
     finalCta?: boolean;
-    conference?: boolean;
+    footer?: boolean;
   };
   customCss: string;
   scripts: {
@@ -385,16 +486,14 @@ export const initialData: WebsiteData = {
       primaryCta: { label: 'Join Now', href: '/#final-cta' },
     },
     visibility: {
-      hero: true,
-      stats: true,
       showcase: true,
-      pillars: true,
-      whoWeAre: true,
-      perks: true,
       blog: true,
       events: true,
       finalCta: true,
-      conference: true,
+      footer: true,
+    },
+    newsletter: {
+      enabled: true,
     },
     customCss: "",
     scripts: {

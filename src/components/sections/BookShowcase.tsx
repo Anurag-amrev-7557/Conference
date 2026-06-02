@@ -46,6 +46,7 @@ function Book3D({ coverUrl }: { coverUrl?: string }) {
 export function BookShowcase({ className }: { className?: string }) {
   const { data } = useWebsiteData()
   const book = data.settings.book
+  const copy = data.settings.sections?.bookShowcase
   const { hero } = data
 
   const title =
@@ -83,7 +84,9 @@ export function BookShowcase({ className }: { className?: string }) {
           <div className="flex flex-col items-start text-left max-w-2xl lg:max-w-none">
             <div className="editorial-eyebrow mb-4 sm:mb-5">
               <span className="editorial-eyebrow__rule" aria-hidden />
-              <span className="section-eyebrow !mb-0 text-muted">The Playbook</span>
+              <span className="section-eyebrow !mb-0 text-muted">
+                {copy?.eyebrow?.trim() || "The Playbook"}
+              </span>
             </div>
 
             <h2 id="book-section-title" className="editorial-heading editorial-heading--book mb-4">
@@ -138,14 +141,17 @@ export function BookShowcase({ className }: { className?: string }) {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-              <Link to="/#final-cta" className="btn-cta-primary w-full sm:w-auto text-center">
-                Get the playbook
+              <Link
+                to={copy?.ctaHref?.trim() || "/#final-cta"}
+                className="btn-cta-primary w-full sm:w-auto text-center"
+              >
+                {copy?.ctaLabel?.trim() || "Get the playbook"}
               </Link>
               <Link
-                to="/blog"
+                to={copy?.secondaryCtaHref?.trim() || "/blog"}
                 className="btn-cta-secondary group w-full sm:w-auto justify-center sm:justify-start"
               >
-                Read excerpts
+                {copy?.secondaryCtaLabel?.trim() || "Read excerpts"}
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
               </Link>
             </div>

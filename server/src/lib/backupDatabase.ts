@@ -1,17 +1,6 @@
 import { copyFile, mkdir, readdir, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { getDatabaseUrl } from './ensureDatabasePath';
-
-function sqlitePathFromUrl(url: string): string | null {
-  if (!url.startsWith('file:')) {
-    return null;
-  }
-  let filePath = url.slice('file:'.length);
-  if (filePath.startsWith('//')) {
-    filePath = filePath.slice(1);
-  }
-  return filePath;
-}
+import { getDatabaseUrl, resolveSqliteFilePath } from './ensureDatabasePath';
 
 export type BackupResult = {
   backupPath: string;
@@ -23,13 +12,15 @@ export async function backupDatabase(options?: {
   backupRoot?: string;
   keep?: number;
 }): Promise<BackupResult | null> {
-  const dbPath = sqlitePathFromUrl(getDatabaseUrl());
+  const dbPath = resolveSqliteFilePath(getDatabaseUrl());
   if (!dbPath) {
     return null;
   }
 
-  const uploadRoot = process.env.UPLOAD_ROOT?.trim() || join(process.cwd(), 'backups');
-  const backupDir = options?.backupRoot ?? join(uploadRoot, 'backups');
+  const uploadRoot = process.env.UPLOAD_ROOT?.trim();
+  const backupDir =
+    options?.backupRoot ??
+    (uploadRoot ? join(uploadRoot, 'backups') : join(process.cwd(), 'backups'));
   const keep = options?.keep ?? 14;
 
   await mkdir(backupDir, { recursive: true });
@@ -54,7 +45,7 @@ export async function backupDatabase(options?: {
 }
 
 export async function getDatabaseStats(): Promise<{ ok: boolean; sizeBytes?: number }> {
-  const dbPath = sqlitePathFromUrl(getDatabaseUrl());
+  const dbPath = resolveSqliteFilePath(getDatabaseUrl());
   if (!dbPath) {
     return { ok: true };
   }

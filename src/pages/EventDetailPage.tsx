@@ -29,15 +29,29 @@ function EventRegistrationCard({
   isPast: boolean
   onShare: () => void
 }) {
+  const registrationClosed = event.registrationOpen === false
+  const registrationUrl = event.registrationUrl?.trim()
+
   return (
     <div className="event-detail__ticket">
       <p className="event-detail__ticket-label">Registration</p>
       <p className="event-detail__ticket-price">{event.price || "Free"}</p>
-      {!isPast ? (
+      {!isPast && !registrationClosed ? (
         <>
-          <button type="button" className="event-detail__ticket-btn">
-            Request to join
-          </button>
+          {registrationUrl ? (
+            <a
+              href={registrationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="event-detail__ticket-btn"
+            >
+              Request to join
+            </a>
+          ) : (
+            <Link to="/register" className="event-detail__ticket-btn">
+              Request to join
+            </Link>
+          )}
           <p className="event-detail__ticket-note">
             Requests are reviewed to keep sessions balanced and high-signal.
           </p>
@@ -45,9 +59,11 @@ function EventRegistrationCard({
       ) : (
         <>
           <button type="button" className="event-detail__ticket-btn" disabled>
-            Registration closed
+            {isPast ? 'Registration closed' : 'Registration closed'}
           </button>
-          <p className="event-detail__ticket-note">This event has ended.</p>
+          <p className="event-detail__ticket-note">
+            {isPast ? 'This event has ended.' : 'Registration is not open for this event.'}
+          </p>
         </>
       )}
       <button type="button" className="event-detail__share-btn" onClick={onShare}>
@@ -159,16 +175,22 @@ export function EventDetailPage() {
                   <h2 id="event-about-heading" className="event-detail__section-title">
                     About this event
                   </h2>
-                  <p className="event-detail__prose">
-                    Join {event.host} for an intimate session on {event.title.toLowerCase()}.
-                    Connect with founders, operators, and investors building the next wave of
-                    agentic AI companies—with curated networking and actionable takeaways.
-                  </p>
-                  <ul className="event-detail__list">
-                    <li>Curated founder &amp; investor networking</li>
-                    <li>Live Q&amp;A with the host</li>
-                    <li>Practical playbooks you can apply immediately</li>
-                  </ul>
+                  {event.description?.trim() ? (
+                    <p className="event-detail__prose whitespace-pre-line">{event.description}</p>
+                  ) : (
+                    <>
+                      <p className="event-detail__prose">
+                        Join {event.host} for an intimate session on {event.title.toLowerCase()}.
+                        Connect with founders, operators, and investors building the next wave of
+                        agentic AI companies—with curated networking and actionable takeaways.
+                      </p>
+                      <ul className="event-detail__list">
+                        <li>Curated founder &amp; investor networking</li>
+                        <li>Live Q&amp;A with the host</li>
+                        <li>Practical playbooks you can apply immediately</li>
+                      </ul>
+                    </>
+                  )}
                 </section>
 
                 {event.tags.length > 0 ? (

@@ -30,6 +30,10 @@ export async function getConferenceRegistrationSettings() {
     ...defaultConferenceRegistrationForm,
     ...saved,
     ticketPriceCents,
+    registrationOpen:
+      typeof saved?.registrationOpen === 'boolean'
+        ? saved.registrationOpen
+        : defaultConferenceRegistrationForm.registrationOpen,
     fields: {
       ...defaultConferenceRegistrationForm.fields,
       ...(saved?.fields as Record<string, unknown> | undefined),

@@ -1,15 +1,21 @@
 import type { HomepageContent, SiteSettings, WebsiteData } from './websiteData'
+import { initialData } from './websiteData'
 
 export type { HomepageContent }
+
+/** CMS list columns must be arrays; legacy/bad saves may store `{}`. */
+export function asHomepageList<T>(value: unknown, fallback: T[]): T[] {
+  return Array.isArray(value) ? value : fallback
+}
 
 export function pickHomepageFields(
   source: Pick<WebsiteData, 'hero' | 'stats' | 'pillars' | 'perks'>,
 ): HomepageContent {
   return {
     hero: source.hero,
-    stats: source.stats,
-    pillars: source.pillars,
-    perks: source.perks,
+    stats: asHomepageList(source.stats, initialData.stats),
+    pillars: asHomepageList(source.pillars, initialData.pillars),
+    perks: asHomepageList(source.perks, initialData.perks),
   }
 }
 
@@ -28,9 +34,18 @@ export function hydrateHomepage(data: WebsiteData): WebsiteData {
   const homepage: HomepageContent = fromSettings
     ? {
         hero: { ...fromColumns.hero, ...fromSettings.hero },
-        stats: fromSettings.stats?.length ? fromSettings.stats : fromColumns.stats,
-        pillars: fromSettings.pillars?.length ? fromSettings.pillars : fromColumns.pillars,
-        perks: fromSettings.perks?.length ? fromSettings.perks : fromColumns.perks,
+        stats: asHomepageList(
+          fromSettings.stats?.length ? fromSettings.stats : fromColumns.stats,
+          initialData.stats,
+        ),
+        pillars: asHomepageList(
+          fromSettings.pillars?.length ? fromSettings.pillars : fromColumns.pillars,
+          initialData.pillars,
+        ),
+        perks: asHomepageList(
+          fromSettings.perks?.length ? fromSettings.perks : fromColumns.perks,
+          initialData.perks,
+        ),
       }
     : fromColumns
 

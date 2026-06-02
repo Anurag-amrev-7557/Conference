@@ -1,21 +1,39 @@
-import React from 'react';
-import { LandingPage } from '../../pages/LandingPage';
+import React, { useCallback, useRef } from 'react';
+import { ConferencePage } from '../../pages/ConferencePage';
+import { ConferenceRegisterPage } from '../../pages/ConferenceRegisterPage';
+import { EventsPage } from '../../pages/EventsPage';
 import { Navbar } from '../Navbar';
 import { Laptop, Smartphone, Tablet, Globe, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '../../lib/utils';
+
+const previewControlBtn =
+  'rounded-lg transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-primary-600)] focus-visible:ring-offset-2';
 
 interface LivePreviewProps {
   onToggleSidebar?: () => void;
   isSidebarCollapsed?: boolean;
+  variant?: 'conference' | 'events' | 'register';
 }
 
-export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSidebarCollapsed }) => {
+export const LivePreview: React.FC<LivePreviewProps> = ({
+  onToggleSidebar,
+  isSidebarCollapsed,
+  variant = 'conference',
+}) => {
   const [device, setDevice] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [previewKey, setPreviewKey] = React.useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const resetPreview = useCallback(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    setPreviewKey((k) => k + 1);
+  }, []);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden shadow-2xl bg-white">
+    <div className="h-full flex flex-col overflow-hidden shadow-2xl dark:shadow-none dark:border dark:border-neutral-800 bg-white dark:bg-neutral-950">
       {/* Browser Header */}
-      <div className="h-14 bg-white border-b border-border/20 flex items-center justify-between px-3 shrink-0">
+      <div className="h-14 bg-white dark:bg-neutral-950 border-b border-border/20 dark:border-neutral-800 flex items-center justify-between px-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5 mr-4">
             <div className="w-3 h-3 rounded-full bg-rose-400" />
@@ -24,7 +42,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSid
           </div>
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-off border border-border/40 min-w-[240px]">
             <Globe className="w-3.5 h-3.5 text-muted" />
-            <span className="text-[11px] font-medium text-muted truncate">superhumanly.ai/preview</span>
+            <span className="text-xs font-medium text-muted truncate">superhumanly.ai/preview</span>
           </div>
         </div>
 
@@ -41,7 +59,13 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSid
                 aria-label={`${d.id} preview`}
                 aria-pressed={device === d.id}
                 onClick={() => setDevice(d.id as 'desktop' | 'tablet' | 'mobile')}
-                className={`p-1.5 rounded-lg transition-all ${device === d.id ? 'bg-white shadow-sm text-accent' : 'text-muted hover:text-text'}`}
+                className={cn(
+                  previewControlBtn,
+                  'p-1.5',
+                  device === d.id
+                    ? 'bg-white dark:bg-neutral-900 shadow-sm dark:shadow-none dark:border dark:border-neutral-700 text-accent'
+                    : 'text-muted hover:text-text',
+                )}
               >
                 <d.icon className="w-4 h-4" aria-hidden />
               </button>
@@ -55,7 +79,13 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSid
             onClick={onToggleSidebar}
             aria-label={isSidebarCollapsed ? 'Exit full screen preview' : 'Full screen preview'}
             aria-pressed={isSidebarCollapsed}
-            className={`p-2 rounded-lg transition-all ${isSidebarCollapsed ? 'bg-accent/10 text-accent shadow-inner' : 'text-muted hover:text-text hover:bg-off'}`}
+            className={cn(
+              previewControlBtn,
+              'p-2',
+              isSidebarCollapsed
+                ? 'bg-accent/10 text-accent shadow-inner'
+                : 'text-muted hover:text-text hover:bg-off dark:hover:bg-neutral-900',
+            )}
           >
             {isSidebarCollapsed ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
@@ -63,7 +93,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSid
           <button
             type="button"
             aria-label="Reset preview"
-            className="p-2 text-muted hover:text-text hover:bg-off rounded-lg transition-all"
+            onClick={resetPreview}
+            className={cn(previewControlBtn, 'p-2 text-muted hover:text-text hover:bg-off dark:hover:bg-neutral-900')}
           >
             <RotateCcw className="w-4 h-4" aria-hidden />
           </button>
@@ -82,10 +113,19 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ onToggleSidebar, isSid
           className={`bg-white shadow-elite relative overflow-hidden transition-all duration-700 ${device === 'desktop' ? '' : 'border-[6px] border-text'}`}
         >
           {/* Scrollable container for the site */}
-          <div className="absolute inset-0 overflow-y-auto hide-scrollbar touch-pan-y z-10 bg-white">
-            <div className="min-h-full w-full origin-top transform-gpu">
-                <Navbar isInsidePreview />
-                <LandingPage />
+          <div
+            ref={scrollRef}
+            className="absolute inset-0 overflow-y-auto hide-scrollbar touch-pan-y z-10 bg-white"
+          >
+            <div key={previewKey} className="min-h-full w-full origin-top transform-gpu">
+              <Navbar isInsidePreview />
+              {variant === 'events' ? (
+                <EventsPage />
+              ) : variant === 'register' ? (
+                <ConferenceRegisterPage />
+              ) : (
+                <ConferencePage />
+              )}
             </div>
           </div>
 

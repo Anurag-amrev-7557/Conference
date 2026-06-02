@@ -10,6 +10,8 @@ export const articleCreateSchema = z
     content: z.string().optional(),
     thumbnail: z.string().optional(),
     isPublished: z.boolean().optional(),
+    publishAt: z.string().datetime().nullable().optional(),
+    unpublishAt: z.string().datetime().nullable().optional(),
     authorName: z.string().min(1),
     authorRole: z.string().optional(),
     authorAvatar: z.string().optional(),

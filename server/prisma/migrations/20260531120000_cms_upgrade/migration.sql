@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN "description" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Event" ADD COLUMN "registrationUrl" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Event" ADD COLUMN "registrationOpen" BOOLEAN NOT NULL DEFAULT true;

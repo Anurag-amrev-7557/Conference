@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from "react"
 import { CheckCircle2, Loader2, ArrowRight } from "lucide-react"
 import { MarketingService } from "../../lib/marketing"
+import { api } from "../../lib/api"
 
 export type WaitlistFormProps = {
   analyticsLocation?: string
@@ -39,12 +40,15 @@ export function WaitlistForm({
 
     setStatus("loading")
 
-    setTimeout(() => {
+    try {
+      await api.submitNewsletter({ email: email.trim(), source: analyticsLocation })
       MarketingService.identify(email)
       MarketingService.logEvent("form_submit", { location: analyticsLocation })
       setStatus("success")
       setEmail("")
-    }, 1500)
+    } catch {
+      setStatus("error")
+    }
   }
 
   const rootClass = [

@@ -2,9 +2,33 @@ import type {
   ConferenceContent,
   ConferenceHeroContent,
   ConferenceSectionCopy,
+  ConferenceSectionVisibility,
   ConferenceTicketsContent,
   ConferenceVideoContent,
 } from './websiteData'
+
+export const DEFAULT_CONFERENCE_SECTION_VISIBILITY: Required<ConferenceSectionVisibility> = {
+  hero: true,
+  countdown: true,
+  speakers: true,
+  video: true,
+  agenda: true,
+  sponsors: true,
+  partners: true,
+  testimonials: true,
+  venue: true,
+  tickets: true,
+  faq: true,
+}
+
+export type ConferenceSectionVisibilityKey = keyof ConferenceSectionVisibility
+
+export function conferenceSectionVisible(
+  visibility: ConferenceSectionVisibility | undefined,
+  key: ConferenceSectionVisibilityKey,
+): boolean {
+  return visibility?.[key] !== false
+}
 
 /** Persistent media paths (served from API /media after bootstrap). */
 export const CONFERENCE_HERO_VIDEO_MEDIA = '/media/conference-hero.mp4'
@@ -64,6 +88,17 @@ export const CONFERENCE_HERO_LEDE =
 
 export const defaultConferenceContent: ConferenceContent = {
   published: true,
+  eventStartAt: '2026-10-14T09:00:00-07:00',
+  eventTimezone: 'America/Los_Angeles',
+  countdownEnabled: true,
+  sectionVisibility: { ...DEFAULT_CONFERENCE_SECTION_VISIBILITY },
+  venue: {
+    eyebrow: 'Venue',
+    title: 'Marymoor Park',
+    lede: 'Redmond, Washington — an open-air setting built for keynotes, workshops, and high-signal networking.',
+    address: '6046 West Lake Sammamish Pkwy NE, Redmond, WA 98052',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2689.0!2d-122.116!3d47.663!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x54906c8c8c8c8c8d%3A0x0!2sMarymoor%20Park!5e0!3m2!1sen!2sus!4v1',
+  },
   hero: {
     badge: 'Superhumanly AI',
     badgeLogoUrl: CONFERENCE_HERO_LOGO,
@@ -127,6 +162,18 @@ export const defaultConferenceContent: ConferenceContent = {
       title: 'Secure Your Spot',
       lede: 'Choose the pass that best fits your goals.',
     },
+    partners: {
+      eyebrow: 'Partners',
+      title: 'Community',
+      titleAccent: 'partners',
+      lede: 'Organizations collaborating to make the summit possible.',
+    },
+    testimonials: {
+      eyebrow: 'Voices',
+      title: 'What attendees',
+      titleAccent: 'are saying',
+      lede: 'Leaders who have joined past summits share why the experience matters.',
+    },
   },
   tickets: defaultConferenceTickets,
   logos: [
@@ -141,6 +188,7 @@ export const defaultConferenceContent: ConferenceContent = {
     { id: 'l9', name: 'NeuralNet' },
     { id: 'l10', name: 'Synergy' },
   ],
+  partners: [],
   speakers: [
     {
       id: 's1',
@@ -271,6 +319,32 @@ export const defaultConferenceContent: ConferenceContent = {
         'Yes. We offer a limited number of sponsor partnerships aligned to high-signal AI infrastructure and workflow tooling.',
     },
   ],
+  testimonials: [
+    {
+      id: 't1',
+      quote:
+        'The most practical AI summit I have attended — every session connected to something we could ship the following week.',
+      name: 'Jordan Lee',
+      role: 'VP Product',
+      company: 'Northstar Systems',
+    },
+    {
+      id: 't2',
+      quote:
+        'High signal from start to finish. The networking alone justified the trip — I left with three partnerships in motion.',
+      name: 'Priya Sharma',
+      role: 'Head of AI',
+      company: 'Meridian Health',
+    },
+    {
+      id: 't3',
+      quote:
+        'Finally a conference that treats responsible AI as a product discipline, not a footnote.',
+      name: 'Marcus Webb',
+      role: 'CTO',
+      company: 'Atlas Robotics',
+    },
+  ],
 }
 
 function mergeSection(
@@ -338,6 +412,15 @@ export function mergeConferenceContent(patch?: Partial<ConferenceContent>): Conf
 
   return {
     published: patch.published ?? base.published ?? true,
+    eventStartAt: patch.eventStartAt ?? base.eventStartAt,
+    eventTimezone: patch.eventTimezone ?? base.eventTimezone,
+    countdownEnabled: patch.countdownEnabled ?? base.countdownEnabled ?? false,
+    sectionVisibility: {
+      ...DEFAULT_CONFERENCE_SECTION_VISIBILITY,
+      ...base.sectionVisibility,
+      ...patch.sectionVisibility,
+    },
+    venue: patch.venue ? { ...base.venue, ...patch.venue } : base.venue,
     hero: mergeHero(base.hero, patch.hero),
     video: mergeVideo(base.video ?? defaultConferenceContent.video, patch.video),
     sections: {
@@ -348,6 +431,8 @@ export function mergeConferenceContent(patch?: Partial<ConferenceContent>): Conf
       agenda: mergeSection(base.sections.agenda, patch.sections?.agenda),
       faq: mergeSection(base.sections.faq, patch.sections?.faq),
       tickets: mergeSection(base.sections.tickets, patch.sections?.tickets),
+      partners: mergeSection(base.sections.partners, patch.sections?.partners),
+      testimonials: mergeSection(base.sections.testimonials, patch.sections?.testimonials),
     },
     tickets: patch.tickets?.tiers?.length
       ? {
@@ -358,9 +443,11 @@ export function mergeConferenceContent(patch?: Partial<ConferenceContent>): Conf
         }
       : base.tickets ?? defaultConferenceTickets,
     logos: patch.logos?.length ? patch.logos : base.logos,
+    partners: patch.partners?.length ? patch.partners : base.partners ?? [],
     speakers: patch.speakers?.length ? patch.speakers : base.speakers,
     agenda: patch.agenda?.length ? patch.agenda : base.agenda,
     faq: patch.faq?.length ? patch.faq : base.faq,
+    testimonials: patch.testimonials?.length ? patch.testimonials : base.testimonials ?? [],
   }
 }
 

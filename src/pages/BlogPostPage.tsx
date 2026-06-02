@@ -11,6 +11,7 @@ import { SeoHead } from '../seo/SeoHead';
 import { JsonLd } from '../seo/JsonLd';
 import { usePageSeo } from '../seo/usePageSeo';
 import { usePageJsonLd } from '../seo/usePageJsonLd';
+import { isEffectivelyPublished } from '../lib/publishSchedule';
 
 // Custom icons for the professional monograph feel
 const XIcon = (props: any) => (
@@ -31,7 +32,7 @@ export const BlogPostPage: React.FC = () => {
   const { data, loading } = useWebsiteData();
   const navigate = useNavigate();
 
-  const article = data.articles.find((a) => a.slug === slug);
+  const article = data.articles.find((a) => a.slug === slug && isEffectivelyPublished(a));
   const tocItems = useMemo(
     () => (article ? extractMarkdownToc(article.content) : []),
     [article?.id, article?.content],

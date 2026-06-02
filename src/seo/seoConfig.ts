@@ -182,10 +182,6 @@ const ADMIN_ROUTE_META: Record<
     page: 'Dashboard',
     description: 'Overview of site content, publishing status, and workspace shortcuts.',
   },
-  '/admin/homepage': {
-    page: 'Book page',
-    description: 'Edit the /home marketing page hero, stats, showcase, perks, sections, and visibility.',
-  },
   '/admin/design': {
     page: 'Brand & theme',
     description: 'Manage brand colors, typography, theme tokens, and identity.',
@@ -207,8 +203,9 @@ const ADMIN_ROUTE_META: Record<
     description: 'Global SEO defaults, navigation, scripts, and structured data.',
   },
   '/admin/conference': {
-    page: 'Homepage',
-    description: 'Edit the public homepage (summit landing) content and publish settings.',
+    page: 'Summit homepage',
+    description:
+      'Edit summit content, embedded blocks, per-section visibility, SEO, custom CSS, and scripts for /.',
   },
 }
 

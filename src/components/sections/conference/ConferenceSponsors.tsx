@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { ConferenceLogo } from '../../../lib/websiteData'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
+import { resolveAssetUrl } from '../../../lib/assetUrl'
 import { ConferenceSectionHeader } from './ConferenceSectionHeader'
 import { ConferenceSectionShell } from './ConferenceSectionShell'
 
@@ -49,7 +50,32 @@ export function ConferenceSponsors() {
             <ul className="conference-sponsors-marquee__track list-none p-0 m-0">
               {trackItems.map((logo, idx) => (
                 <li key={`${logo.id}-${idx}`} className="conference-sponsor-logo">
-                  <span>{logo.name}</span>
+                  {logo.logoUrl?.trim() ? (
+                    logo.websiteUrl?.trim() ? (
+                      <a
+                        href={logo.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="conference-sponsor-logo__link"
+                      >
+                        <img
+                          src={resolveAssetUrl(logo.logoUrl)}
+                          alt={logo.logoAlt || logo.name}
+                          className="conference-sponsor-logo__img"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <img
+                        src={resolveAssetUrl(logo.logoUrl)}
+                        alt={logo.logoAlt || logo.name}
+                        className="conference-sponsor-logo__img"
+                        loading="lazy"
+                      />
+                    )
+                  ) : (
+                    <span>{logo.name}</span>
+                  )}
                 </li>
               ))}
             </ul>

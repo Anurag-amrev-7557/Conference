@@ -1,21 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
-import { LivePreview } from './LivePreview';
-import { Palette, Type, Box, Check, Layers } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../lib/utils';
+import { Palette, Type, Box, Layers, Check, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
-  AdminField,
-  AdminFormSection,
+  AdminEditorField,
+  AdminEditorInput,
+  AdminEditorSection,
+  AdminEditorSubsection,
+  AdminEditorFields,
+  editorSaveStatusFrom,
+} from './admin-editor-ui';
+import {
+  AdminButton,
   AdminHeaderSave,
-  AdminInput,
   AdminPageIntro,
-  AdminPanelTabIntro,
-  AdminSubnav,
 } from './admin-ui';
 import { MediaUrlField } from './MediaUrlField';
-import { CONFERENCE_HERO_LOGO } from '../../lib/conferenceDefaults';
-import { useAdminWorkspaceNavRegistry, useApplyPendingAdminSection } from './admin-workspace-nav';
+import { useApplyPendingAdminSection } from './admin-workspace-nav';
+import { AdminWorkspaceShell } from './AdminWorkspaceShell';
+import { DESIGN_TAB_INTROS } from './workspaceTabIntros';
+import { ColorPicker } from './ui';
+import { useFormHistory, useRegisterUndoRedo } from './providers/UndoRedoProvider';
+import { useAutosave } from './providers/AutosaveProvider';
+import { useToast } from './ui/Toast';
+import { cn } from '../../lib/utils';
 
 const DESIGN_SUBNAV_GROUPS = [
   {
@@ -32,27 +40,7 @@ const DESIGN_SUBNAV_GROUPS = [
   },
 ];
 
-const TAB_INTROS: Record<
-  'colors' | 'typography' | 'tokens' | 'branding',
-  { title: string; description: string }
-> = {
-  colors: {
-    title: 'Palette',
-    description: 'Primary brand color for buttons, links, accents, and focus states across the site.',
-  },
-  typography: {
-    title: 'Typography',
-    description: 'Heading and body font families applied to the public marketing site.',
-  },
-  tokens: {
-    title: 'Theme',
-    description: 'Global UI tokens — corner radius and shadow depth for cards and surfaces.',
-  },
-  branding: {
-    title: 'Brand',
-    description: 'Display name and navbar logo shown across the public site.',
-  },
-};
+const TAB_INTROS = DESIGN_TAB_INTROS;
 
 const COLOR_PRESETS = [
   '#003E99',
@@ -76,15 +64,27 @@ export const DesignSystemManager: React.FC = () => {
   const [activePanel, setActivePanel] = useState<'colors' | 'typography' | 'tokens' | 'branding'>(
     'colors',
   );
-  const [form, setForm] = useState(sourceData.appearance);
+  const formHistory = useFormHistory(sourceData.appearance);
+  const form = formHistory.value;
+  const setForm = formHistory.setValue;
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { registerSaveHandler, markUnsaved, setStatus } = useAutosave();
+  const { toast } = useToast();
+  const isDirty = JSON.stringify(form) !== JSON.stringify(sourceData.appearance);
 
   const appearanceSyncKey = JSON.stringify(sourceData.appearance);
   useEffect(() => {
-    setForm(sourceData.appearance);
+    formHistory.reset(sourceData.appearance);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when persisted appearance changes
   }, [appearanceSyncKey]);
+
+  useRegisterUndoRedo({
+    undo: formHistory.undo,
+    redo: formHistory.redo,
+    canUndo: formHistory.canUndo,
+    canRedo: formHistory.canRedo,
+  });
 
   useEffect(() => {
     if (!isPreviewVisible) {
@@ -95,122 +95,100 @@ export const DesignSystemManager: React.FC = () => {
     return () => setPreview(null);
   }, [form, isPreviewVisible, setPreview]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
       await updateAppearance(form);
+      setStatus('saved');
+      toast({ variant: 'success', title: 'Brand & theme saved' });
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Save failed',
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [form, updateAppearance, setStatus, toast]);
 
-  useAdminWorkspaceNavRegistry({
-    groups: DESIGN_SUBNAV_GROUPS,
-    activeId: activePanel,
-    onSelect: (id) => setActivePanel(id as typeof activePanel),
-  });
+  useEffect(() => {
+    registerSaveHandler(handleSave);
+    return () => registerSaveHandler(null);
+  }, [handleSave, registerSaveHandler]);
+
+  useEffect(() => {
+    if (JSON.stringify(form) !== JSON.stringify(sourceData.appearance)) {
+      markUnsaved();
+    }
+  }, [form, sourceData.appearance, markUnsaved]);
 
   useApplyPendingAdminSection('/admin/design', (id) =>
     setActivePanel(id as typeof activePanel),
   );
 
-  const editorColumn = (
-    <div
-      className={cn(
-        'flex flex-col min-h-0 overflow-hidden bg-[var(--admin-surface)]',
-        isPreviewVisible ? 'w-[520px] shrink-0 border-r border-[var(--admin-border)]' : 'flex-1 admin-page-workspace',
-      )}
-    >
-      <div className={cn('admin-toolbar shrink-0', isPreviewVisible && 'admin-toolbar--compact')}>
-        <div className="admin-toolbar__content">
-          <AdminPageIntro
-            className="mb-0"
-            eyebrow="Site"
-            title="Brand & theme"
-            lede={
-              isPreviewVisible
-                ? 'Live preview updates as you edit.'
-                : 'Colors, typography, theme tokens, and brand identity for the public site.'
-            }
-          />
-        </div>
-        <div className="admin-toolbar__actions">
+  return (
+    <AdminWorkspaceShell
+      editorClassName="admin-book-page"
+      contentEditor
+      isPreviewVisible={isPreviewVisible}
+      isSidebarCollapsed={isSidebarCollapsed}
+      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
+      toolbar={
+        <AdminPageIntro
+          compact
+          className="mb-0"
+          lede={
+            isPreviewVisible
+              ? 'Live preview updates as you edit.'
+              : 'Colors, typography, theme tokens, and brand identity.'
+          }
+        />
+      }
+      editorHeaderAside={undefined}
+      headerAction={
+        <>
+          <Link to="/home" target="_blank" rel="noopener noreferrer" className="inline-flex">
+            <AdminButton variant="secondary" className="shrink-0">
+              View site
+              <ExternalLink className="w-4 h-4" />
+            </AdminButton>
+          </Link>
           <AdminHeaderSave
             label="Save brand & theme"
             saving={isSaving}
-            onClick={handleSave}
+            onClick={() => void handleSave()}
           />
-        </div>
-      </div>
-
-      <div className="admin-page-editor flex flex-1 min-h-0">
-        <AdminSubnav
-          className="admin-subnav--desktop-only"
-          groups={DESIGN_SUBNAV_GROUPS}
-          title="Brand & theme"
-          activeId={activePanel}
-          onSelect={(id) => setActivePanel(id as typeof activePanel)}
-        />
-
-        <div className="admin-panel-body flex-1 min-h-0 overflow-y-auto">
-          <div className="admin-panel-body__inner">
-            <AdminPanelTabIntro
-              title={TAB_INTROS[activePanel].title}
-              description={TAB_INTROS[activePanel].description}
-            />
-
-            <div className="admin-form-stack">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activePanel}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25 }}
-                >
+        </>
+      }
+      subnav={{
+        groups: DESIGN_SUBNAV_GROUPS,
+        title: 'Brand & theme',
+        activeId: activePanel,
+        onSelect: (id) => setActivePanel(id as typeof activePanel),
+        pageId: 'design',
+      }}
+      editorHeader={TAB_INTROS[activePanel]}
+      saveStatus={editorSaveStatusFrom(isSaving, isDirty)}
+    >
                   {activePanel === 'colors' && (
-                    <>
-                      <AdminFormSection
-                        title="Primary color"
-                        description="Pick a preset or enter a custom hex value."
-                      >
-                        <div className="admin-color-grid">
-                          {COLOR_PRESETS.map((color) => (
-                            <button
-                              key={color}
-                              type="button"
-                              onClick={() => setForm({ ...form, primaryColor: color })}
-                              className={cn(
-                                'admin-color-swatch',
-                                form.primaryColor.toLowerCase() === color.toLowerCase() &&
-                                  'admin-color-swatch--active',
-                              )}
-                              style={{ backgroundColor: color }}
-                              aria-label={`Use ${color}`}
-                            >
-                              {form.primaryColor.toLowerCase() === color.toLowerCase() && (
-                                <span className="absolute inset-0 flex items-center justify-center">
-                                  <Check className="w-5 h-5 text-white drop-shadow" aria-hidden />
-                                </span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                        <AdminField label="Custom hex" className="!mb-0 mt-4">
-                          <AdminInput
-                            value={form.primaryColor}
-                            onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                            placeholder="#0052cc"
-                            className="font-mono text-sm max-w-xs"
-                          />
-                        </AdminField>
-                      </AdminFormSection>
-                    </>
+                    <AdminEditorSection
+                      icon={Palette}
+                      title="Primary color"
+                      description="Pick a preset or enter a custom hex value."
+                    >
+                      <ColorPicker
+                        value={form.primaryColor}
+                        onChange={(primaryColor) => setForm({ ...form, primaryColor })}
+                        presets={COLOR_PRESETS}
+                      />
+                    </AdminEditorSection>
                   )}
 
                   {activePanel === 'typography' && (
                     <>
-                      <AdminFormSection
+                      <AdminEditorSection
+                        icon={Type}
                         title="Heading font"
                         description="Used for page titles and section headlines."
                       >
@@ -254,10 +232,10 @@ export const DesignSystemManager: React.FC = () => {
                             </button>
                           ))}
                         </div>
-                      </AdminFormSection>
+                      </AdminEditorSection>
 
-                      <AdminFormSection title="Body font" description="Paragraph and UI copy.">
-                        <AdminField label="Body typeface">
+                      <AdminEditorSection icon={Type} title="Body font" description="Paragraph and UI copy.">
+                        <AdminEditorField label="Body typeface">
                           <select
                             value={form.typography.bodyFont}
                             onChange={(e) =>
@@ -269,14 +247,14 @@ export const DesignSystemManager: React.FC = () => {
                                 },
                               })
                             }
-                            className="admin-input"
+                            className="admin-editor-input"
                           >
                             <option value="sans">Sans-serif (Plus Jakarta)</option>
                             <option value="serif">Serif (Instrument)</option>
                             <option value="mono">Monospace (JetBrains)</option>
                           </select>
-                        </AdminField>
-                        <AdminField label="Base text size">
+                        </AdminEditorField>
+                        <AdminEditorField label="Base text size">
                           <div className="admin-segmented">
                             {(['small', 'medium', 'large'] as const).map((size) => (
                               <button
@@ -297,14 +275,14 @@ export const DesignSystemManager: React.FC = () => {
                               </button>
                             ))}
                           </div>
-                        </AdminField>
-                      </AdminFormSection>
+                        </AdminEditorField>
+                      </AdminEditorSection>
                     </>
                   )}
 
                   {activePanel === 'tokens' && (
                     <>
-                      <AdminFormSection title="Corner radius" description="Roundness of buttons and cards.">
+                      <AdminEditorSection icon={Box} title="Corner radius" description="Roundness of buttons and cards.">
                         <div className="admin-segmented max-w-md">
                           {(['none', 'sm', 'md', 'lg', 'full'] as const).map((r) => (
                             <button
@@ -322,9 +300,9 @@ export const DesignSystemManager: React.FC = () => {
                             </button>
                           ))}
                         </div>
-                      </AdminFormSection>
+                      </AdminEditorSection>
 
-                      <AdminFormSection title="Shadow depth" description="Elevation on cards and panels.">
+                      <AdminEditorSection icon={Box} title="Shadow depth" description="Elevation on cards and panels.">
                         <div className="admin-shadow-picker">
                           {(['none', 'soft', 'heavy'] as const).map((s) => (
                             <button
@@ -362,9 +340,9 @@ export const DesignSystemManager: React.FC = () => {
                             </button>
                           ))}
                         </div>
-                      </AdminFormSection>
+                      </AdminEditorSection>
 
-                      <AdminFormSection title="Button style" description="Default button treatment.">
+                      <AdminEditorSection icon={Box} title="Button style" description="Default button treatment.">
                         <div className="admin-segmented max-w-md">
                           {(['flat', 'outline', 'glass'] as const).map((style) => (
                             <button
@@ -385,84 +363,46 @@ export const DesignSystemManager: React.FC = () => {
                             </button>
                           ))}
                         </div>
-                      </AdminFormSection>
+                      </AdminEditorSection>
                     </>
                   )}
 
                   {activePanel === 'branding' && (
-                    <>
-                      <AdminFormSection
-                        title="Brand identity"
+                    <AdminEditorFields className="admin-editor-fields--readable">
+                      <AdminEditorSubsection
+                        title="Site name & logo"
                         description="Shown in the navbar, footer, and browser tab context."
                       >
-                        <AdminField label="Brand name">
-                          <AdminInput
+                        <AdminEditorField label="Brand name">
+                          <AdminEditorInput
                             value={form.brandName}
                             onChange={(e) => setForm({ ...form, brandName: e.target.value })}
                             placeholder="Superhumanly AI"
                           />
-                        </AdminField>
+                        </AdminEditorField>
                         <MediaUrlField
+                          editor
                           label="Navbar logo"
                           value={form.brandLogoUrl ?? ''}
                           onChange={(url) => setForm({ ...form, brandLogoUrl: url })}
-                          hint={`PNG/WebP with transparent background. Default: ${CONFERENCE_HERO_LOGO}`}
+                          hint="PNG/WebP with transparent background. Default site logo: /media/superhumanly-logo.png"
                         />
-                        <AdminField
-                          label="Legacy logo mark (fallback)"
-                          hint="Used only when no logo image is set — one or two characters."
-                        >
-                          <AdminInput
+                      </AdminEditorSubsection>
+                      <AdminEditorSubsection
+                        title="Fallback mark"
+                        description="Used only when no logo image is set — one or two characters."
+                      >
+                        <AdminEditorField label="Legacy logo mark">
+                          <AdminEditorInput
                             value={form.brandLogoText}
                             onChange={(e) => setForm({ ...form, brandLogoText: e.target.value })}
                             maxLength={2}
-                            className="max-w-[5.5rem] text-center font-semibold"
+                            className="admin-editor-field--compact text-center font-semibold"
                           />
-                        </AdminField>
-                      </AdminFormSection>
-                    </>
+                        </AdminEditorField>
+                      </AdminEditorSubsection>
+                    </AdminEditorFields>
                   )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="admin-workspace flex h-full w-full overflow-hidden">
-      <motion.div
-        layout
-        animate={{
-          width: isPreviewVisible ? (isSidebarCollapsed ? 0 : 520) : '100%',
-          opacity: isSidebarCollapsed && isPreviewVisible ? 0 : 1,
-        }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={cn(
-          'flex min-h-0 overflow-hidden',
-          isPreviewVisible ? 'shrink-0' : 'flex-1 w-full min-w-0',
-        )}
-      >
-        {editorColumn}
-      </motion.div>
-
-      <AnimatePresence>
-        {isPreviewVisible && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="flex-1 min-w-0 overflow-hidden flex flex-col bg-[var(--admin-surface)]"
-          >
-            <LivePreview
-              onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              isSidebarCollapsed={isSidebarCollapsed}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </AdminWorkspaceShell>
   );
 };

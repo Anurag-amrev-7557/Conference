@@ -1,0 +1,533 @@
+/**
+ * Admin dark mode — workspace, editor, and design-system controls.
+ * Requires .admin-shell[data-theme='dark'] from AdminThemeProvider.
+ */
+
+.admin-shell[data-theme='dark'] {
+  --admin-primary: var(--ds-primary-500);
+  --admin-primary-hover: var(--ds-primary-400);
+}
+
+/* Segmented controls — active state readable in both admin.css and workspace-v2 */
+.admin-shell[data-theme='dark'] .admin-segmented__item--active {
+  background: var(--ds-primary-500);
+  color: var(--ds-neutral-50);
+  box-shadow: none;
+}
+
+/* Workspace chrome */
+.admin-shell[data-theme='dark'] .admin-toolbar {
+  background: var(--admin-surface);
+  border-bottom-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-page-workspace,
+.admin-shell[data-theme='dark'] .admin-workspace__editor-pane,
+.admin-shell[data-theme='dark'] .admin-page-editor {
+  background: var(--admin-surface);
+}
+
+.admin-shell[data-theme='dark'] .admin-content-editor.admin-panel-body,
+.admin-shell[data-theme='dark'] .admin-panel-body.admin-content-editor,
+.admin-shell[data-theme='dark'] .admin-book-page .admin-panel-body,
+.admin-shell[data-theme='dark'] .admin-content-editor {
+  background: var(--admin-surface);
+}
+
+.admin-shell[data-theme='dark'] .admin-panel-body--flush .admin-editor-page-header {
+  background: var(--admin-surface);
+  border-bottom-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-page-subnav {
+  border-right-color: var(--admin-border);
+}
+
+/* Editor inputs — all variants */
+.admin-shell[data-theme='dark'] .admin-editor-input,
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-editor-input,
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-input,
+.admin-shell[data-theme='dark'] .admin-content-editor textarea.admin-editor-input,
+.admin-shell[data-theme='dark'] .admin-content-editor textarea.admin-input,
+.admin-shell[data-theme='dark'] .admin-workspace select.admin-editor-input,
+.admin-shell[data-theme='dark'] .admin-input,
+.admin-shell[data-theme='dark'] .admin-workspace input:not([type='checkbox']):not([type='radio']):not([type='file']),
+.admin-shell[data-theme='dark'] .admin-workspace textarea,
+.admin-shell[data-theme='dark'] .admin-workspace select {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-editor-input:focus,
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-editor-input:focus,
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-input:focus,
+.admin-shell[data-theme='dark'] .admin-input:focus,
+.admin-shell[data-theme='dark'] .admin-workspace input:focus,
+.admin-shell[data-theme='dark'] .admin-workspace textarea:focus,
+.admin-shell[data-theme='dark'] .admin-workspace select:focus {
+  border-color: color-mix(in srgb, var(--admin-primary) 55%, var(--admin-border-strong));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-primary) 22%, transparent);
+}
+
+.admin-shell[data-theme='dark'] .admin-code-input:not(.admin-code-input--dark) {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-code-input--dark {
+  background: #0c0c0e;
+  border-color: var(--admin-border-strong);
+  color: #86efac;
+}
+
+.admin-shell[data-theme='dark'] .admin-editor-subsection {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-editor-item-group {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-catalog-item {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-catalog-item:hover {
+  border-color: color-mix(in srgb, var(--admin-primary) 35%, var(--admin-border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-page-metrics-inline {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-media-view-toggle__btn--active {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.admin-shell[data-theme='dark'] .admin-media-dropzone:hover,
+.admin-shell[data-theme='dark'] .admin-media-dropzone--active {
+  background: color-mix(in srgb, var(--admin-primary) 8%, var(--admin-surface-muted));
+}
+
+.admin-shell[data-theme='dark'] .admin-registrations-table,
+.admin-shell[data-theme='dark'] .admin-team-table,
+.admin-shell[data-theme='dark'] .admin-newsletter-table,
+.admin-shell[data-theme='dark'] .admin-media-list {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-media-grid__item {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+/* Design system pickers */
+.admin-shell[data-theme='dark'] .admin-choice-list__item--active {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface-muted));
+  border-color: color-mix(in srgb, var(--admin-primary) 45%, var(--admin-border));
+}
+
+.admin-shell[data-theme='dark'] .admin-shadow-picker__item--active {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface-muted));
+  border-color: color-mix(in srgb, var(--admin-primary) 45%, var(--admin-border));
+}
+
+.admin-shell[data-theme='dark'] .admin-list-editor--v2 .admin-list-editor__row--v2 {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+/* Status badges & save indicators */
+.admin-shell[data-theme='dark'] .admin-editor-status-badge--published {
+  background: color-mix(in srgb, #10b981 18%, var(--admin-surface-muted));
+  color: #6ee7b7;
+}
+
+.admin-shell[data-theme='dark'] .admin-editor-status-badge--draft {
+  background: color-mix(in srgb, var(--admin-text-muted) 20%, var(--admin-surface-muted));
+  color: var(--admin-text-secondary);
+}
+
+.admin-shell[data-theme='dark'] .admin-editor-status-badge--scheduled {
+  background: color-mix(in srgb, #f59e0b 18%, var(--admin-surface-muted));
+  color: #fcd34d;
+}
+
+.admin-shell[data-theme='dark'] .admin-catalog-item__status--live {
+  background: color-mix(in srgb, #10b981 85%, #065f46);
+  color: #ecfdf5;
+}
+
+.admin-shell[data-theme='dark'] .admin-editor-save-status--unsaved {
+  color: #fbbf24;
+}
+
+.admin-shell[data-theme='dark'] .admin-topbar__save-status--saved {
+  color: var(--ds-success-text);
+  background: var(--ds-success-bg);
+}
+
+.admin-shell[data-theme='dark'] .admin-topbar__save-status--unsaved {
+  color: var(--ds-warning-text);
+  background: var(--ds-warning-bg);
+}
+
+/* Buttons */
+.admin-shell[data-theme='dark'] .admin-btn--primary {
+  color: var(--ds-neutral-50);
+}
+
+.admin-shell[data-theme='dark'] .admin-btn--secondary {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text-secondary);
+}
+
+.admin-shell[data-theme='dark'] .admin-btn--secondary:hover {
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-btn--danger:hover {
+  background: color-mix(in srgb, var(--ds-danger-text) 12%, var(--admin-surface-muted));
+}
+
+.admin-shell[data-theme='dark'] .admin-header-save {
+  color: var(--ds-neutral-50);
+}
+
+.admin-shell[data-theme='dark'] .admin-stat-card {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+/* Legacy form sections inside editor */
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-form-section {
+  border-bottom-color: var(--admin-border);
+}
+
+/* Nav link editor, danger zone, drawers */
+.admin-shell[data-theme='dark'] .admin-team-list {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-team-list__row:hover {
+  background: var(--admin-surface);
+}
+
+.admin-shell[data-theme='dark'] .admin-shell__nav-link--active.admin-shell__nav-link--v2 {
+  background: var(--admin-surface);
+  color: var(--ds-text-primary);
+  box-shadow: none;
+}
+
+.admin-shell[data-theme='dark'] .admin-shell__nav-link--active.admin-shell__nav-link--v2 .admin-shell__nav-icon {
+  color: var(--admin-primary);
+}
+
+/* Dashboard surfaces */
+.admin-shell[data-theme='dark'] .admin-tool-card,
+.admin-shell[data-theme='dark'] .admin-tool-card:hover {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+.admin-shell[data-theme='dark'] .admin-dashboard__panel,
+.admin-shell[data-theme='dark'] .admin-ops-tile,
+.admin-shell[data-theme='dark'] .admin-ops-tile:hover:not(:disabled) {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+.admin-shell[data-theme='dark'] .admin-permissions__group,
+.admin-shell[data-theme='dark'] .admin-team-list,
+.admin-shell[data-theme='dark'] .admin-team-page__invite {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+.admin-shell[data-theme='dark'] .admin-team-segmented__item--active {
+  background: var(--admin-surface);
+  box-shadow: none;
+}
+
+/* Custom select */
+.admin-shell[data-theme='dark'] .admin-select__trigger,
+.admin-shell[data-theme='dark'] .admin-select__trigger:hover:not(:disabled) {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border-strong);
+}
+
+.admin-shell[data-theme='dark'] .admin-select__menu {
+  background: var(--admin-surface);
+  border-color: var(--admin-border-strong);
+}
+
+.admin-shell[data-theme='dark'] .admin-select__chevron-wrap {
+  background: var(--admin-surface);
+}
+
+.admin-shell[data-theme='dark'] .admin-select__option:hover,
+.admin-shell[data-theme='dark'] .admin-select__option--active {
+  background: var(--admin-surface-muted);
+}
+
+.admin-shell[data-theme='dark'] .admin-permissions__section-chip {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-permissions__section-chip:has(input:checked) {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+  border-color: color-mix(in srgb, var(--admin-primary) 40%, var(--admin-border));
+  color: var(--admin-primary);
+}
+
+/* Invite member panel */
+.admin-shell[data-theme='dark'] .admin-invite-panel {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+.admin-shell[data-theme='dark'] .admin-invite-panel__header {
+  background: var(--admin-surface);
+  border-bottom-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-invite-panel__icon {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+  color: var(--admin-primary);
+}
+
+.admin-shell[data-theme='dark'] .admin-invite-panel .admin-input,
+.admin-shell[data-theme='dark'] .admin-invite-panel .admin-select__trigger {
+  background: var(--admin-surface);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-invite-panel__label {
+  color: var(--admin-text-secondary);
+}
+
+/* Portaled select menu carries admin-shell + data-theme on the menu root */
+.admin-shell.admin-select__menu[data-theme='dark'] {
+  box-shadow: var(--admin-shadow-lg);
+}
+
+/* Confirm / alert modals (portaled to body) */
+.admin-modal-root .admin-modal-backdrop {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.admin-modal-root[data-theme='dark'] .admin-modal-backdrop {
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.admin-shell.admin-modal[data-theme='dark'] {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border-strong);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.admin-shell.admin-modal[data-theme='dark'] .admin-modal__message {
+  color: var(--admin-text-secondary);
+}
+
+.admin-shell.admin-modal[data-theme='dark'] .admin-btn--danger-solid {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.admin-shell.admin-modal[data-theme='dark'] .admin-btn--danger-solid:hover:not(:disabled) {
+  background: #be123c;
+}
+
+.admin-shell[data-theme='dark'] .admin-select__option--active .admin-select__option-desc,
+.admin-shell.admin-select__menu[data-theme='dark'] .admin-select__option--active .admin-select__option-desc {
+  color: var(--admin-text-secondary);
+}
+
+.admin-shell[data-theme='dark'] .admin-select__option-label,
+.admin-shell.admin-select__menu[data-theme='dark'] .admin-select__option-label {
+  color: var(--admin-text);
+}
+
+/* Visibility toggles in editor */
+.admin-shell[data-theme='dark'] .admin-content-editor .admin-editor-visibility-row__icon--on {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface-muted));
+  border-color: color-mix(in srgb, var(--admin-primary) 35%, var(--admin-border));
+}
+
+/* Media library detail panel */
+.admin-shell[data-theme='dark'] .admin-media-detail {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+.admin-shell[data-theme='dark'] .admin-media-detail__close {
+  background: var(--admin-surface);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text-muted);
+}
+
+.admin-shell[data-theme='dark'] .admin-media-detail__close:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-media-detail__url,
+.admin-shell[data-theme='dark'] .admin-media-detail__preview {
+  background: var(--admin-surface);
+  border-color: var(--admin-border-strong);
+}
+
+.admin-shell[data-theme='dark'] .admin-toast {
+  background: var(--admin-surface);
+  border-color: var(--admin-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.admin-shell[data-theme='dark'] .admin-toast--success {
+  background: color-mix(in srgb, var(--ds-success-text, #10b981) 12%, var(--admin-surface));
+  border-color: color-mix(in srgb, var(--ds-success-text, #10b981) 35%, var(--admin-border));
+}
+
+.admin-shell[data-theme='dark'] .admin-toast--warning {
+  background: color-mix(in srgb, var(--ds-warning-text, #f59e0b) 12%, var(--admin-surface));
+  border-color: color-mix(in srgb, var(--ds-warning-text, #f59e0b) 35%, var(--admin-border));
+}
+
+.admin-shell[data-theme='dark'] .admin-panel-banner--warning,
+.admin-shell[data-theme='dark'] .admin-panel-body--flush .admin-catalog-panel > .admin-panel-banner--warning {
+  border-bottom-color: color-mix(in srgb, #f59e0b 40%, var(--admin-border));
+  background: color-mix(in srgb, #f59e0b 14%, var(--admin-surface));
+}
+
+.admin-shell[data-theme='dark'] .admin-team-guard-banner__icon {
+  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  color: #fbbf24;
+}
+
+.admin-shell[data-theme='dark'] .admin-team-guard-banner__title {
+  color: #fcd34d;
+}
+
+.admin-shell[data-theme='dark'] .admin-team-guard-banner__text {
+  color: color-mix(in srgb, #fde68a 88%, var(--admin-text-muted));
+}
+
+.admin-shell[data-theme='dark'] .admin-toast--error {
+  background: color-mix(in srgb, var(--ds-danger-text, #f43f5e) 12%, var(--admin-surface));
+  border-color: color-mix(in srgb, var(--ds-danger-text, #f43f5e) 35%, var(--admin-border));
+}
+
+.admin-shell[data-theme='dark'] .admin-toast--info {
+  background: color-mix(in srgb, var(--ds-info-text, #3b82f6) 12%, var(--admin-surface));
+  border-color: color-mix(in srgb, var(--ds-info-text, #3b82f6) 35%, var(--admin-border));
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-filter {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+  color: var(--admin-text-secondary);
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-filter--active {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface-muted));
+  border-color: color-mix(in srgb, var(--admin-primary) 40%, var(--admin-border));
+  color: #93c5fd;
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-toolbar {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-data-table__table tbody tr.admin-data-table__row--active td {
+  background: color-mix(in srgb, var(--admin-primary) 12%, var(--admin-surface-muted));
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-detail-panel__header,
+.admin-shell[data-theme='dark'] .admin-crm-detail-panel__footer {
+  border-color: var(--admin-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-detail-panel__footer {
+  background: var(--admin-surface-muted);
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-detail-panel__close {
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text-muted);
+}
+
+.admin-shell[data-theme='dark'] .admin-crm-detail-panel__close:hover {
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+/* Confirm dialogs */
+.admin-shell[data-theme='dark'] .admin-confirm-dialog {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+  box-shadow:
+    0 24px 48px -12px rgba(0, 0, 0, 0.45),
+    0 8px 24px -8px rgba(0, 0, 0, 0.35);
+}
+
+.admin-shell[data-theme='dark'] .admin-confirm-dialog__title {
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-confirm-dialog__desc {
+  color: var(--admin-text-secondary);
+}
+
+.admin-shell[data-theme='dark'] .admin-confirm-dialog__desc strong {
+  color: var(--admin-text);
+}
+
+.admin-shell[data-theme='dark'] .admin-confirm-dialog__icon--danger {
+  color: var(--ds-danger-text);
+  background: var(--ds-danger-bg);
+  box-shadow: 0 0 0 1px var(--ds-danger-border);
+}
+
+.admin-shell[data-theme='dark'] .admin-confirm-dialog__icon--primary {
+  background: color-mix(in srgb, var(--admin-primary) 18%, var(--admin-surface));
+}
+
+.admin-shell[data-theme='dark'] .admin-btn--danger:hover {
+  background: var(--ds-danger-bg);
+}
+
+/* Top bar save status */
+.admin-shell[data-theme='dark'] .admin-topbar__save-status--saved {
+  color: var(--ds-success-text);
+  background: var(--ds-success-bg);
+}
+
+.admin-shell[data-theme='dark'] .admin-topbar__save-status--unsaved {
+  color: var(--ds-warning-text);
+  background: var(--ds-warning-bg);
+}

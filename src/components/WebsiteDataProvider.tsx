@@ -3,8 +3,7 @@ import type { WebsiteData } from '../lib/websiteData';
 import { initialData, pillarIcons, perkIcons } from '../lib/websiteData';
 import { mergeConferenceContent } from '../lib/conferenceDefaults';
 import { defaultConferenceRegistrationForm } from '../lib/registrationDefaults';
-import { buildHomepageGlobalPatch, hydrateHomepage } from '../lib/homepageContent';
-import type { HomepageContent } from '../lib/websiteData';
+import { hydrateHomepage } from '../lib/homepageContent';
 import { api } from '../lib/api';
 import { setSiteOrigin } from '../seo/siteUrl';
 
@@ -14,7 +13,6 @@ interface WebsiteDataContextType {
   /** Persisted CMS data without preview overrides — use for editor form sync. */
   sourceData: WebsiteData;
   loading: boolean;
-  updateHero: (hero: WebsiteData['hero']) => Promise<void>;
   updateArticles: (articles: WebsiteData['articles']) => Promise<void>;
   createArticle: (article: any) => Promise<void>;
   updateArticle: (id: string, article: any) => Promise<void>;
@@ -23,16 +21,13 @@ interface WebsiteDataContextType {
   updateEvent: (id: string, event: any) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
   updateEvents: (events: WebsiteData['events']) => Promise<void>;
-  updateStats: (stats: WebsiteData['stats']) => Promise<void>;
-  updatePillars: (pillars: WebsiteData['pillars']) => Promise<void>;
-  updatePerks: (perks: WebsiteData['perks']) => Promise<void>;
   updateSettings: (settings: WebsiteData['settings']) => Promise<void>;
   updateAppearance: (appearance: WebsiteData['appearance']) => Promise<void>;
   setPreview: (preview: Partial<WebsiteData> | null) => void;
   isPreviewVisible: boolean;
-  togglePreview: () => void;
   resetData: () => void;
   refresh: () => Promise<void>;
+  contentVersion: number;
 }
 
 const WebsiteDataContext = createContext<WebsiteDataContextType | undefined>(undefined);
@@ -40,27 +35,26 @@ const WebsiteDataContext = createContext<WebsiteDataContextType | undefined>(und
 export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<WebsiteData>(initialData);
   const [previewData, setPreviewData] = useState<WebsiteData | null>(null);
-  const [isPreviewVisible, setIsPreviewVisible] = useState(() => {
-    const saved = localStorage.getItem('admin_preview_visible');
-    return saved !== 'false'; // Default to true
-  });
+  const isPreviewVisible = false;
   const [loading, setLoading] = useState(true);
+  const [contentVersion, setContentVersion] = useState(1);
   const dataRef = useRef(data);
   dataRef.current = data;
 
   const fetchContent = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('adminToken') || '';
       const [site, articles, events] = await Promise.all([
         api.getContentSite().catch((e) => {
           console.error('Failed to fetch site slice:', e);
           return {};
         }),
-        api.getArticles().catch((e) => {
+        (token ? api.getAdminArticles(token) : api.getArticles()).catch((e) => {
           console.error('Failed to fetch articles slice:', e);
           return [];
         }),
-        api.getEvents().catch((e) => {
+        (token ? api.getAdminEvents(token) : api.getEvents()).catch((e) => {
           console.error('Failed to fetch events slice:', e);
           return [];
         }),
@@ -69,6 +63,9 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       if (typeof (site as { siteUrl?: string }).siteUrl === 'string') {
         setSiteOrigin((site as { siteUrl: string }).siteUrl);
+      }
+      if (typeof (site as { contentVersion?: number }).contentVersion === 'number') {
+        setContentVersion((site as { contentVersion: number }).contentVersion);
       }
 
       // Deep merge remoteData with initialData to ensure new fields (typography, theme, etc.) 
@@ -193,13 +190,13 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           };
           merged.hero = { ...initialData.hero, ...hero };
         }
-        if (remoteData.stats) {
+        if (Array.isArray(remoteData.stats)) {
           merged.stats = remoteData.stats;
         }
-        if (remoteData.pillars) {
+        if (Array.isArray(remoteData.pillars)) {
           merged.pillars = remoteData.pillars;
         }
-        if (remoteData.perks) {
+        if (Array.isArray(remoteData.perks)) {
           merged.perks = remoteData.perks;
         }
         return hydrateHomepage(merged);
@@ -226,25 +223,22 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
 
     try {
-      await api.updateGlobalContent(token, updates);
+      const result = await api.updateGlobalContent(token, updates, { version: contentVersion });
+      if (typeof result.version === 'number') {
+        setContentVersion(result.version);
+      }
       await fetchContent(); // Refresh from server
     } catch (error) {
+      const err = error as Error & { status?: number };
+      if (err.status === 409) {
+        await fetchContent();
+        window.alert('Someone else saved changes first. Content was refreshed — review and save again.');
+      }
       console.error('Persistence error:', error);
       throw error;
     }
   };
 
-  const updateHomepage = async (patch: Partial<HomepageContent>) => {
-    let payload!: ReturnType<typeof buildHomepageGlobalPatch>
-    setData((prev) => {
-      payload = buildHomepageGlobalPatch(prev, patch)
-      return hydrateHomepage({ ...prev, ...payload })
-    })
-    await updateGlobal(payload)
-  }
-
-  const updateHero = async (hero: WebsiteData['hero']) => updateHomepage({ hero });
-  
   const createArticle = async (article: any) => {
     const token = getAdminToken();
     if (!token) return;
@@ -326,9 +320,6 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
      setData(prev => ({ ...prev, events }));
   };
   
-  const updateStats = async (stats: WebsiteData['stats']) => updateHomepage({ stats });
-  const updatePillars = async (pillars: WebsiteData['pillars']) => updateHomepage({ pillars });
-  const updatePerks = async (perks: WebsiteData['perks']) => updateHomepage({ perks });
   const updateSettings = async (settings: WebsiteData['settings']) => updateGlobal({ settings });
   const updateAppearance = async (appearance: WebsiteData['appearance']) => updateGlobal({ appearance });
 
@@ -356,14 +347,6 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
   }, []);
 
-  const togglePreview = () => {
-    setIsPreviewVisible(prev => {
-      const next = !prev;
-      localStorage.setItem('admin_preview_visible', next.toString());
-      return next;
-    });
-  };
-
   const resetData = () => {
     setData(initialData);
     setPreviewData(null);
@@ -375,7 +358,6 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       data: previewData || data,
       sourceData: data,
       loading,
-      updateHero,
       updateArticles,
       createArticle,
       updateArticle,
@@ -384,16 +366,13 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateEvent,
       deleteEvent,
       updateEvents,
-      updateStats,
-      updatePillars,
-      updatePerks,
       updateSettings,
       updateAppearance,
       setPreview,
       isPreviewVisible,
-      togglePreview,
       resetData,
-      refresh: fetchContent
+      refresh: fetchContent,
+      contentVersion,
     }}>
       {children}
     </WebsiteDataContext.Provider>

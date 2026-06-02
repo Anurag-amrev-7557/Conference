@@ -10,7 +10,9 @@ datasource db {
 model Admin {
   id        String   @id @default(uuid())
   username  String   @unique
+  email     String?
   password  String
+  role      String   @default("super_admin")
   createdAt DateTime @default(now())
 }
 
@@ -22,6 +24,7 @@ model SiteContent {
   stats      String
   pillars    String
   perks      String
+  version    Int      @default(1)
   updatedAt  DateTime @updatedAt
 }
 
@@ -35,6 +38,8 @@ model Article {
   content      String
   thumbnail    String
   isPublished  Boolean  @default(true)
+  publishAt    DateTime?
+  unpublishAt  DateTime?
   authorName   String
   authorRole   String
   authorAvatar String
@@ -43,6 +48,7 @@ model Article {
   seoDescription String?
   ogImage        String?
   noindex        Boolean  @default(false)
+  deletedAt      DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -56,11 +62,16 @@ model Event {
   title       String
   host        String
   location    String
+  description String   @default("")
   tags        String
   price       String
   thumbnail   String
   status      String
   isPublished Boolean  @default(true)
+  publishAt   DateTime?
+  unpublishAt DateTime?
+  registrationUrl  String  @default("")
+  registrationOpen Boolean @default(true)
   startDate   DateTime?
   endDate     DateTime?
   lat         Float?
@@ -69,8 +80,33 @@ model Event {
   seoDescription String?
   ogImage        String?
   noindex        Boolean  @default(false)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ContentRevision {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  snapshot   String
+  changedBy  String   @default("admin")
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  adminId    String?
+  username   String   @default("admin")
+  action     String
+  entityType String
+  entityId   String?
+  summary    String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model CommunityPost {
@@ -112,7 +148,7 @@ model Comment {
 model ConferenceRegistration {
   id               String   @id @default(uuid())
   name             String
-  email            String
+  email            String   @unique
   phone            String   @default("")
   linkedIn         String   @default("")
   designation      String
@@ -120,4 +156,11 @@ model ConferenceRegistration {
   status           String   @default("pending")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model NewsletterSignup {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  source    String   @default("waitlist")
+  createdAt DateTime @default(now())
 }

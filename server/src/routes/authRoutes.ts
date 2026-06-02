@@ -19,22 +19,29 @@ const loginLimiter = rateLimit({
 
 // POST /api/v1/auth/login
 router.post('/login', loginLimiter, async (req, res) => {
-  const { password } = req.body;
+  const { password, username: loginUsername } = req.body;
+  const username = typeof loginUsername === 'string' && loginUsername.trim()
+    ? loginUsername.trim()
+    : 'admin';
 
   try {
-    const admin = await prisma.admin.findUnique({ where: { username: 'admin' } });
+    const admin = await prisma.admin.findUnique({ where: { username } });
 
     if (!admin) {
-      return res.status(401).json({ error: 'Administrative dashboard not initialized.' });
+      return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
     const isValid = await bcrypt.compare(password, admin.password);
     if (!isValid) {
-      return res.status(401).json({ error: 'Incorrect administrative password.' });
+      return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
-    const token = jwt.sign({ role: 'admin' }, getJwtSecret(), { expiresIn: '24h' });
-    res.json({ token, success: true });
+    const token = jwt.sign(
+      { role: admin.role || 'super_admin', adminId: admin.id, username: admin.username },
+      getJwtSecret(),
+      { expiresIn: '24h' },
+    );
+    res.json({ token, success: true, role: admin.role, username: admin.username });
   } catch (error) {
     res.status(500).json({ error: 'Authentication failed.' });
   }

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '../../lib/utils'
-import { Check, ClipboardList, Download, FileText, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Check, ClipboardList, Download, ExternalLink, FileText, Globe, Pencil, Plus, Search, Settings2, Trash2, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
 import {
   defaultConferenceRegistrationForm,
@@ -14,31 +16,55 @@ import type {
 } from '../../lib/registrationTypes'
 import type { RouteSeoOverride } from '../../lib/websiteData'
 import { useWebsiteData } from '../WebsiteDataProvider'
-import { AdminConfirmDialog } from './AdminConfirmDialog'
-import { RouteSeoFields } from './admin-workspace-fields'
 import {
-  AdminButton,
-  AdminField,
-  AdminFieldGrid,
-  AdminFormSection,
   AdminHeaderSave,
-  AdminInput,
   AdminPageIntro,
-  AdminSubnav,
-  AdminTextarea,
+  AdminButton,
 } from './admin-ui'
-import { useAdminWorkspaceNavRegistry, useApplyPendingAdminSection } from './admin-workspace-nav'
+import {
+  AdminEditorField,
+  AdminEditorFields,
+  AdminEditorInput,
+  editorSaveStatusFrom,
+} from './admin-editor-ui'
+import { AdminWorkspaceShell } from './AdminWorkspaceShell'
+import { REGISTRATION_TAB_INTROS } from './workspaceTabIntros'
+import {
+  RegistrationFormCopyEditor,
+  RegistrationOperationsEditor,
+  RegistrationSeoEditor,
+} from './RegistrationFormEditor'
+import { AdminSelect } from './AdminSelect'
+import { useApplyPendingAdminSection } from './admin-workspace-nav'
+import { EmptyState, ConfirmDialog, SkeletonTable, DataTable } from './ui'
+import { useToast } from './ui/Toast'
+import type { DataTableColumn } from './ui'
 
-type TabId = 'submissions' | 'form'
+type TabId = 'submissions' | 'form' | 'operations' | 'seo'
+type StatusFilter = 'all' | RegistrationStatus
+
+const EDITOR_TABS: TabId[] = ['form', 'operations', 'seo']
+
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'confirmed', label: 'Approved' },
+  { id: 'cancelled', label: 'Rejected' },
+]
 
 const STATUS_OPTIONS: RegistrationStatus[] = ['pending', 'confirmed', 'cancelled']
 
 const SUBNAV_GROUPS = [
   {
     label: 'CRM',
+    items: [{ id: 'submissions', label: 'Submissions', icon: ClipboardList }],
+  },
+  {
+    label: 'Page',
     items: [
-      { id: 'submissions', label: 'Submissions', icon: ClipboardList },
       { id: 'form', label: 'Form copy', icon: FileText },
+      { id: 'operations', label: 'Operations', icon: Settings2 },
+      { id: 'seo', label: 'SEO', icon: Globe },
     ],
   },
 ]
@@ -110,9 +136,191 @@ function exportRegistrationsCsv(
   URL.revokeObjectURL(url)
 }
 
+function statusLabel(status: RegistrationStatus) {
+  return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+function RegistrationSidePanel({
+  mode,
+  title,
+  record,
+  designationOptions,
+  saving,
+  saveLabel,
+  onChange,
+  onClose,
+  onSave,
+  onApprove,
+  onReject,
+}: {
+  mode: 'create' | 'edit'
+  title: string
+  record: ConferenceRegistrationRecord
+  designationOptions: ConferenceRegistrationFormSettings['designationOptions']
+  saving: boolean
+  saveLabel: string
+  onChange: (next: ConferenceRegistrationRecord) => void
+  onClose: () => void
+  onSave: () => void
+  onApprove?: () => void
+  onReject?: () => void
+}) {
+  return (
+    <motion.aside
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 16 }}
+      transition={{ duration: 0.2, ease: [0, 0, 0.2, 1] }}
+      className="admin-crm-detail-panel"
+      aria-label={title}
+    >
+      <header className="admin-crm-detail-panel__header">
+        <div className="min-w-0">
+          <h2 className="admin-crm-detail-panel__title">{title}</h2>
+          {mode === 'edit' ? (
+            <p className="admin-crm-detail-panel__meta">
+              Submitted {new Date(record.createdAt).toLocaleString()}
+              {record.updatedAt !== record.createdAt
+                ? ` · Updated ${new Date(record.updatedAt).toLocaleString()}`
+                : null}
+            </p>
+          ) : null}
+        </div>
+        <button type="button" className="admin-crm-detail-panel__close" onClick={onClose} aria-label="Close">
+          <X className="w-4 h-4" aria-hidden />
+        </button>
+      </header>
+      <div className="admin-crm-detail-panel__body">
+        <div className="admin-crm-detail-panel__section">
+          <h3 className="admin-crm-detail-panel__section-title">Contact</h3>
+          <AdminEditorFields>
+            <AdminEditorField label="Full name">
+              <AdminEditorInput
+                value={record.name}
+                onChange={(e) => onChange({ ...record, name: e.target.value })}
+                autoComplete="name"
+              />
+            </AdminEditorField>
+            <AdminEditorField label="Email">
+              <AdminEditorInput
+                type="email"
+                value={record.email}
+                onChange={(e) => onChange({ ...record, email: e.target.value })}
+                autoComplete="email"
+              />
+            </AdminEditorField>
+            <AdminEditorField label="Phone">
+              <AdminEditorInput
+                type="tel"
+                value={record.phone}
+                onChange={(e) => onChange({ ...record, phone: e.target.value })}
+                autoComplete="tel"
+              />
+            </AdminEditorField>
+            <AdminEditorField label="LinkedIn">
+              <AdminEditorInput
+                type="url"
+                value={record.linkedIn}
+                onChange={(e) => onChange({ ...record, linkedIn: e.target.value })}
+                placeholder="linkedin.com/in/username"
+              />
+            </AdminEditorField>
+          </AdminEditorFields>
+        </div>
+
+        <div className="admin-crm-detail-panel__section">
+          <h3 className="admin-crm-detail-panel__section-title">Registration</h3>
+          <AdminEditorFields>
+            <AdminEditorField label="Designation">
+              <AdminSelect
+                aria-label="Designation"
+                value={record.designation}
+                onChange={(designation) =>
+                  onChange({ ...record, designation: designation as RegistrationDesignation })
+                }
+                options={designationOptions.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+              />
+            </AdminEditorField>
+            <AdminEditorField label="Status">
+              <AdminSelect
+                aria-label="Status"
+                value={record.status}
+                onChange={(status) => onChange({ ...record, status: status as RegistrationStatus })}
+                options={STATUS_OPTIONS.map((s) => ({
+                  value: s,
+                  label: statusLabel(s),
+                }))}
+              />
+            </AdminEditorField>
+            <AdminEditorField
+              label="Ticket price (cents)"
+              hint={formatPriceFromCents(record.ticketPriceCents)}
+            >
+              <AdminEditorInput
+                type="number"
+                min={0}
+                value={String(record.ticketPriceCents)}
+                onChange={(e) =>
+                  onChange({ ...record, ticketPriceCents: Number(e.target.value) || 0 })
+                }
+              />
+            </AdminEditorField>
+          </AdminEditorFields>
+        </div>
+      </div>
+      <footer
+        className={cn(
+          'admin-crm-detail-panel__footer',
+          mode === 'edit' && 'admin-crm-detail-panel__footer--split',
+        )}
+      >
+        {mode === 'edit' ? (
+          <div className="admin-crm-detail-panel__quick-actions">
+            <AdminButton
+              type="button"
+              variant="secondary"
+              className="admin-btn--compact"
+              disabled={saving || record.status === 'confirmed'}
+              onClick={onApprove}
+            >
+              <Check className="w-4 h-4" aria-hidden />
+              Approve
+            </AdminButton>
+            <AdminButton
+              type="button"
+              variant="secondary"
+              className="admin-btn--compact"
+              disabled={saving || record.status === 'cancelled'}
+              onClick={onReject}
+            >
+              <X className="w-4 h-4" aria-hidden />
+              Reject
+            </AdminButton>
+          </div>
+        ) : null}
+        <div className="flex flex-wrap justify-end gap-2">
+          <AdminButton type="button" variant="secondary" onClick={onClose} disabled={saving}>
+            Cancel
+          </AdminButton>
+          <AdminButton type="button" onClick={onSave} disabled={saving}>
+            {saving ? 'Saving…' : saveLabel}
+          </AdminButton>
+        </div>
+      </footer>
+    </motion.aside>
+  )
+}
+
 export function RegistrationManager() {
-  const { sourceData, updateSettings } = useWebsiteData()
+  const { sourceData, updateSettings, setPreview, isPreviewVisible } = useWebsiteData()
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<TabId>('submissions')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const skipDirtyRef = useRef(true)
   const [formCopy, setFormCopy] = useState<ConferenceRegistrationFormSettings>(() => ({
     ...defaultConferenceRegistrationForm,
     ...sourceData.settings.conferenceRegistration,
@@ -142,7 +350,10 @@ export function RegistrationManager() {
   const [saveError, setSaveError] = useState('')
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ConferenceRegistrationRecord | null>(null)
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const getToken = () => localStorage.getItem('adminToken') ?? ''
 
@@ -166,6 +377,8 @@ export function RegistrationManager() {
   }, [loadRegistrations])
 
   useEffect(() => {
+    skipDirtyRef.current = true
+    setIsDirty(false)
     setFormCopy({
       ...defaultConferenceRegistrationForm,
       ...sourceData.settings.conferenceRegistration,
@@ -185,14 +398,43 @@ export function RegistrationManager() {
     setRouteSeo(sourceData.settings.routeSeo?.['/register'] ?? {})
   }, [sourceData.settings.conferenceRegistration, sourceData.settings.routeSeo])
 
-  useApplyPendingAdminSection('/admin/registrations', (id) =>
-    setActiveTab(id === 'form' ? 'form' : 'submissions'),
-  )
+  useEffect(() => {
+    skipDirtyRef.current = true
+    setIsDirty(false)
+  }, [activeTab])
 
-  useAdminWorkspaceNavRegistry({
-    groups: SUBNAV_GROUPS,
-    activeId: activeTab,
-    onSelect: (id) => setActiveTab(id as TabId),
+  useEffect(() => {
+    if (!EDITOR_TABS.includes(activeTab)) return
+    if (skipDirtyRef.current) {
+      skipDirtyRef.current = false
+      return
+    }
+    setIsDirty(true)
+  }, [formCopy, routeSeo, activeTab])
+
+  useEffect(() => {
+    if (!EDITOR_TABS.includes(activeTab)) {
+      setPreview(null)
+      return
+    }
+    if (!isPreviewVisible) {
+      setPreview(null)
+      return
+    }
+    setPreview({
+      settings: {
+        ...sourceData.settings,
+        conferenceRegistration: formCopy,
+        routeSeo: { ...sourceData.settings.routeSeo, '/register': routeSeo },
+      },
+    })
+    return () => setPreview(null)
+  }, [activeTab, formCopy, routeSeo, isPreviewVisible, sourceData.settings, setPreview])
+
+  useApplyPendingAdminSection('/admin/registrations', (id) => {
+    if (id === 'form' || id === 'operations' || id === 'seo' || id === 'submissions') {
+      setActiveTab(id)
+    }
   })
 
   const handleSaveFormCopy = async () => {
@@ -204,8 +446,12 @@ export function RegistrationManager() {
         conferenceRegistration: formCopy,
         routeSeo: { ...sourceData.settings.routeSeo, '/register': routeSeo },
       })
+      skipDirtyRef.current = true
+      setIsDirty(false)
+      toast({ variant: 'success', title: 'Registration settings saved' })
     } catch {
       setSaveError('Failed to save form settings.')
+      toast({ variant: 'error', title: 'Save failed', description: 'Failed to save form settings.' })
     } finally {
       setIsSaving(false)
     }
@@ -234,6 +480,7 @@ export function RegistrationManager() {
     if (!token) return
     setIsSaving(true)
     setSaveError('')
+    const createdName = createDraft.name
     try {
       await api.createRegistration(token, {
         name: createDraft.name,
@@ -247,8 +494,10 @@ export function RegistrationManager() {
       setCreating(false)
       setCreateDraft(null)
       await loadRegistrations()
+      toast({ variant: 'success', title: 'Registration created', description: createdName })
     } catch {
       setSaveError('Failed to create registration.')
+      toast({ variant: 'error', title: 'Could not create registration' })
     } finally {
       setIsSaving(false)
     }
@@ -272,8 +521,10 @@ export function RegistrationManager() {
       })
       setEditing(null)
       await loadRegistrations()
+      toast({ variant: 'success', title: 'Registration updated', description: editing.name })
     } catch {
       setSaveError('Failed to update registration.')
+      toast({ variant: 'error', title: 'Could not save changes' })
     } finally {
       setIsSaving(false)
     }
@@ -299,6 +550,11 @@ export function RegistrationManager() {
       if (editing?.id === deleteTarget.id) setEditing(null)
       setDeleteTarget(null)
       await loadRegistrations()
+      toast({
+        variant: 'success',
+        title: 'Registration deleted',
+        description: deleteTarget.name,
+      })
     } catch (err: unknown) {
       setListError(err instanceof Error ? err.message : 'Failed to delete registration.')
     } finally {
@@ -315,8 +571,13 @@ export function RegistrationManager() {
       await api.updateRegistration(token, id, { status })
       if (editing?.id === id) setEditing((prev) => (prev ? { ...prev, status } : null))
       await loadRegistrations()
+      toast({
+        variant: 'success',
+        title: status === 'confirmed' ? 'Registration approved' : status === 'cancelled' ? 'Registration rejected' : 'Status updated',
+      })
     } catch {
       setListError('Failed to update registration status.')
+      toast({ variant: 'error', title: 'Could not update status' })
     } finally {
       setStatusUpdatingId(null)
     }
@@ -325,17 +586,131 @@ export function RegistrationManager() {
   const handleApprove = (id: string) => void handleSetStatus(id, 'confirmed')
 
   const handleReject = (id: string, currentStatus: RegistrationStatus) => {
-    if (
-      currentStatus !== 'confirmed' &&
-      !window.confirm('Reject this registration? They will be marked as not allowed.')
-    ) {
+    if (currentStatus === 'confirmed') {
+      void handleSetStatus(id, 'cancelled')
       return
     }
-    void handleSetStatus(id, 'cancelled')
+    setRejectTargetId(id)
   }
 
   const allowedCount = registrations.filter((r) => r.status === 'confirmed').length
   const pendingCount = registrations.filter((r) => r.status === 'pending').length
+  const rejectedCount = registrations.filter((r) => r.status === 'cancelled').length
+
+  const filteredRegistrations = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return registrations.filter((row) => {
+      if (statusFilter !== 'all' && row.status !== statusFilter) return false
+      if (!q) return true
+      return (
+        row.name.toLowerCase().includes(q) ||
+        row.email.toLowerCase().includes(q) ||
+        row.phone.toLowerCase().includes(q) ||
+        row.linkedIn.toLowerCase().includes(q)
+      )
+    })
+  }, [registrations, searchQuery, statusFilter])
+
+  const activeRowId = editing?.id ?? createDraft?.id ?? null
+
+  const openEditRecord = (row: ConferenceRegistrationRecord) => {
+    setCreating(false)
+    setCreateDraft(null)
+    setEditing({ ...row })
+  }
+
+  const registrationColumns: DataTableColumn<ConferenceRegistrationRecord>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      render: (row) => <span className="admin-data-table__name">{row.name}</span>,
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (row) => (
+        <span className="admin-data-table__muted">{row.email}</span>
+      ),
+    },
+    {
+      key: 'designation',
+      header: 'Type',
+      render: (row) => designationLabel(row.designation, formCopy.designationOptions),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => (
+        <span className={cn('admin-allowed-badge', allowedBadgeClass(row.status))}>
+          {row.status === 'confirmed' ? 'Approved' : row.status === 'cancelled' ? 'Rejected' : 'Pending'}
+        </span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Submitted',
+      sortable: true,
+      render: (row) => (
+        <span className="admin-data-table__muted">
+          {new Date(row.createdAt).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (row) => {
+        const isUpdating = statusUpdatingId === row.id
+        return (
+          <div className="admin-data-table__row-actions">
+            <AdminButton
+              type="button"
+              variant="ghost"
+              className="admin-btn--icon admin-btn--approve"
+              disabled={isUpdating || row.status === 'confirmed'}
+              onClick={() => void handleApprove(row.id)}
+              aria-label={`Approve ${row.name}`}
+              title="Approve"
+            >
+              <Check className="h-4 w-4" />
+            </AdminButton>
+            <AdminButton
+              type="button"
+              variant="ghost"
+              className="admin-btn--icon admin-btn--reject"
+              disabled={isUpdating || row.status === 'cancelled'}
+              onClick={() => handleReject(row.id, row.status)}
+              aria-label={`Reject ${row.name}`}
+              title="Reject"
+            >
+              <X className="h-4 w-4" />
+            </AdminButton>
+            <AdminButton
+              type="button"
+              variant="ghost"
+              className="admin-btn--icon"
+              disabled={isUpdating}
+              onClick={() => openEditRecord(row)}
+              aria-label={`Edit ${row.name}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </AdminButton>
+            <AdminButton
+              type="button"
+              variant="ghost"
+              className="admin-btn--icon"
+              disabled={isUpdating}
+              onClick={() => requestDelete(row)}
+              aria-label={`Delete ${row.name}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </AdminButton>
+          </div>
+        )
+      },
+    },
+  ]
 
   const patchForm = <K extends keyof ConferenceRegistrationFormSettings>(
     key: K,
@@ -344,834 +719,264 @@ export function RegistrationManager() {
     setFormCopy((prev) => ({ ...prev, [key]: value }))
   }
 
+  const saveStatus = EDITOR_TABS.includes(activeTab)
+    ? editorSaveStatusFrom(isSaving, isDirty)
+    : 'idle'
+
+  const saveLabel =
+    activeTab === 'operations'
+      ? 'Save operations'
+      : activeTab === 'seo'
+        ? 'Save SEO'
+        : 'Save form copy'
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="admin-toolbar shrink-0">
-        <div className="admin-toolbar__content w-full">
-          <AdminPageIntro
-            className="mb-0"
-            eyebrow="Summit"
-            title="Registration CRM"
-            lede="Submissions from /register and editable form copy."
-          />
-        </div>
-        <div className="admin-toolbar__actions">
-          {activeTab === 'form' ? (
-            <AdminHeaderSave label="Save form" saving={isSaving} onClick={handleSaveFormCopy} />
-          ) : (
-            <>
-              <AdminButton
-                type="button"
-                variant="secondary"
-                disabled={loading || registrations.length === 0}
-                onClick={() => exportRegistrationsCsv(registrations, formCopy.designationOptions)}
-              >
-                <Download className="h-4 w-4" aria-hidden />
-                Export CSV
+    <AdminWorkspaceShell
+      editorClassName="admin-book-page"
+      isPreviewVisible={isPreviewVisible && EDITOR_TABS.includes(activeTab)}
+      isSidebarCollapsed={isSidebarCollapsed}
+      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
+      previewVariant="register"
+      contentEditor={EDITOR_TABS.includes(activeTab)}
+      panelFlush={activeTab === 'submissions'}
+      toolbar={
+        <AdminPageIntro compact className="mb-0" lede="Summit sign-ups and /register form copy." />
+      }
+      subnav={{
+        groups: SUBNAV_GROUPS,
+        title: 'Registrations',
+        activeId: activeTab,
+        onSelect: (id) => setActiveTab(id as TabId),
+        pageId: 'registrations',
+      }}
+      editorHeader={REGISTRATION_TAB_INTROS[activeTab]}
+      editorHeaderAside={
+        activeTab === 'submissions' ? (
+          <div className="admin-page-metrics-inline">
+            <span>{registrations.length} total</span>
+            <span aria-hidden>·</span>
+            <span>{allowedCount} approved</span>
+            <span aria-hidden>·</span>
+            <span>{pendingCount} pending</span>
+            {rejectedCount > 0 ? (
+              <>
+                <span aria-hidden>·</span>
+                <span>{rejectedCount} rejected</span>
+              </>
+            ) : null}
+          </div>
+        ) : activeTab === 'operations' || activeTab === 'form' ? (
+          <span
+            className={cn(
+              'admin-allowed-badge',
+              formCopy.registrationOpen !== false
+                ? 'admin-allowed-badge--yes'
+                : 'admin-allowed-badge--no',
+            )}
+          >
+            {formCopy.registrationOpen !== false ? 'Registration open' : 'Registration closed'}
+          </span>
+        ) : null
+      }
+      saveStatus={saveStatus}
+      headerAction={
+        EDITOR_TABS.includes(activeTab) ? (
+          <>
+            <Link to="/register" target="_blank" rel="noopener noreferrer" className="inline-flex">
+              <AdminButton variant="secondary" className="shrink-0">
+                Open register page
+                <ExternalLink className="w-4 h-4" />
               </AdminButton>
-              <AdminButton type="button" variant="secondary" onClick={() => void loadRegistrations()}>
-                Refresh
-              </AdminButton>
-              <AdminButton type="button" onClick={openCreateForm}>
-                <Plus className="h-4 w-4" aria-hidden />
-                Add registration
-              </AdminButton>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="admin-page-editor flex flex-1 min-h-0">
-        <AdminSubnav
-          className="admin-subnav--desktop-only"
-          groups={SUBNAV_GROUPS}
-          title="Registrations"
-          activeId={activeTab}
-          onSelect={(id) => setActiveTab(id as TabId)}
-        />
-
+            </Link>
+            <AdminHeaderSave
+              label={saveLabel}
+              saving={isSaving}
+              onClick={() => void handleSaveFormCopy()}
+            />
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--secondary admin-btn--compact"
+              disabled={loading || registrations.length === 0}
+              onClick={() => exportRegistrationsCsv(filteredRegistrations, formCopy.designationOptions)}
+            >
+              <Download className="h-4 w-4" aria-hidden />
+              Export CSV
+            </button>
+            <button type="button" className="admin-btn admin-btn--secondary" onClick={() => void loadRegistrations()}>
+              Refresh
+            </button>
+            <button type="button" className="admin-btn admin-btn--primary" onClick={openCreateForm}>
+              <Plus className="h-4 w-4" aria-hidden />
+              Add registration
+            </button>
+          </>
+        )
+      }
+    >
+      {activeTab === 'submissions' ? (
         <div
           className={cn(
-            'admin-panel-body flex-1 min-h-0',
-            activeTab === 'submissions' ? 'admin-panel-body--flush' : 'overflow-y-auto',
+            'admin-catalog-panel admin-catalog-panel--crm admin-crm-layout',
+            (editing || (creating && createDraft)) && 'admin-crm-layout--detail',
           )}
         >
-          {activeTab === 'submissions' ? (
-            <>
-              {saveError || listError ? (
-                <div className="admin-panel-banner">
-                  {saveError ? (
-                    <p className="admin-error" role="alert">
-                      {saveError}
-                    </p>
-                  ) : null}
-                  {listError ? (
-                    <p className="admin-error" role="alert">
-                      {listError}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {loading ? (
-                <p className="admin-panel-empty">Loading…</p>
-              ) : registrations.length === 0 ? (
-                <p className="admin-panel-empty">No registrations yet.</p>
-              ) : (
-                <div className="admin-data-table">
-                  <div className="admin-data-table__toolbar">
-                    <p className="admin-data-table__toolbar-meta">
-                      <strong>{registrations.length}</strong> submissions ·{' '}
-                      <strong>{allowedCount}</strong> allowed ·{' '}
-                      <strong>{pendingCount}</strong> pending review
-                    </p>
-                  </div>
-                  <div className="admin-data-table__scroll">
-                    <table className="admin-data-table__table">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Phone</th>
-                          <th>LinkedIn</th>
-                          <th>Type</th>
-                          <th>Allowed</th>
-                          <th>Status</th>
-                          <th>Submitted</th>
-                          <th className="admin-data-table__actions">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {registrations.map((row) => {
-                          const isUpdating = statusUpdatingId === row.id
-                          return (
-                            <tr key={row.id}>
-                              <td className="admin-data-table__name">{row.name}</td>
-                              <td>{row.email}</td>
-                              <td className="admin-data-table__muted">{row.phone || '—'}</td>
-                              <td>
-                                {row.linkedIn ? (
-                                  <a
-                                    href={
-                                      row.linkedIn.startsWith('http')
-                                        ? row.linkedIn
-                                        : `https://${row.linkedIn}`
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="admin-data-table__link"
-                                    title={row.linkedIn}
-                                  >
-                                    {row.linkedIn.replace(/^https?:\/\//, '')}
-                                  </a>
-                                ) : (
-                                  <span className="admin-data-table__muted">—</span>
-                                )}
-                              </td>
-                              <td>
-                                {designationLabel(row.designation, formCopy.designationOptions)}
-                              </td>
-                              <td>
-                                <span
-                                  className={cn(
-                                    'admin-allowed-badge',
-                                    allowedBadgeClass(row.status),
-                                  )}
-                                >
-                                  {allowedLabel(row.status)}
-                                </span>
-                              </td>
-                              <td className="capitalize">{row.status}</td>
-                              <td className="admin-data-table__muted">
-                                {new Date(row.createdAt).toLocaleString()}
-                              </td>
-                              <td className="admin-data-table__actions">
-                                <div className="admin-data-table__row-actions">
-                                  <AdminButton
-                                    type="button"
-                                    variant="ghost"
-                                    className="admin-btn--icon admin-btn--approve"
-                                    disabled={isUpdating || row.status === 'confirmed'}
-                                    onClick={() => void handleApprove(row.id)}
-                                    aria-label={`Approve ${row.name}`}
-                                    title="Approve (allow entry)"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </AdminButton>
-                                  <AdminButton
-                                    type="button"
-                                    variant="ghost"
-                                    className="admin-btn--icon admin-btn--reject"
-                                    disabled={isUpdating || row.status === 'cancelled'}
-                                    onClick={() => handleReject(row.id, row.status)}
-                                    aria-label={`Reject ${row.name}`}
-                                    title={
-                                      row.status === 'confirmed'
-                                        ? 'Revoke approval'
-                                        : 'Reject (not allowed)'
-                                    }
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </AdminButton>
-                                  <AdminButton
-                                    type="button"
-                                    variant="ghost"
-                                    className="admin-btn--icon"
-                                    disabled={isUpdating}
-                                    onClick={() => setEditing({ ...row })}
-                                    aria-label={`Edit ${row.name}`}
-                                    title="Edit"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </AdminButton>
-                                  <AdminButton
-                                    type="button"
-                                    variant="ghost"
-                                    className="admin-btn--icon"
-                                    disabled={isUpdating}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      requestDelete(row)
-                                    }}
-                                    aria-label={`Delete ${row.name}`}
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </AdminButton>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {creating && createDraft ? (
-                <div className="admin-panel-drawer admin-panel-body__inner admin-form-stack">
-                  <AdminFormSection title="Add registration">
-                    <AdminFieldGrid>
-                      <AdminField label="Name">
-                        <AdminInput
-                          value={createDraft.name}
-                          onChange={(e) => setCreateDraft({ ...createDraft, name: e.target.value })}
-                        />
-                      </AdminField>
-                      <AdminField label="Email">
-                        <AdminInput
-                          type="email"
-                          value={createDraft.email}
-                          onChange={(e) => setCreateDraft({ ...createDraft, email: e.target.value })}
-                        />
-                      </AdminField>
-                      <AdminField label="Phone">
-                        <AdminInput
-                          value={createDraft.phone}
-                          onChange={(e) => setCreateDraft({ ...createDraft, phone: e.target.value })}
-                        />
-                      </AdminField>
-                      <AdminField label="LinkedIn">
-                        <AdminInput
-                          value={createDraft.linkedIn}
-                          onChange={(e) =>
-                            setCreateDraft({ ...createDraft, linkedIn: e.target.value })
-                          }
-                        />
-                      </AdminField>
-                      <AdminField label="Designation">
-                        <select
-                          className="admin-input w-full"
-                          value={createDraft.designation}
-                          onChange={(e) =>
-                            setCreateDraft({
-                              ...createDraft,
-                              designation: e.target.value as RegistrationDesignation,
-                            })
-                          }
-                        >
-                          {formCopy.designationOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </AdminField>
-                      <AdminField label="Status">
-                        <select
-                          className="admin-input w-full"
-                          value={createDraft.status}
-                          onChange={(e) =>
-                            setCreateDraft({
-                              ...createDraft,
-                              status: e.target.value as RegistrationStatus,
-                            })
-                          }
-                        >
-                          {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </AdminField>
-                      <AdminField label="Ticket price (cents)">
-                        <AdminInput
-                          type="number"
-                          min={0}
-                          value={createDraft.ticketPriceCents}
-                          onChange={(e) =>
-                            setCreateDraft({
-                              ...createDraft,
-                              ticketPriceCents: Number(e.target.value) || 0,
-                            })
-                          }
-                        />
-                      </AdminField>
-                    </AdminFieldGrid>
-                    <div className="flex gap-2 mt-4">
-                      <AdminButton
-                        type="button"
-                        onClick={() => void handleCreateRecord()}
-                        disabled={isSaving}
-                      >
-                        Create
-                      </AdminButton>
-                      <AdminButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          setCreating(false)
-                          setCreateDraft(null)
-                        }}
-                      >
-                        Cancel
-                      </AdminButton>
-                    </div>
-                  </AdminFormSection>
-                </div>
-              ) : null}
-
-              {editing ? (
-                <div className="admin-panel-drawer admin-panel-body__inner admin-form-stack">
-                  <AdminFormSection title={`Edit — ${editing.name}`}>
-                    <AdminFieldGrid>
-                      <AdminField label="Full name">
-                        <AdminInput
-                          value={editing.name}
-                          onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                        />
-                      </AdminField>
-                      <AdminField label="Email">
-                        <AdminInput
-                          type="email"
-                          value={editing.email}
-                          onChange={(e) => setEditing({ ...editing, email: e.target.value })}
-                        />
-                      </AdminField>
-                      <AdminField label="Phone">
-                        <AdminInput
-                          type="tel"
-                          value={editing.phone}
-                          onChange={(e) => setEditing({ ...editing, phone: e.target.value })}
-                        />
-                      </AdminField>
-                      <AdminField label="LinkedIn">
-                        <AdminInput
-                          type="url"
-                          value={editing.linkedIn}
-                          onChange={(e) => setEditing({ ...editing, linkedIn: e.target.value })}
-                          placeholder="linkedin.com/in/username"
-                        />
-                      </AdminField>
-                      <AdminField label="Designation">
-                        <select
-                          className="admin-input w-full"
-                          value={editing.designation}
-                          onChange={(e) =>
-                            setEditing({
-                              ...editing,
-                              designation: e.target.value as RegistrationDesignation,
-                            })
-                          }
-                        >
-                          {formCopy.designationOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </AdminField>
-                      <AdminField label="Status">
-                        <select
-                          className="admin-input w-full"
-                          value={editing.status}
-                          onChange={(e) =>
-                            setEditing({
-                              ...editing,
-                              status: e.target.value as RegistrationStatus,
-                            })
-                          }
-                        >
-                          {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </AdminField>
-                      <AdminField label="Ticket price (cents)">
-                        <AdminInput
-                          type="number"
-                          min={0}
-                          value={String(editing.ticketPriceCents)}
-                          onChange={(e) =>
-                            setEditing({
-                              ...editing,
-                              ticketPriceCents: Number(e.target.value) || 0,
-                            })
-                          }
-                        />
-                      </AdminField>
-                    </AdminFieldGrid>
-                    <div className="flex gap-2 mt-4">
-                      <AdminButton type="button" onClick={() => void handleSaveRecord()} disabled={isSaving}>
-                        Save changes
-                      </AdminButton>
-                      <AdminButton type="button" variant="secondary" onClick={() => setEditing(null)}>
-                        Cancel
-                      </AdminButton>
-                    </div>
-                  </AdminFormSection>
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <div className="admin-panel-body__inner admin-form-stack">
-              {saveError ? (
+          <div className="admin-crm-layout__main">
+            {saveError || listError ? (
+              <div className="admin-panel-banner">
                 <p className="admin-error" role="alert">
-                  {saveError}
+                  {saveError || listError}
                 </p>
-              ) : null}
+              </div>
+            ) : null}
 
-              <AdminFormSection title="Page & panel">
-                  <AdminFieldGrid>
-                    <AdminField label="Panel eyebrow">
-                      <AdminInput
-                        value={formCopy.panelEyebrow}
-                        onChange={(e) => patchForm('panelEyebrow', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Panel headline">
-                      <AdminInput
-                        value={formCopy.panelHeadline}
-                        onChange={(e) => patchForm('panelHeadline', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Panel headline accent">
-                      <AdminInput
-                        value={formCopy.panelHeadlineAccent ?? ''}
-                        onChange={(e) => patchForm('panelHeadlineAccent', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Panel lede" className="sm:col-span-2">
-                      <AdminTextarea
-                        value={formCopy.panelLede}
-                        onChange={(e) => patchForm('panelLede', e.target.value)}
-                        rows={2}
-                      />
-                    </AdminField>
-                  </AdminFieldGrid>
-                </AdminFormSection>
-
-                <AdminFormSection title="Panel stats">
-                  {formCopy.panelStats.map((stat, i) => (
-                    <AdminFieldGrid key={`${stat.label}-${i}`} className="mb-4">
-                      <AdminField label="Value">
-                        <AdminInput
-                          value={stat.value}
-                          onChange={(e) => {
-                            const next = [...formCopy.panelStats];
-                            next[i] = { ...next[i], value: e.target.value };
-                            patchForm('panelStats', next);
-                          }}
-                        />
-                      </AdminField>
-                      <AdminField label="Label">
-                        <AdminInput
-                          value={stat.label}
-                          onChange={(e) => {
-                            const next = [...formCopy.panelStats];
-                            next[i] = { ...next[i], label: e.target.value };
-                            patchForm('panelStats', next);
-                          }}
-                        />
-                      </AdminField>
-                    </AdminFieldGrid>
+            {!loading && registrations.length > 0 ? (
+              <div className="admin-crm-toolbar">
+                <div className="admin-crm-toolbar__filters" role="tablist" aria-label="Filter by status">
+                  {STATUS_FILTERS.map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={statusFilter === filter.id}
+                      className={cn(
+                        'admin-crm-filter',
+                        statusFilter === filter.id && 'admin-crm-filter--active',
+                      )}
+                      onClick={() => setStatusFilter(filter.id)}
+                    >
+                      {filter.label}
+                    </button>
                   ))}
-                </AdminFormSection>
+                </div>
+                <div className="admin-crm-toolbar__actions">
+                  <span className="admin-crm-toolbar__count">
+                    {filteredRegistrations.length} of {registrations.length}
+                  </span>
+                  <label className="admin-crm-toolbar__search">
+                    <span className="sr-only">Search submissions</span>
+                    <AdminEditorInput
+                      type="search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search name, email, phone…"
+                      aria-label="Search submissions"
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
 
-                <AdminFormSection title="Panel quote">
-                  <AdminFieldGrid>
-                    <AdminField label="Quote" className="sm:col-span-2">
-                      <AdminTextarea
-                        value={formCopy.panelQuote.quote}
-                        onChange={(e) =>
-                          patchForm('panelQuote', { ...formCopy.panelQuote, quote: e.target.value })
-                        }
-                        rows={3}
-                      />
-                    </AdminField>
-                    <AdminField label="Name">
-                      <AdminInput
-                        value={formCopy.panelQuote.name}
-                        onChange={(e) =>
-                          patchForm('panelQuote', { ...formCopy.panelQuote, name: e.target.value })
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Role">
-                      <AdminInput
-                        value={formCopy.panelQuote.role}
-                        onChange={(e) =>
-                          patchForm('panelQuote', { ...formCopy.panelQuote, role: e.target.value })
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Initials">
-                      <AdminInput
-                        value={formCopy.panelQuote.initials}
-                        onChange={(e) =>
-                          patchForm('panelQuote', {
-                            ...formCopy.panelQuote,
-                            initials: e.target.value,
-                          })
-                        }
-                      />
-                    </AdminField>
-                  </AdminFieldGrid>
-                </AdminFormSection>
+            {loading ? (
+              <div className="admin-registrations-table">
+                <SkeletonTable rows={8} cols={5} />
+              </div>
+            ) : registrations.length === 0 ? (
+              <EmptyState
+                icon={ClipboardList}
+                heading="No registrations yet"
+                subtext="Summit sign-ups from /register will appear here."
+              />
+            ) : filteredRegistrations.length === 0 ? (
+              <EmptyState
+                icon={Search}
+                heading="No matches"
+                subtext="Try a different filter or clear your search."
+              />
+            ) : (
+              <div className="admin-registrations-table">
+                <DataTable
+                  embedded
+                  columns={registrationColumns}
+                  data={filteredRegistrations}
+                  activeRowId={activeRowId}
+                  onRowClick={openEditRecord}
+                />
+              </div>
+            )}
+          </div>
 
-                <AdminFormSection title="Trust footer">
-                  <AdminFieldGrid>
-                    <AdminField label="Eyebrow">
-                      <AdminInput
-                        value={formCopy.trustFooter.eyebrow}
-                        onChange={(e) =>
-                          patchForm('trustFooter', {
-                            ...formCopy.trustFooter,
-                            eyebrow: e.target.value,
-                          })
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Title" className="sm:col-span-2">
-                      <AdminInput
-                        value={formCopy.trustFooter.title}
-                        onChange={(e) =>
-                          patchForm('trustFooter', { ...formCopy.trustFooter, title: e.target.value })
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Logo names (comma-separated)" className="sm:col-span-2">
-                      <AdminInput
-                        value={formCopy.trustFooter.logos.join(', ')}
-                        onChange={(e) =>
-                          patchForm('trustFooter', {
-                            ...formCopy.trustFooter,
-                            logos: e.target.value
-                              .split(',')
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                          })
-                        }
-                      />
-                    </AdminField>
-                  </AdminFieldGrid>
-                </AdminFormSection>
+          <AnimatePresence mode="wait">
+            {editing ? (
+              <RegistrationSidePanel
+                key={`edit-${editing.id}`}
+                mode="edit"
+                title={editing.name}
+                record={editing}
+                designationOptions={formCopy.designationOptions}
+                saving={isSaving}
+                saveLabel="Save changes"
+                onChange={setEditing}
+                onClose={() => setEditing(null)}
+                onSave={() => void handleSaveRecord()}
+                onApprove={() => void handleApprove(editing.id)}
+                onReject={() => handleReject(editing.id, editing.status)}
+              />
+            ) : creating && createDraft ? (
+              <RegistrationSidePanel
+                key="create"
+                mode="create"
+                title="Add registration"
+                record={createDraft}
+                designationOptions={formCopy.designationOptions}
+                saving={isSaving}
+                saveLabel="Create"
+                onChange={setCreateDraft}
+                onClose={() => {
+                  setCreating(false)
+                  setCreateDraft(null)
+                }}
+                onSave={() => void handleCreateRecord()}
+              />
+            ) : null}
+          </AnimatePresence>
 
-                <AdminFormSection title="Page SEO (/register)">
-                  <RouteSeoFields path="/register" value={routeSeo} onChange={setRouteSeo} />
-                </AdminFormSection>
-
-                <AdminFormSection title="Form card">
-                  <AdminFieldGrid>
-                    <AdminField label="Page title">
-                      <AdminInput
-                        value={formCopy.pageTitle}
-                        onChange={(e) => patchForm('pageTitle', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Page title accent">
-                      <AdminInput
-                        value={formCopy.pageTitleAccent ?? ''}
-                        onChange={(e) => patchForm('pageTitleAccent', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Page lede" className="sm:col-span-2">
-                      <AdminTextarea
-                        value={formCopy.pageLede}
-                        onChange={(e) => patchForm('pageLede', e.target.value)}
-                        rows={2}
-                      />
-                    </AdminField>
-                    <AdminField label="Form kicker">
-                      <AdminInput
-                        value={formCopy.formKicker}
-                        onChange={(e) => patchForm('formKicker', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Section title (below page lede)">
-                      <AdminInput
-                        value={formCopy.formTitle}
-                        onChange={(e) => patchForm('formTitle', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Form subtitle" className="sm:col-span-2">
-                      <AdminTextarea
-                        value={formCopy.formSubtitle}
-                        onChange={(e) => patchForm('formSubtitle', e.target.value)}
-                        rows={2}
-                      />
-                    </AdminField>
-                    <AdminField label="Price label">
-                      <AdminInput
-                        value={formCopy.priceLabel}
-                        onChange={(e) => patchForm('priceLabel', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Ticket price (cents)">
-                      <AdminInput
-                        type="number"
-                        min={0}
-                        value={formCopy.ticketPriceCents}
-                        onChange={(e) => {
-                          const cents = Number(e.target.value) || 0
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            ticketPriceCents: cents,
-                            priceAmount: formatPriceFromCents(cents),
-                          }))
-                        }}
-                      />
-                    </AdminField>
-                    <AdminField label="Price display">
-                      <AdminInput
-                        value={formCopy.priceAmount}
-                        onChange={(e) => patchForm('priceAmount', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Price note" className="sm:col-span-2">
-                      <AdminInput
-                        value={formCopy.priceNote ?? ''}
-                        onChange={(e) => patchForm('priceNote', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Submit button">
-                      <AdminInput
-                        value={formCopy.submitLabel}
-                        onChange={(e) => patchForm('submitLabel', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Success title">
-                      <AdminInput
-                        value={formCopy.successTitle}
-                        onChange={(e) => patchForm('successTitle', e.target.value)}
-                      />
-                    </AdminField>
-                    <AdminField label="Success message" className="sm:col-span-2">
-                      <AdminTextarea
-                        value={formCopy.successMessage}
-                        onChange={(e) => patchForm('successMessage', e.target.value)}
-                        rows={3}
-                      />
-                    </AdminField>
-                  </AdminFieldGrid>
-                </AdminFormSection>
-
-                <AdminFormSection title="Field labels">
-                  <AdminFieldGrid>
-                    <AdminField label="Name label">
-                      <AdminInput
-                        value={formCopy.fields.name.label}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              name: { ...prev.fields.name, label: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Name placeholder">
-                      <AdminInput
-                        value={formCopy.fields.name.placeholder ?? ''}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              name: { ...prev.fields.name, placeholder: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Email label">
-                      <AdminInput
-                        value={formCopy.fields.email.label}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              email: { ...prev.fields.email, label: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Email placeholder">
-                      <AdminInput
-                        value={formCopy.fields.email.placeholder ?? ''}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              email: { ...prev.fields.email, placeholder: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Phone label">
-                      <AdminInput
-                        value={formCopy.fields.phone.label}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              phone: { ...prev.fields.phone, label: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Phone placeholder">
-                      <AdminInput
-                        value={formCopy.fields.phone.placeholder ?? ''}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              phone: { ...prev.fields.phone, placeholder: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="LinkedIn label">
-                      <AdminInput
-                        value={formCopy.fields.linkedIn.label}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              linkedIn: { ...prev.fields.linkedIn, label: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="LinkedIn placeholder">
-                      <AdminInput
-                        value={formCopy.fields.linkedIn.placeholder ?? ''}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              linkedIn: { ...prev.fields.linkedIn, placeholder: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                    <AdminField label="Designation field label" className="sm:col-span-2">
-                      <AdminInput
-                        value={formCopy.fields.designation.label}
-                        onChange={(e) =>
-                          setFormCopy((prev) => ({
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              designation: { ...prev.fields.designation, label: e.target.value },
-                            },
-                          }))
-                        }
-                      />
-                    </AdminField>
-                  </AdminFieldGrid>
-                </AdminFormSection>
-
-                <AdminFormSection title="Designation options">
-                  {formCopy.designationOptions.map((opt, i) => (
-                    <AdminFieldGrid key={opt.value} className="mb-4 pb-4 border-b border-border last:border-0">
-                      <AdminField label={`${opt.label} — display label`}>
-                        <AdminInput
-                          value={opt.label}
-                          onChange={(e) => {
-                            const next = [...formCopy.designationOptions]
-                            next[i] = { ...next[i], label: e.target.value }
-                            patchForm('designationOptions', next)
-                          }}
-                        />
-                      </AdminField>
-                      <AdminField label="Description">
-                        <AdminInput
-                          value={opt.description ?? ''}
-                          onChange={(e) => {
-                            const next = [...formCopy.designationOptions]
-                            next[i] = { ...next[i], description: e.target.value }
-                            patchForm('designationOptions', next)
-                          }}
-                        />
-                      </AdminField>
-                    </AdminFieldGrid>
-                  ))}
-                </AdminFormSection>
-            </div>
-          )}
+          <ConfirmDialog
+            open={deleteTarget != null}
+            onOpenChange={(open) => !open && setDeleteTarget(null)}
+            title="Delete registration?"
+            description={deleteTarget ? `Remove ${deleteTarget.name}? This cannot be undone.` : ''}
+            confirmLabel="Delete"
+            variant="danger"
+            loading={isDeleting}
+            onConfirm={() => void confirmDelete()}
+          />
+          <ConfirmDialog
+            open={rejectTargetId != null}
+            onOpenChange={(open) => !open && setRejectTargetId(null)}
+            title="Reject registration?"
+            description="They will be marked as not allowed to attend."
+            confirmLabel="Reject"
+            variant="danger"
+            loading={statusUpdatingId === rejectTargetId}
+            onConfirm={() => {
+              if (!rejectTargetId) return
+              void handleSetStatus(rejectTargetId, 'cancelled').finally(() => setRejectTargetId(null))
+            }}
+          />
         </div>
-      </div>
-
-      <AdminConfirmDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) setDeleteTarget(null)
-        }}
-        title="Delete registration?"
-        description={
-          deleteTarget ? (
-            <>
-              This permanently removes <strong>{deleteTarget.name}</strong> (
-              {deleteTarget.email}) from the summit list. This cannot be undone.
-            </>
-          ) : null
-        }
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-        variant="danger"
-        loading={isDeleting}
-        onConfirm={confirmDelete}
-      />
-    </div>
+      ) : (
+        <>
+          {saveError ? (
+            <p className="admin-error" role="alert">
+              {saveError}
+            </p>
+          ) : null}
+          {activeTab === 'form' ? (
+            <RegistrationFormCopyEditor
+              formCopy={formCopy}
+              patchForm={patchForm}
+              setFormCopy={setFormCopy}
+            />
+          ) : activeTab === 'operations' ? (
+            <RegistrationOperationsEditor formCopy={formCopy} patchForm={patchForm} />
+          ) : (
+            <RegistrationSeoEditor routeSeo={routeSeo} setRouteSeo={setRouteSeo} />
+          )}
+        </>
+      )}
+    </AdminWorkspaceShell>
   )
 }

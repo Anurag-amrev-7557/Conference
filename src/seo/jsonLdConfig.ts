@@ -159,11 +159,6 @@ export function resolvePageJsonLd(input: {
 
   if (pathname === '/') {
     graph.push(buildWebSiteSchema(data), buildOrganizationSchema(data))
-    return graph
-  }
-
-  if (pathname === '/home') {
-    graph.push(buildWebSiteSchema(data), buildOrganizationSchema(data))
     const book = buildBookSchema(data)
     if (book) graph.push(book)
     return graph

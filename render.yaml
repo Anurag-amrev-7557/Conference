@@ -33,3 +33,9 @@ services:
         sync: false
       - key: BACKUP_ON_START
         value: "1"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: REGISTRATION_NOTIFY_EMAIL
+        sync: false

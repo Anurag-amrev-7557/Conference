@@ -2,52 +2,125 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
 import type { Article } from '../../lib/websiteData';
 import {
-  Plus,
-  Edit2,
-  Trash2,
   ChevronLeft,
+  ExternalLink,
   FileText,
   Globe,
   Layout,
+  Image,
+  BookOpen,
+  CalendarClock,
+  History,
+  Plus,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { ArticleSeoTab } from './ArticleSeoTab';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../lib/utils';
 import { BlogPageWorkspacePanel } from './PageWorkspacePanel';
+import { api } from '../../lib/api';
+import { RevisionHistoryPanel } from './RevisionHistoryPanel';
+import { useAdminSession } from './useAdminSession';
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/datetimeLocal';
+import { formatScheduleHint, getScheduleBadge } from '../../lib/publishSchedule';
 import {
   AdminButton,
-  AdminField,
-  AdminFormSection,
+  AdminFieldGrid,
   AdminHeaderSave,
-  AdminInput,
   AdminPageIntro,
-  AdminTextarea,
 } from './admin-ui';
+import {
+  AdminEditorField,
+  AdminEditorInput,
+  AdminEditorSection,
+  AdminEditorSubsection,
+  AdminEditorTextarea,
+  editorSaveStatusFrom,
+} from './admin-editor-ui';
 import type { WorkspaceSaveConfig } from './admin-workspace-save';
 import { MediaUrlField } from './MediaUrlField';
 import { AdminWorkspaceShell } from './AdminWorkspaceShell';
 import { BLOG_TAB_INTROS } from './workspaceTabIntros';
 import { useApplyPendingAdminSection } from './admin-workspace-nav';
+import {
+  CatalogViewToggle,
+  CatalogListSkeleton,
+  CatalogItemCard,
+  getPublishBadge,
+} from './admin-catalog-list';
+import { ConfirmDialog, Toggle, EmptyState, RichTextEditor } from './ui';
+import { useToast } from './ui/Toast';
+import { cn } from '../../lib/utils';
+
+const ARTICLE_FIELD_LIMITS = {
+  title: 120,
+  slug: 80,
+  time: 16,
+  excerpt: 300,
+  thumbnail: 500,
+} as const;
 
 export const BlogManager: React.FC = () => {
   const {
     data,
     sourceData,
-    createArticle,
     updateArticle,
     deleteArticle,
     setPreview,
     isPreviewVisible,
+    refresh,
   } = useWebsiteData();
   const articlesRef = useRef(sourceData.articles);
   articlesRef.current = sourceData.articles;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Article>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const skipDirtyRef = useRef(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [editorTab, setEditorTab] = useState<'content' | 'seo'>('content');
   const [workspaceTab, setWorkspaceTab] = useState<'articles' | 'page' | 'seo'>('articles');
   const [panelSave, setPanelSave] = useState<WorkspaceSaveConfig | null>(null);
+  const [articleView, setArticleView] = useState<'active' | 'trash'>('active');
+  const [trashArticles, setTrashArticles] = useState<Article[]>([]);
+  const [loadingTrash, setLoadingTrash] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
+
+  const adminToken = localStorage.getItem('adminToken') || '';
+  const { isSuperAdmin, canEdit } = useAdminSession();
+
+  useEffect(() => {
+    if (articleView !== 'trash' || !adminToken) {
+      setTrashArticles([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingTrash(true);
+    void api
+      .getAdminArticles(adminToken, { trash: true })
+      .then((items) => {
+        if (!cancelled) setTrashArticles(items);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          toast({
+            variant: 'error',
+            title: 'Could not load trash',
+            description: err instanceof Error ? err.message : undefined,
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingTrash(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [articleView, adminToken]);
 
   const storedArticle = editingId
     ? sourceData.articles.find((a) => a.id === editingId)
@@ -67,6 +140,8 @@ export const BlogManager: React.FC = () => {
   }, [editingId, editForm, isPreviewVisible, setPreview]);
 
   const handleEdit = (article: Article) => {
+    skipDirtyRef.current = true;
+    setIsDirty(false);
     setEditingId(article.id);
     setEditForm(article);
     setEditorTab('content');
@@ -95,43 +170,161 @@ export const BlogManager: React.FC = () => {
     };
 
     try {
-      await createArticle(newArticle);
+      const created = await api.createArticle(adminToken, newArticle);
+      await refresh();
+      if (created?.id) {
+        skipDirtyRef.current = true;
+        setIsDirty(false);
+        setEditingId(created.id);
+        setEditForm({ ...newArticle, ...created, id: created.id });
+        setEditorTab('content');
+      }
     } catch (err) {
-      console.error(err);
+      toast({
+        variant: 'error',
+        title: 'Create failed',
+        description: err instanceof Error ? err.message : 'Failed to create article.',
+      });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Delete this article?')) {
-      try {
-        await deleteArticle(id);
-        if (editingId === id) setEditingId(null);
-      } catch (err) {
-        console.error(err);
-      }
+    setDeleteTargetId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
+    try {
+      await deleteArticle(deleteTargetId);
+      if (editingId === deleteTargetId) setEditingId(null);
+      toast({ variant: 'success', title: 'Article moved to trash' });
+      setDeleteTargetId(null);
+    } catch (err) {
+      toast({ variant: 'error', title: 'Failed to delete', description: err instanceof Error ? err.message : undefined });
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const handleSave = async () => {
-    if (editingId) {
-      setIsSaving(true);
-      try {
-        await updateArticle(editingId, editForm);
-        setEditingId(null);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsSaving(false);
-      }
+  const handleRestore = async (id: string) => {
+    if (!adminToken) return;
+    try {
+      await api.restoreArticle(adminToken, id);
+      setTrashArticles((prev) => prev.filter((a) => a.id !== id));
+      await refresh();
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Restore failed',
+        description: err instanceof Error ? err.message : 'Failed to restore article.',
+      });
     }
   };
+
+  const handlePermanentDelete = async (id: string) => {
+    if (!adminToken || !isSuperAdmin) return;
+    setPermanentDeleteId(id);
+  };
+
+  const confirmPermanentDelete = async () => {
+    if (!permanentDeleteId || !adminToken) return;
+    setDeleting(true);
+    try {
+      await api.permanentDeleteArticle(adminToken, permanentDeleteId);
+      setTrashArticles((prev) => prev.filter((a) => a.id !== permanentDeleteId));
+      toast({ variant: 'success', title: 'Article permanently deleted' });
+      setPermanentDeleteId(null);
+    } catch (err) {
+      toast({ variant: 'error', title: 'Delete failed', description: err instanceof Error ? err.message : undefined });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const listArticles = articleView === 'trash' ? trashArticles : sourceData.articles;
+
+  const handleSave = async () => {
+    if (!editingId) return;
+    setIsSaving(true);
+    try {
+      await updateArticle(editingId, editForm);
+      skipDirtyRef.current = true;
+      setIsDirty(false);
+      toast({ variant: 'success', title: 'Article saved' });
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Save failed',
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    skipDirtyRef.current = true;
+    setIsDirty(false);
+  }, [editingId, editorTab]);
+
+  useEffect(() => {
+    if (!editingId) return;
+    if (skipDirtyRef.current) {
+      skipDirtyRef.current = false;
+      return;
+    }
+    setIsDirty(true);
+  }, [editForm, editingId]);
 
   const tabIntroKey = editingId
     ? editorTab === 'seo'
       ? 'articleSeo'
       : 'content'
     : workspaceTab;
-  const tabIntro = BLOG_TAB_INTROS[tabIntroKey as keyof typeof BLOG_TAB_INTROS];
+  const tabIntro = (() => {
+    if (!editingId) {
+      return BLOG_TAB_INTROS[tabIntroKey as keyof typeof BLOG_TAB_INTROS];
+    }
+
+    const base = BLOG_TAB_INTROS[tabIntroKey as keyof typeof BLOG_TAB_INTROS];
+    const articleTitle = editForm.title?.trim() || 'Untitled article';
+    const scheduleBadge = getScheduleBadge(editForm as Article);
+    let status: 'published' | 'draft' | 'scheduled' = 'draft';
+    if (editForm.isPublished) {
+      status = scheduleBadge === 'scheduled' ? 'scheduled' : 'published';
+    }
+
+    if (editorTab === 'seo') {
+      return {
+        ...base,
+        breadcrumb: `Blog · Articles · ${articleTitle}`,
+        title: 'Article SEO',
+        description: base.description,
+        status,
+      };
+    }
+
+    return {
+      ...base,
+      breadcrumb: `Blog · Articles · ${articleTitle}`,
+      title: articleTitle,
+      description: base.description,
+      status,
+    };
+  })();
+
+  const editorToolbarLede = editingId
+    ? undefined
+    : 'Editorial posts, listing page hero, and /blog SEO.';
+
+  const saveStatus = editingId
+    ? editorSaveStatusFrom(isSaving, isDirty)
+    : workspaceTab === 'articles'
+      ? 'idle'
+      : panelSave?.saving
+        ? 'saving'
+        : 'idle';
 
   useApplyPendingAdminSection('/admin/blogs', (id) => {
     if (id === 'content' || id === 'seo') return;
@@ -151,6 +344,7 @@ export const BlogManager: React.FC = () => {
         ],
         activeId: editorTab,
         onSelect: (id: string) => setEditorTab(id as typeof editorTab),
+        pageId: 'blogs' as const,
       }
     : {
         groups: [
@@ -165,43 +359,73 @@ export const BlogManager: React.FC = () => {
         ],
         activeId: workspaceTab,
         onSelect: (id: string) => setWorkspaceTab(id as typeof workspaceTab),
+        pageId: 'blogs' as const,
       };
 
   return (
     <AdminWorkspaceShell
+      editorClassName="admin-book-page"
       isPreviewVisible={isPreviewVisible}
       isSidebarCollapsed={isSidebarCollapsed}
       onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       toolbar={
         editingId ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 min-w-0 w-full">
             <AdminButton
               variant="ghost"
               type="button"
               onClick={() => setEditingId(null)}
-              className="!px-0"
+              className="!px-0 shrink-0"
             >
               <ChevronLeft className="w-4 h-4" />
               Back to articles
             </AdminButton>
-            <span className="text-[var(--admin-type-label)] font-semibold text-[var(--admin-text)]">
-              Edit article
-            </span>
           </div>
         ) : (
-          <AdminPageIntro
-            className="mb-0"
-            eyebrow="Blog"
-            title="Blog workspace"
-            lede="Articles, listing page hero, and /blog SEO."
-          />
+          <AdminPageIntro compact className="mb-0" lede={editorToolbarLede} />
         )
       }
       subnav={subnav}
-      tabIntro={tabIntro}
+      editorHeader={tabIntro}
+      editorHeaderAside={
+        !editingId && workspaceTab === 'articles' ? (
+          <CatalogViewToggle view={articleView} onChange={setArticleView} />
+        ) : undefined
+      }
+      contentEditor={!!editingId || workspaceTab !== 'articles'}
+      panelFlush={!editingId && workspaceTab === 'articles'}
+      saveStatus={saveStatus}
       headerAction={
         editingId ? (
-          <AdminHeaderSave label="Save article" saving={isSaving} onClick={handleSave} />
+          <>
+            {editForm.isPublished && editForm.slug ? (
+              <Link
+                to={`/blog/${editForm.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex"
+              >
+                <AdminButton variant="secondary" className="shrink-0">
+                  View article
+                  <ExternalLink className="w-4 h-4" />
+                </AdminButton>
+              </Link>
+            ) : null}
+            <AdminHeaderSave label="Save article" saving={isSaving} onClick={handleSave} />
+          </>
+        ) : workspaceTab === 'articles' && canEdit && articleView === 'active' ? (
+          <>
+            <Link to="/blog" target="_blank" rel="noopener noreferrer" className="inline-flex">
+              <AdminButton variant="secondary" className="shrink-0">
+                Open blog
+                <ExternalLink className="w-4 h-4" />
+              </AdminButton>
+            </Link>
+            <button type="button" className="admin-btn admin-btn--primary" onClick={() => void handleAddNew()}>
+              <Plus className="w-4 h-4" aria-hidden />
+              New article
+            </button>
+          </>
         ) : workspaceTab !== 'articles' && panelSave ? (
           <AdminHeaderSave
             label={panelSave.label}
@@ -214,10 +438,11 @@ export const BlogManager: React.FC = () => {
       <AnimatePresence mode="wait">
         {editingId ? (
           <motion.div
-            key="editor"
+            key={editingId ? `editor-${editorTab}` : 'list'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0, 0, 0.2, 1] }}
           >
             {editorTab === 'seo' ? (
               <ArticleSeoTab
@@ -228,105 +453,201 @@ export const BlogManager: React.FC = () => {
               />
             ) : (
               <>
-                <AdminFormSection title="Basics" description="Title, URL, and listing metadata.">
-                  <AdminField label="Article title">
-                    <AdminInput
+                <AdminEditorSection
+                  icon={FileText}
+                  title="Basics"
+                  description="Title, URL, and listing metadata."
+                >
+                  <AdminEditorSubsection title="Article details">
+                    <AdminEditorField
+                      label="Article title"
                       value={editForm.title || ''}
-                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                      placeholder="The Future of AI Systems"
-                    />
-                  </AdminField>
-                  <AdminField label="URL slug">
-                    <AdminInput
-                      value={editForm.slug || ''}
-                      onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
-                      placeholder="future-ai-systems"
-                      className="font-mono text-sm"
-                    />
-                  </AdminField>
-                  <div className="admin-field-grid admin-field-grid--2">
-                    <AdminField label="Category">
-                      <select
-                        value={editForm.category || ''}
-                        onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                        className="admin-input"
-                      >
-                        {['RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'].map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </AdminField>
-                    <AdminField label="Reading time">
-                      <AdminInput
-                        value={editForm.time || ''}
-                        onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
-                        placeholder="5 MIN"
-                      />
-                    </AdminField>
-                  </div>
-                  <AdminField label="Short summary">
-                    <AdminTextarea
-                      rows={3}
-                      value={editForm.excerpt || ''}
-                      onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
-                    />
-                  </AdminField>
-                </AdminFormSection>
-
-                <AdminFormSection title="Cover image">
-                  {editForm.thumbnail ? (
-                    <div className="aspect-video rounded-xl overflow-hidden border border-[var(--admin-border)] mb-3 max-w-md">
-                      <img src={editForm.thumbnail} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  ) : null}
-                  <MediaUrlField
-                    label="Cover image URL"
-                    value={editForm.thumbnail || ''}
-                    onChange={(url) => setEditForm({ ...editForm, thumbnail: url })}
-                  />
-                </AdminFormSection>
-
-                <AdminFormSection title="Body">
-                  <AdminField label="Markdown content">
-                    <AdminTextarea
-                      rows={15}
-                      value={editForm.content || ''}
-                      onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                      className="font-mono text-sm min-h-[20rem]"
-                    />
-                  </AdminField>
-                </AdminFormSection>
-
-                <AdminFormSection title="Publish">
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <div>
-                      <p className="font-semibold text-[var(--admin-text)]">
-                        {editForm.isPublished ? 'Published' : 'Draft'}
-                      </p>
-                      <p className="admin-field__hint">
-                        {editForm.isPublished ? 'Visible on /blog' : 'Hidden from the public site'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEditForm({ ...editForm, isPublished: !editForm.isPublished })}
-                      className={cn(
-                        'w-12 h-7 rounded-full relative transition-all p-1 border shrink-0',
-                        editForm.isPublished
-                          ? 'bg-[var(--admin-primary)] border-[var(--admin-primary)]'
-                          : 'bg-[var(--admin-border)] border-[var(--admin-border-strong)]',
-                      )}
-                      aria-label="Toggle published"
+                      maxLength={ARTICLE_FIELD_LIMITS.title}
+                      showCharCount
                     >
-                      <motion.div
-                        animate={{ x: editForm.isPublished ? 20 : 0 }}
-                        className="w-5 h-5 bg-white rounded-full shadow-sm"
+                      <AdminEditorInput
+                        value={editForm.title || ''}
+                        maxLength={ARTICLE_FIELD_LIMITS.title}
+                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                        placeholder="The Future of AI Systems"
                       />
-                    </button>
-                  </div>
-                </AdminFormSection>
+                    </AdminEditorField>
+                    <AdminEditorField
+                      label="URL slug"
+                      value={editForm.slug || ''}
+                      maxLength={ARTICLE_FIELD_LIMITS.slug}
+                      showCharCount
+                    >
+                      <AdminEditorInput
+                        value={editForm.slug || ''}
+                        maxLength={ARTICLE_FIELD_LIMITS.slug}
+                        onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                        placeholder="future-ai-systems"
+                        className="font-mono"
+                      />
+                    </AdminEditorField>
+                    <AdminFieldGrid columns={2}>
+                      <AdminEditorField label="Category">
+                        <select
+                          value={editForm.category || ''}
+                          onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                          className="admin-editor-input"
+                        >
+                          {['RESEARCH', 'STRATEGY', 'PLAYBOOK', 'GUIDE'].map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </AdminEditorField>
+                      <AdminEditorField
+                        label="Reading time"
+                        value={editForm.time || ''}
+                        maxLength={ARTICLE_FIELD_LIMITS.time}
+                        showCharCount
+                      >
+                        <AdminEditorInput
+                          value={editForm.time || ''}
+                          maxLength={ARTICLE_FIELD_LIMITS.time}
+                          onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                          placeholder="5 MIN"
+                        />
+                      </AdminEditorField>
+                    </AdminFieldGrid>
+                    <AdminEditorField
+                      label="Short summary"
+                      value={editForm.excerpt || ''}
+                      maxLength={ARTICLE_FIELD_LIMITS.excerpt}
+                      showCharCount
+                    >
+                      <AdminEditorTextarea
+                        rows={3}
+                        value={editForm.excerpt || ''}
+                        maxLength={ARTICLE_FIELD_LIMITS.excerpt}
+                        onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
+                      />
+                    </AdminEditorField>
+                  </AdminEditorSubsection>
+                </AdminEditorSection>
+
+                <AdminEditorSection icon={Image} title="Cover image" description="Listing thumbnail and social fallback.">
+                  <AdminEditorSubsection title="Hero image">
+                    {editForm.thumbnail ? (
+                      <div className="aspect-video rounded-lg overflow-hidden border border-[var(--editor-border-secondary)] mb-3 max-w-md">
+                        <img src={editForm.thumbnail} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : null}
+                    <MediaUrlField
+                      editor
+                      label="Cover image URL"
+                      value={editForm.thumbnail || ''}
+                      maxLength={ARTICLE_FIELD_LIMITS.thumbnail}
+                      onChange={(url) => setEditForm({ ...editForm, thumbnail: url })}
+                    />
+                  </AdminEditorSubsection>
+                </AdminEditorSection>
+
+                <AdminEditorSection icon={BookOpen} title="Body" description="Main article content in Markdown.">
+                  <AdminEditorSubsection title="Markdown content">
+                    <RichTextEditor
+                      className="admin-rich-text-editor"
+                      value={editForm.content || ''}
+                      onChange={(content) => setEditForm({ ...editForm, content })}
+                      rows={15}
+                    />
+                  </AdminEditorSubsection>
+                </AdminEditorSection>
+
+                <AdminEditorSection icon={CalendarClock} title="Publish" description="Visibility and schedule windows.">
+                  <AdminEditorSubsection title="Visibility & schedule">
+                    <div className="admin-editor-visibility-row">
+                      <div
+                        className={cn(
+                          'admin-editor-visibility-row__icon',
+                          editForm.isPublished && 'admin-editor-visibility-row__icon--on',
+                        )}
+                        aria-hidden
+                      >
+                        {editForm.isPublished ? (
+                          <Eye className="w-4 h-4" />
+                        ) : (
+                          <EyeOff className="w-4 h-4" />
+                        )}
+                      </div>
+                      <Toggle
+                        label={editForm.isPublished ? 'Published' : 'Draft'}
+                        description={
+                          editForm.isPublished
+                            ? 'Visible on /blog when schedule allows'
+                            : 'Hidden from the public site'
+                        }
+                        checked={!!editForm.isPublished}
+                        onChange={(checked) => setEditForm({ ...editForm, isPublished: checked })}
+                      />
+                    </div>
+                    {formatScheduleHint(editForm) ? (
+                      <p className="admin-editor-field__hint text-[var(--ds-warning-text)]">{formatScheduleHint(editForm)}</p>
+                    ) : null}
+                    <AdminEditorField label="Published date">
+                      <AdminEditorInput
+                        type="date"
+                        value={editForm.publishedAt?.split('T')[0] ?? ''}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, publishedAt: e.target.value || editForm.publishedAt })
+                        }
+                      />
+                      <p className="admin-editor-field__hint mt-1.5">
+                        Shown as the byline date on the public article page.
+                      </p>
+                    </AdminEditorField>
+                    <AdminEditorField label="Publish at (optional)">
+                      <AdminEditorInput
+                        type="datetime-local"
+                        value={toDatetimeLocalValue(editForm.publishAt)}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            publishAt: fromDatetimeLocalValue(e.target.value) ?? undefined,
+                          })
+                        }
+                      />
+                    </AdminEditorField>
+                    <AdminEditorField label="Unpublish at (optional)">
+                      <AdminEditorInput
+                        type="datetime-local"
+                        value={toDatetimeLocalValue(editForm.unpublishAt)}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            unpublishAt: fromDatetimeLocalValue(e.target.value) ?? undefined,
+                          })
+                        }
+                      />
+                    </AdminEditorField>
+                  </AdminEditorSubsection>
+                </AdminEditorSection>
+
+                {editingId && canEdit ? (
+                  <AdminEditorSection icon={History} title="Revision history" description="Restore prior versions of this article.">
+                    <AdminEditorSubsection title="Version snapshots" description="Automatic snapshots saved on each update.">
+                      <RevisionHistoryPanel
+                        embedded
+                        entityType="article"
+                        entityId={editingId}
+                        previewKeys={['title', 'excerpt', 'content', 'isPublished']}
+                        currentSnapshot={editForm as Record<string, unknown>}
+                        onRestored={async () => {
+                          await refresh();
+                          const updated = sourceData.articles.find((a) => a.id === editingId);
+                          if (updated) {
+                            skipDirtyRef.current = true;
+                            setEditForm(updated);
+                          }
+                        }}
+                      />
+                    </AdminEditorSubsection>
+                  </AdminEditorSection>
+                ) : null}
               </>
             )}
           </motion.div>
@@ -340,57 +661,67 @@ export const BlogManager: React.FC = () => {
             )}
 
             {workspaceTab === 'articles' && (
-              <>
-                <AdminButton
-                  type="button"
-                  onClick={() => void handleAddNew()}
-                  className="mb-4 w-full sm:w-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  New article
-                </AdminButton>
+              <div className="admin-catalog-panel">
+                {articleView === 'trash' && loadingTrash ? (
+                  <CatalogListSkeleton count={3} />
+                ) : listArticles.length === 0 ? (
+                  <EmptyState
+                    icon={FileText}
+                    heading={articleView === 'trash' ? 'Trash is empty' : 'No articles yet'}
+                    subtext={
+                      articleView === 'trash'
+                        ? 'Deleted articles appear here before permanent removal.'
+                        : 'Create your first editorial piece for the blog.'
+                    }
+                    actionLabel={articleView === 'trash' ? undefined : 'New article'}
+                    onAction={articleView === 'trash' ? undefined : () => void handleAddNew()}
+                  />
+                ) : (
+                  <div className="admin-catalog-list">
+                    {listArticles.map((article) => (
+                      <CatalogItemCard
+                        key={article.id}
+                        title={article.title}
+                        meta={article.category}
+                        thumbnail={<img src={article.thumbnail} alt="" className="w-full h-full object-cover" />}
+                        publishBadge={getPublishBadge(
+                          article.isPublished,
+                          articleView === 'active' ? getScheduleBadge(article) : null,
+                          articleView === 'trash',
+                        )}
+                        view={articleView}
+                        canEdit={canEdit}
+                        isSuperAdmin={isSuperAdmin}
+                        onEdit={() => handleEdit(article)}
+                        onTrash={() => void handleDelete(article.id)}
+                        onRestore={() => void handleRestore(article.id)}
+                        onPermanentDelete={() => void handlePermanentDelete(article.id)}
+                      />
+                    ))}
+                  </div>
+                )}
 
-                <div className="space-y-3">
-                  {data.articles.map((article) => (
-                    <div key={article.id} className="admin-list-card">
-                      <div className="admin-list-card__thumb">
-                        <img src={article.thumbnail} alt="" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="admin-list-card__meta">{article.category}</span>
-                          <span
-                            className={cn(
-                              'w-2 h-2 rounded-full',
-                              article.isPublished ? 'bg-emerald-500' : 'bg-amber-500',
-                            )}
-                            aria-label={article.isPublished ? 'Published' : 'Draft'}
-                          />
-                        </div>
-                        <h3 className="admin-list-card__title truncate">{article.title}</h3>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <AdminButton
-                          variant="secondary"
-                          onClick={() => handleEdit(article)}
-                          className="!min-h-10 !px-3"
-                          aria-label="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </AdminButton>
-                        <AdminButton
-                          variant="danger"
-                          onClick={() => void handleDelete(article.id)}
-                          className="!min-h-10 !px-3"
-                          aria-label="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </AdminButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+                <ConfirmDialog
+                  open={deleteTargetId != null}
+                  onOpenChange={(open) => !open && setDeleteTargetId(null)}
+                  title="Move to trash?"
+                  description="This article will be hidden from the public site. You can restore it from Trash."
+                  confirmLabel="Move to trash"
+                  variant="danger"
+                  loading={deleting}
+                  onConfirm={() => void confirmDelete()}
+                />
+                <ConfirmDialog
+                  open={permanentDeleteId != null}
+                  onOpenChange={(open) => !open && setPermanentDeleteId(null)}
+                  title="Permanently delete?"
+                  description="This cannot be undone. The article will be removed forever."
+                  confirmLabel="Delete permanently"
+                  variant="danger"
+                  loading={deleting}
+                  onConfirm={() => void confirmPermanentDelete()}
+                />
+              </div>
             )}
           </motion.div>
         )}
