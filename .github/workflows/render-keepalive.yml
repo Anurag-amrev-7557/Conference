@@ -1,0 +1,26 @@
+name: Render Keepalive
+
+on:
+  schedule:
+    # Every 10 minutes to keep free-tier instances warm.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate URL secret
+        run: |
+          if [ -z "${{ secrets.RENDER_HEALTHCHECK_URL }}" ]; then
+            echo "Missing RENDER_HEALTHCHECK_URL secret"
+            exit 1
+          fi
+
+      - name: Ping Render health endpoint
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 20 \
+            --retry 2 \
+            --retry-delay 2 \
+            "${{ secrets.RENDER_HEALTHCHECK_URL }}"

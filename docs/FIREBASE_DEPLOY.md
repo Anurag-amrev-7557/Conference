@@ -133,6 +133,22 @@ Firebase Console → Hosting → Add custom domain → then update Render `SITE_
 2. Firebase `.env.production` → `VITE_API_URL` / `VITE_API_ORIGIN` = Render URL
 3. Redeploy **both** after changing domains
 
+## Optional — Keep Render warm (free tier)
+
+If your Render service idles on inactivity, add this repo secret and the scheduled workflow:
+
+1. GitHub repo → **Settings** → **Secrets and variables** → **Actions**
+2. Create secret: `RENDER_HEALTHCHECK_URL`
+3. Value: `https://YOUR-RENDER-SERVICE.onrender.com/health`
+4. Keep `.github/workflows/render-keepalive.yml` enabled
+
+The workflow pings `/health` every 10 minutes.
+
+Notes:
+
+- Starter/paid Render plans usually do not sleep, so keepalive is optional there.
+- Keepalive from GitHub Actions is best-effort, not a formal uptime SLA.
+
 ### Smoke test
 
 - [ ] Homepage loads hero video (from Render `/media/`)
