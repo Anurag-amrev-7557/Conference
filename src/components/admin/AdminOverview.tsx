@@ -4,7 +4,6 @@ import { api } from '../../lib/api';
 import { useAdminSession } from './useAdminSession';
 import {
   FileText,
-  Layout,
   Settings,
   Palette,
   ChevronRight,

@@ -108,6 +108,22 @@ function MarketingTracker() {
 }
 
 function App() {
+  const { loading } = useWebsiteData();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-off font-sans text-text">
+        <div className="noise-texture" />
+        <div className="mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-6">
+          <div className="text-center">
+            <p className="text-sm uppercase tracking-wide text-text/60">Loading</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-text">Superhumanly Thoughts</h1>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <ThemeSynchronizer />

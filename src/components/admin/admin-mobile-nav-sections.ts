@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   Box,
   Calendar,
   ExternalLink,
@@ -13,7 +12,6 @@ import {
   Palette,
   Search,
   Sparkles,
-  Target,
   Type,
   Users,
   ClipboardList,

@@ -7,11 +7,14 @@ export type MediaLibraryItem = {
 };
 
 /** In production (Vercel), set VITE_API_URL to your Render API, e.g. https://api.example.com/api/v1 */
+const PROD_API_BASE = 'https://superhumanly-thoughts.onrender.com/api/v1';
+const LEGACY_BROKEN_API_BASE = 'https://book-website-api.onrender.com/api/v1';
+const envApiBase = import.meta.env.VITE_API_URL?.trim();
+
 export const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD
-    ? '/api/v1'
-    : 'http://localhost:3001/api/v1');
+  import.meta.env.PROD
+    ? (!envApiBase || envApiBase === LEGACY_BROKEN_API_BASE ? PROD_API_BASE : envApiBase)
+    : (envApiBase || 'http://localhost:3001/api/v1');
 
 export const api = {
   // Public content (split endpoints)

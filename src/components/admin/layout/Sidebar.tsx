@@ -9,7 +9,6 @@ import {
   Settings2,
   LogOut,
   ExternalLink,
-  Layout,
   Paintbrush,
   ChevronLeft,
   ChevronDown,
