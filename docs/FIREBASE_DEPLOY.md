@@ -142,19 +142,37 @@ Firebase Console → Hosting → Add custom domain → then update Render `SITE_
 
 ## Optional — Keep Render warm (free tier)
 
-If your Render service idles on inactivity, add this repo secret and the scheduled workflow:
+Render free web services spin down after ~15 minutes without traffic. This repo includes `.github/workflows/render-keepalive.yml`, which pings the API **every 5 minutes**.
 
-1. GitHub repo → **Settings** → **Secrets and variables** → **Actions**
-2. Create secret: `RENDER_HEALTHCHECK_URL`
-3. Value: `https://YOUR-RENDER-SERVICE.onrender.com/health`
-4. Keep `.github/workflows/render-keepalive.yml` enabled
+### GitHub Actions (included)
 
-The workflow pings `/health` every 10 minutes.
+1. Push `main` so the workflow file is on the default branch.
+2. Repo → **Actions** → enable workflows if prompted.
+3. *(Optional)* Override the default URL:
+   - **Settings** → **Secrets and variables** → **Actions**
+   - Secret: `RENDER_HEALTHCHECK_URL`
+   - Value: `https://YOUR-SERVICE.onrender.com/ping`  
+     (use `/ping` for a cheap wake-up; use `/health` if you also want DB checks)
+
+Default ping URL (no secret required): `https://superhumanly-thoughts.onrender.com/ping`
+
+Manual test:
+
+```bash
+curl -sS https://superhumanly-thoughts.onrender.com/ping
+```
+
+### External cron (backup)
+
+If GitHub schedules are delayed, use [cron-job.org](https://cron-job.org) or UptimeRobot (free):
+
+- URL: `https://superhumanly-thoughts.onrender.com/ping`
+- Interval: every **5–10 minutes**
 
 Notes:
 
-- Starter/paid Render plans usually do not sleep, so keepalive is optional there.
-- Keepalive from GitHub Actions is best-effort, not a formal uptime SLA.
+- Paid Render plans usually do not sleep; keepalive is mainly for free tier.
+- Keepalive reduces cold starts; it is not a formal uptime SLA.
 
 ### Smoke test
 

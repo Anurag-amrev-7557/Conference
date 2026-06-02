@@ -86,6 +86,15 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/marketing', marketingRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
+/** Lightweight keep-alive (no DB) — use for Render uptime pings. */
+app.get('/ping', (_req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: 'book-website-api',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get('/health', async (_req, res) => {
   const dbStats = await getDatabaseStats();
   let dbConnected = false;
