@@ -22,6 +22,14 @@ import { requestIdMiddleware, errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
+process.on('uncaughtException', (err) => {
+  console.error('[process] uncaughtException:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] unhandledRejection:', reason);
+});
+
 export const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -109,6 +117,7 @@ app.get('/health', async (_req, res) => {
 app.use(errorHandler);
 
 async function startServer() {
+  console.log('[startup] Booting API service...');
   // Validate required production env early so startup fails loudly.
   getJwtSecret();
   getSiteUrl();
