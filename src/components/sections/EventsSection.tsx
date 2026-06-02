@@ -46,7 +46,7 @@ export function EventsSection() {
           <h2 className="editorial-heading editorial-heading--section mb-0">
             {renderSectionHeading(preview, (
               <>
-                Live Training & <span className="italic editorial-accent">Events</span>
+                Live Training & <span className="editorial-accent">Events</span>
               </>
             ))}
           </h2>
