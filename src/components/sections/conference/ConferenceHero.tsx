@@ -18,6 +18,7 @@ export function ConferenceHero() {
   const { heroRevealReady, heroEntranceFast } = useConferenceReveal()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [useVideo, setUseVideo] = useState(true)
+  const [videoReady, setVideoReady] = useState(false)
 
   const entranceDuration = heroEntranceFast ? 0.48 : 0.55
   const delay = (step: number) =>
@@ -34,44 +35,48 @@ export function ConferenceHero() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (reducedMotion) {
       setUseVideo(false)
+      setVideoReady(false)
       video.pause()
       return
     }
 
-    const play = () => {
+    const onCanPlay = () => {
+      setVideoReady(true)
       void video.play().catch(() => setUseVideo(false))
     }
 
-    if (video.readyState >= 2) play()
-    else video.addEventListener("loadeddata", play, { once: true })
+    if (video.readyState >= 2) onCanPlay()
+    else video.addEventListener("canplay", onCanPlay, { once: true })
 
-    return () => video.removeEventListener("loadeddata", play)
+    return () => video.removeEventListener("canplay", onCanPlay)
   }, [videoSrc])
 
   return (
     <section id="conference-hero" className="conference-hero">
       <div className="conference-hero__stage">
         <div className="conference-hero__media" aria-hidden>
+          <div
+            className="conference-hero__poster"
+            style={{ backgroundImage: `url(${posterSrc})` }}
+          />
           {useVideo ? (
             <video
               ref={videoRef}
-              className="conference-hero__video"
+              className={`conference-hero__video${videoReady ? " conference-hero__video--ready" : ""}`}
               autoPlay
               muted
               loop
               playsInline
               preload="auto"
               poster={posterSrc}
-              onError={() => setUseVideo(false)}
+              onError={() => {
+                setUseVideo(false)
+                setVideoReady(false)
+              }}
             >
               <source src={videoSrc} type="video/mp4" />
             </video>
-          ) : (
-            <div
-              className="conference-hero__poster"
-              style={{ backgroundImage: `url(${posterSrc})` }}
-            />
-          )}
+          ) : null}
           <div className="conference-hero__shade" />
           <div className="conference-hero__vignette" />
           <div className="conference-hero__bottom-depth" />
