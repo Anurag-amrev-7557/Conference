@@ -1,6 +1,11 @@
 import dotenv from 'dotenv';
+import path from 'node:path';
 
-dotenv.config();
+const envDir = path.resolve(__dirname, '..');
+dotenv.config({ path: path.join(envDir, '.env') });
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({ path: path.join(envDir, '.env.development'), override: true });
+}
 
 process.on('uncaughtException', (err) => {
   console.error('[bootstrap] uncaughtException:', err);

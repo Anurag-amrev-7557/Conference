@@ -4,7 +4,7 @@
   "description": "Backend API for the Book Website (legacy alias: Superhumanly API)",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only src/start.ts",
     "build": "npx -p typescript@5.4.5 tsc",
     "start": "node dist/start.js",
     "prisma:generate": "prisma generate",

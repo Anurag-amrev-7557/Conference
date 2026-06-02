@@ -213,31 +213,114 @@ async function main() {
     }
   });
 
-  // 3. Articles
+  // 3. Articles (sample content for local UI: blog index, read page, TOC, related guides)
   const articles = [
     {
-      id: "1",
-      slug: "evolution-of-agentic-orchestration",
-      title: "The Evolution of Agentic Orchestration",
-      category: "RESEARCH",
-      time: "6 MIN",
-      excerpt: "How small businesses are moving from simple automation to complex agentic ecosystems.",
-      content: `# The Evolution of Agentic Orchestration\n\nIn the rapidly evolving landscape of artificial intelligence...`,
-      thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2000",
+      id: 'article-evolution-agentic',
+      slug: 'evolution-of-agentic-orchestration',
+      title: 'The Evolution of Agentic Orchestration',
+      category: 'RESEARCH',
+      time: '6 MIN',
+      excerpt:
+        'How small businesses are moving from simple automation to complex agentic ecosystems that coordinate work across tools.',
+      content: `# The Evolution of Agentic Orchestration
+
+Agentic systems are no longer experimental side projects. Teams are wiring models, tools, and policies into repeatable workflows that ship outcomes—not demos.
+
+## Why orchestration matters now
+
+Most businesses already automate isolated tasks. The next step is coordinating multiple agents with clear ownership, guardrails, and observability.
+
+### From scripts to swarms
+
+Early automation was linear: trigger, action, done. Agentic orchestration adds planning, retries, and human checkpoints when confidence drops.
+
+### What changes for operators
+
+- **Visibility:** every step leaves an audit trail
+- **Recovery:** failed runs can resume without duplicating side effects
+- **Governance:** roles decide who can approve high-risk actions
+
+## A practical rollout pattern
+
+Start with one high-friction workflow—onboarding, support triage, or weekly reporting—then expand only after you measure cycle time and error rate.
+
+## What to measure in week one
+
+Track time-to-resolution, handoff count, and override rate. If humans override more than 30% of agent decisions, tighten prompts or narrow tool access before scaling.
+
+## Closing thought
+
+The winners will not be the teams with the flashiest models. They will be the teams with the clearest orchestration contracts between people, agents, and data.`,
+      thumbnail:
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2000',
       isPublished: true,
-      authorName: "Maria Jones",
-      authorRole: "Chief AI Strategist",
-      authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
-      publishedAt: "2024-04-10"
-    }
-    // Add more if needed
+      authorName: 'Maria Jones',
+      authorRole: 'Chief AI Strategist',
+      authorAvatar:
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+      publishedAt: '2024-04-10',
+    },
+    {
+      id: 'article-strategic-ai-implementation',
+      slug: 'strategic-ai-implementation',
+      title: 'Strategic AI Implementation: Moving from Hype to High Impact',
+      category: 'STRATEGY',
+      time: '5 MIN',
+      excerpt:
+        'A field-tested playbook for prioritizing AI initiatives, proving value in 30 days, and scaling without burning your team out.',
+      content: `# Strategic AI Implementation
+
+Leaders are under pressure to "do AI" quickly. The teams that succeed treat implementation as a product discipline—not a one-off pilot.
+
+## Start with business outcomes
+
+Pick one measurable outcome: reduced support backlog, faster proposal turnaround, or higher qualified pipeline. If you cannot name the metric, pause before buying more tools.
+
+## Build a 30-day proof lane
+
+### Week 1: Map the workflow
+
+Document inputs, approvals, and failure modes. Capture where humans spend time on copy-paste or context switching.
+
+### Week 2: Ship a narrow agent
+
+Scope the agent to a single decision boundary. Give it read-only access first, then expand permissions after review.
+
+### Week 3: Instrument and iterate
+
+Add logging, cost tracking, and a weekly review with operators. Promote only workflows that beat your baseline on quality and speed.
+
+## Common traps to avoid
+
+- **Boiling the ocean:** too many use cases at once
+- **Shadow workflows:** agents that bypass compliance checks
+- **Vanity demos:** impressive UI with no production owner
+
+## Operating model that scales
+
+Assign a workflow owner, an AI builder, and a risk reviewer. Meet weekly until error rates stabilize, then move to monthly governance.
+
+## Related capabilities to invest in next
+
+Once one lane is stable, add retrieval quality, evaluation suites, and role-based access. These three investments compound faster than adding more models.`,
+      thumbnail:
+        'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=2000',
+      isPublished: true,
+      authorName: 'Systems Architect',
+      authorRole: 'Lead',
+      authorAvatar:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
+      publishedAt: '2026-06-02',
+    },
   ];
 
   for (const article of articles) {
+    const { id, slug, ...rest } = article;
     await prisma.article.upsert({
-      where: { slug: article.slug },
-      update: {},
-      create: article
+      where: { slug },
+      update: { ...rest, id },
+      create: article,
     });
   }
 

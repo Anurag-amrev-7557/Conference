@@ -9,39 +9,13 @@ function buildHeadingComponents(entries: MarkdownTocItem[], cursor: { n: number 
     return entries[i]?.id ?? `section-${i}`
   }
 
-  const scrollCls = "scroll-mt-[calc(var(--header-offset,5.5rem)+0.75rem)]"
-
   return {
-    h1: ({ children }) => (
-      <h2 id={nextId()} className={scrollCls}>
-        {children}
-      </h2>
-    ),
-    h2: ({ children }) => (
-      <h2 id={nextId()} className={scrollCls}>
-        {children}
-      </h2>
-    ),
-    h3: ({ children }) => (
-      <h3 id={nextId()} className={scrollCls}>
-        {children}
-      </h3>
-    ),
-    h4: ({ children }) => (
-      <h4 id={nextId()} className={scrollCls}>
-        {children}
-      </h4>
-    ),
-    h5: ({ children }) => (
-      <h5 id={nextId()} className={scrollCls}>
-        {children}
-      </h5>
-    ),
-    h6: ({ children }) => (
-      <h6 id={nextId()} className={scrollCls}>
-        {children}
-      </h6>
-    ),
+    h1: ({ children }) => <h2 id={nextId()}>{children}</h2>,
+    h2: ({ children }) => <h2 id={nextId()}>{children}</h2>,
+    h3: ({ children }) => <h3 id={nextId()}>{children}</h3>,
+    h4: ({ children }) => <h4 id={nextId()}>{children}</h4>,
+    h5: ({ children }) => <h5 id={nextId()}>{children}</h5>,
+    h6: ({ children }) => <h6 id={nextId()}>{children}</h6>,
   } satisfies Components
 }
 

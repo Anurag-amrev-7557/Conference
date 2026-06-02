@@ -11,10 +11,11 @@ const PROD_API_BASE = 'https://superhumanly-thoughts.onrender.com/api/v1';
 const LEGACY_BROKEN_API_BASE = 'https://book-website-api.onrender.com/api/v1';
 const envApiBase = import.meta.env.VITE_API_URL?.trim();
 
+/** Dev default uses Vite proxy (`vite.config.ts` → localhost:3001) to avoid CORS blocks. */
 export const API_BASE =
   import.meta.env.PROD
     ? (!envApiBase || envApiBase === LEGACY_BROKEN_API_BASE ? PROD_API_BASE : envApiBase)
-    : (envApiBase || 'http://localhost:3001/api/v1');
+    : (envApiBase || '/api/v1');
 
 const ALLOWED_ARTICLE_KEYS = [
   'slug',

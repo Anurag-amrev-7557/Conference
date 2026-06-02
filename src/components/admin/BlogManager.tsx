@@ -52,6 +52,8 @@ import {
 import { ConfirmDialog, Toggle, EmptyState, RichTextEditor } from './ui';
 import { useToast } from './ui/Toast';
 import { cn } from '../../lib/utils';
+import { resolveAssetUrl } from '../../lib/assetUrl';
+import { toEditorHtml } from '../../lib/articleContent';
 
 const ARTICLE_FIELD_LIMITS = {
   title: 120,
@@ -60,6 +62,53 @@ const ARTICLE_FIELD_LIMITS = {
   excerpt: 300,
   thumbnail: 500,
 } as const;
+
+function normalizeImageUrlInput(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (host === 'unsplash.com') {
+      const match = parsed.pathname.match(/^\/photos\/(?:[^/]*-)?([A-Za-z0-9_-]+)\/?$/);
+      if (match?.[1]) {
+        return `https://source.unsplash.com/${match[1]}/2000x1125`;
+      }
+    }
+  } catch {
+    return trimmed;
+  }
+
+  return trimmed;
+}
+
+function extractUnsplashId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (host === 'unsplash.com') {
+      const match = parsed.pathname.match(/^\/photos\/(?:[^/]*-)?([A-Za-z0-9_-]+)\/?$/);
+      return match?.[1] ?? null;
+    }
+    if (host === 'images.unsplash.com') {
+      const match = parsed.pathname.match(/^\/photo-([A-Za-z0-9_-]+)/);
+      return match?.[1] ?? null;
+    }
+    if (host === 'source.unsplash.com') {
+      const match = parsed.pathname.match(/^\/([A-Za-z0-9_-]+)/);
+      return match?.[1] ?? null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function withCacheBust(url: string, nonce: number): string {
+  const joiner = url.includes('?') ? '&' : '?';
+  return `${url}${joiner}v=${nonce}`;
+}
 
 export const BlogManager: React.FC = () => {
   const {
@@ -89,6 +138,7 @@ export const BlogManager: React.FC = () => {
   const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [thumbnailPreviewNonce, setThumbnailPreviewNonce] = useState(0);
+  const [thumbnailPreviewIndex, setThumbnailPreviewIndex] = useState(0);
   const { toast } = useToast();
 
   const adminToken = localStorage.getItem('adminToken') || '';
@@ -144,7 +194,10 @@ export const BlogManager: React.FC = () => {
     skipDirtyRef.current = true;
     setIsDirty(false);
     setEditingId(article.id);
-    setEditForm(article);
+    setEditForm({
+      ...article,
+      content: toEditorHtml(article.content),
+    });
     setEditorTab('content');
   };
 
@@ -155,7 +208,8 @@ export const BlogManager: React.FC = () => {
       category: 'RESEARCH',
       time: '5 MIN',
       excerpt: 'A brief summary of the architectural insights discussed in this piece.',
-      content: '# New Article\n\nStart writing your architectural narrative here...',
+      content:
+        '<h2>Introduction</h2><p>Start writing your article here. Use the toolbar for headings, lists, links, and quotes—no markdown required.</p>',
       thumbnail:
         'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2000',
       isPublished: false,
@@ -265,21 +319,34 @@ export const BlogManager: React.FC = () => {
   };
 
   const handleThumbnailChange = (url: string) => {
+    const normalized = normalizeImageUrlInput(url);
     setThumbnailPreviewNonce(Date.now());
-    setEditForm((prev) => ({ ...prev, thumbnail: url.trim() }));
+    setEditForm((prev) => ({ ...prev, thumbnail: normalized }));
   };
 
-  const thumbnailPreviewSrc = (() => {
-    const raw = editForm.thumbnail?.trim();
-    if (!raw) return '';
-    const joiner = raw.includes('?') ? '&' : '?';
-    return `${raw}${joiner}v=${thumbnailPreviewNonce}`;
+  const thumbnailPreviewCandidates = (() => {
+    const raw = resolveAssetUrl(editForm.thumbnail?.trim());
+    if (!raw) return [] as string[];
+    const candidates = [withCacheBust(raw, thumbnailPreviewNonce)];
+    const unsplashId = extractUnsplashId(raw);
+    if (unsplashId) {
+      candidates.push(withCacheBust(`https://images.unsplash.com/photo-${unsplashId}?auto=format&fit=crop&w=2000&q=80`, thumbnailPreviewNonce));
+      candidates.push(withCacheBust(`https://source.unsplash.com/${unsplashId}/2000x1125`, thumbnailPreviewNonce));
+      candidates.push(withCacheBust(`https://unsplash.com/photos/${unsplashId}/download?force=true&w=2000`, thumbnailPreviewNonce));
+    }
+    return Array.from(new Set(candidates));
   })();
+
+  const thumbnailPreviewSrc = thumbnailPreviewCandidates[thumbnailPreviewIndex] ?? '';
 
   useEffect(() => {
     skipDirtyRef.current = true;
     setIsDirty(false);
   }, [editingId, editorTab]);
+
+  useEffect(() => {
+    setThumbnailPreviewIndex(0);
+  }, [editForm.thumbnail, thumbnailPreviewNonce]);
 
   useEffect(() => {
     if (!editingId) return;
@@ -552,6 +619,11 @@ export const BlogManager: React.FC = () => {
                           src={thumbnailPreviewSrc}
                           alt=""
                           className="w-full h-full object-cover"
+                          onError={() =>
+                            setThumbnailPreviewIndex((prev) =>
+                              prev + 1 < thumbnailPreviewCandidates.length ? prev + 1 : prev,
+                            )
+                          }
                         />
                       </div>
                     ) : null}
@@ -565,13 +637,18 @@ export const BlogManager: React.FC = () => {
                   </AdminEditorSubsection>
                 </AdminEditorSection>
 
-                <AdminEditorSection icon={BookOpen} title="Body" description="Main article content in Markdown.">
-                  <AdminEditorSubsection title="Markdown content">
+                <AdminEditorSection
+                  icon={BookOpen}
+                  title="Body"
+                  description="Write and format the article visually—saved as rich HTML."
+                >
+                  <AdminEditorSubsection title="Article content">
                     <RichTextEditor
                       className="admin-rich-text-editor"
                       value={editForm.content || ''}
                       onChange={(content) => setEditForm({ ...editForm, content })}
-                      rows={15}
+                      rows={18}
+                      placeholder="Write your article…"
                     />
                   </AdminEditorSubsection>
                 </AdminEditorSection>
