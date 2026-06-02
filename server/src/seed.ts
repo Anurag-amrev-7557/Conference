@@ -4,7 +4,7 @@
  */
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { defaultConferenceContent } from '../../src/lib/conferenceDefaults';
 import { defaultConferenceRegistrationForm } from './lib/registrationDefaults';
 
