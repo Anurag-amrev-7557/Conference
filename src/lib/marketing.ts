@@ -6,6 +6,7 @@ import { API_BASE } from './api';
 
 const IDENTITY_STORAGE_KEY = 'vellux_lead_email';
 const VISITOR_STORAGE_KEY = 'sh_visitor_id';
+const EVENT_COOLDOWN_MS = 30_000;
 
 const CONTRACT_ACTIONS = new Set([
   'page_view',
@@ -23,6 +24,8 @@ const CONTRACT_ACTIONS = new Set([
 
 export class MarketingService {
   private static initialized = false;
+  private static eventCooldowns = new Map<string, number>();
+  private static rateLimitWarningLogged = false;
 
   private static getEmail(): string | null {
     return localStorage.getItem(IDENTITY_STORAGE_KEY);
@@ -68,6 +71,13 @@ export class MarketingService {
 
     const email = this.getEmail();
     const visitorId = this.getVisitorId();
+    const eventKey = `${normalized}:${JSON.stringify(metadata)}`;
+    const now = Date.now();
+    const lastSentAt = this.eventCooldowns.get(eventKey);
+    if (lastSentAt && now - lastSentAt < EVENT_COOLDOWN_MS) {
+      return;
+    }
+    this.eventCooldowns.set(eventKey, now);
 
     const useWebhook =
       normalized === 'form_submit' ||
@@ -127,6 +137,13 @@ export class MarketingService {
         console.log(`[Marketing] Event '${normalized}' sync successful.`);
       } catch (err) {
         const status = (err as { status?: number })?.status;
+        if (status === 429) {
+          if (!this.rateLimitWarningLogged) {
+            this.rateLimitWarningLogged = true;
+            console.warn('[Marketing] Rate-limited (429). Telemetry temporarily throttled.');
+          }
+          return;
+        }
         // Do not retry client/rate-limit errors; only retry transient/network issues.
         const shouldRetry = retryCount > 0 && (status == null || status >= 500);
         if (shouldRetry) {

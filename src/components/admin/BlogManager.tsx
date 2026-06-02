@@ -88,6 +88,7 @@ export const BlogManager: React.FC = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [thumbnailPreviewNonce, setThumbnailPreviewNonce] = useState(0);
   const { toast } = useToast();
 
   const adminToken = localStorage.getItem('adminToken') || '';
@@ -262,6 +263,18 @@ export const BlogManager: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  const handleThumbnailChange = (url: string) => {
+    setThumbnailPreviewNonce(Date.now());
+    setEditForm((prev) => ({ ...prev, thumbnail: url.trim() }));
+  };
+
+  const thumbnailPreviewSrc = (() => {
+    const raw = editForm.thumbnail?.trim();
+    if (!raw) return '';
+    const joiner = raw.includes('?') ? '&' : '?';
+    return `${raw}${joiner}v=${thumbnailPreviewNonce}`;
+  })();
 
   useEffect(() => {
     skipDirtyRef.current = true;
@@ -532,9 +545,14 @@ export const BlogManager: React.FC = () => {
 
                 <AdminEditorSection icon={Image} title="Cover image" description="Listing thumbnail and social fallback.">
                   <AdminEditorSubsection title="Hero image">
-                    {editForm.thumbnail ? (
+                    {thumbnailPreviewSrc ? (
                       <div className="aspect-video rounded-lg overflow-hidden border border-[var(--editor-border-secondary)] mb-3 max-w-md">
-                        <img src={editForm.thumbnail} alt="" className="w-full h-full object-cover" />
+                        <img
+                          key={thumbnailPreviewSrc}
+                          src={thumbnailPreviewSrc}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     ) : null}
                     <MediaUrlField
@@ -542,7 +560,7 @@ export const BlogManager: React.FC = () => {
                       label="Cover image URL"
                       value={editForm.thumbnail || ''}
                       maxLength={ARTICLE_FIELD_LIMITS.thumbnail}
-                      onChange={(url) => setEditForm({ ...editForm, thumbnail: url })}
+                      onChange={handleThumbnailChange}
                     />
                   </AdminEditorSubsection>
                 </AdminEditorSection>

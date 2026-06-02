@@ -16,6 +16,39 @@ export const API_BASE =
     ? (!envApiBase || envApiBase === LEGACY_BROKEN_API_BASE ? PROD_API_BASE : envApiBase)
     : (envApiBase || 'http://localhost:3001/api/v1');
 
+const ALLOWED_ARTICLE_KEYS = [
+  'slug',
+  'title',
+  'category',
+  'time',
+  'excerpt',
+  'content',
+  'thumbnail',
+  'isPublished',
+  'publishAt',
+  'unpublishAt',
+  'authorName',
+  'authorRole',
+  'authorAvatar',
+  'publishedAt',
+  'seoTitle',
+  'seoDescription',
+  'ogImage',
+  'noindex',
+] as const;
+
+type AllowedArticleKey = (typeof ALLOWED_ARTICLE_KEYS)[number];
+
+function sanitizeArticlePayload(article: Record<string, unknown>) {
+  const payload: Partial<Record<AllowedArticleKey, unknown>> = {};
+  for (const key of ALLOWED_ARTICLE_KEYS) {
+    if (key in article && article[key] !== undefined) {
+      payload[key] = article[key];
+    }
+  }
+  return payload;
+}
+
 export const api = {
   // Public content (split endpoints)
   async getContentSite() {
@@ -379,16 +412,18 @@ export const api = {
   },
 
   async updateArticle(token: string, id: string, article: any) {
+    const sanitizedArticle = sanitizeArticlePayload(article as Record<string, unknown>);
     const res = await fetch(`${API_BASE}/admin/blogs/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(article)
+      body: JSON.stringify(sanitizedArticle)
     });
-    if (!res.ok) throw new Error('Failed to update article');
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update article');
+    return data;
   },
 
   async deleteArticle(token: string, id: string) {
