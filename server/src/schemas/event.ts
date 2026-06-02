@@ -45,9 +45,9 @@ export const eventCreateSchema = z
       .optional(),
     lat: z.number().optional(),
     lng: z.number().optional(),
-    seoTitle: z.string().optional(),
-    seoDescription: z.string().optional(),
-    ogImage: z.string().optional(),
+    seoTitle: z.string().nullable().optional(),
+    seoDescription: z.string().nullable().optional(),
+    ogImage: z.string().max(2048).nullable().optional(),
     noindex: z.boolean().optional(),
   })
   .strict();

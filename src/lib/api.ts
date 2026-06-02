@@ -107,8 +107,26 @@ function sanitizeEventPayload(event: Record<string, unknown>) {
     delete payload.coordinates;
   }
 
-  if (payload.ogImage === '') {
-    delete payload.ogImage;
+  const optionalStringKeys = [
+    'weekday',
+    'time',
+    'full_time',
+    'host',
+    'location',
+    'description',
+    'price',
+    'thumbnail',
+    'status',
+    'registrationUrl',
+    'seoTitle',
+    'seoDescription',
+    'ogImage',
+  ] as const;
+
+  for (const key of optionalStringKeys) {
+    if (payload[key] === '') {
+      payload[key] = null;
+    }
   }
 
   return payload;
