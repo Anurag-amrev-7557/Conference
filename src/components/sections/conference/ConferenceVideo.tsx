@@ -55,7 +55,7 @@ export function ConferenceVideo() {
         copy={copy}
         fallback={
           <>
-            The summit <span className="italic editorial-accent">in motion</span>
+            The summit <span className="editorial-accent">in motion</span>
           </>
         }
         ledeFallback="Step inside the energy of the event — keynotes, workshops, and the conversations that shape what ships next."

@@ -25,7 +25,7 @@ export const SplashScreen: React.FC = () => {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="w-20 h-20 bg-text rounded-full flex items-center justify-center text-white font-serif italic text-4xl mb-12 shadow-2xl shadow-text/20"
+              className="w-20 h-20 bg-text rounded-full flex items-center justify-center text-white font-semibold text-4xl mb-12 shadow-2xl shadow-text/20"
             >
               S
             </motion.div>
@@ -43,7 +43,7 @@ export const SplashScreen: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8, duration: 1 }}
-                className="text-3xl font-serif italic text-text"
+                className="text-3xl font-semibold tracking-tight text-text"
               >
                 Archival Record 2024
               </motion.h2>

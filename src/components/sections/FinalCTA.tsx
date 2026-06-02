@@ -128,7 +128,7 @@ export function FinalCTA({
                 {renderSectionHeading(
                   copy,
                   <>
-                    Secure your <span className="italic editorial-accent">spot</span>.
+                    Secure your <span className="editorial-accent">spot</span>.
                   </>,
                   { singleLine: true },
                 )}

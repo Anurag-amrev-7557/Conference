@@ -20,7 +20,7 @@ export function ConferenceTestimonials() {
         copy={copy}
         fallback={
           <>
-            What attendees <span className="italic editorial-accent">are saying</span>
+            What attendees <span className="editorial-accent">are saying</span>
           </>
         }
         ledeFallback="Leaders share why the summit experience matters."

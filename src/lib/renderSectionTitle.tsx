@@ -12,7 +12,7 @@ export function renderCatalogTitle(
       {content.titleAccent ? (
         <>
           {' '}
-          <em>{content.titleAccent}</em>
+          <span className="editorial-accent">{content.titleAccent}</span>
         </>
       ) : null}
     </>
@@ -32,7 +32,7 @@ export function renderSectionHeading(
         {content.titleAccent ? (
           <>
             {' '}
-            <span className="italic editorial-accent">{content.titleAccent}</span>
+            <span className="editorial-accent">{content.titleAccent}</span>
           </>
         ) : null}
       </>
@@ -44,7 +44,7 @@ export function renderSectionHeading(
       {content.titleAccent ? (
         <>
           <br />
-          <span className="italic editorial-accent">{content.titleAccent}</span>
+          <span className="editorial-accent">{content.titleAccent}</span>
         </>
       ) : null}
     </>

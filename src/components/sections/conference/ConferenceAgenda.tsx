@@ -45,7 +45,7 @@ export function ConferenceAgenda() {
         copy={copy}
         fallback={
           <>
-            Full <span className="italic editorial-accent">Agenda</span>
+            Full <span className="editorial-accent">Agenda</span>
           </>
         }
         ledeFallback="Two days. Zero fluff. Just the sessions worth your calendar."

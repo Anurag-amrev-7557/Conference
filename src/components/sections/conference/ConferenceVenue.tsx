@@ -20,7 +20,7 @@ export function ConferenceVenue() {
                 {venue.eyebrow}
               </p>
             ) : null}
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-text mb-4">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text mb-4">
               {venue.title || 'Venue'}
             </h2>
             {venue.lede ? <p className="text-text2 leading-relaxed mb-4">{venue.lede}</p> : null}

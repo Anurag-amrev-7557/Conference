@@ -49,7 +49,7 @@ export function BlogSection() {
               preview.title
             ) : (
               <>
-                Latest <span className="italic editorial-accent">Automation</span> Strategies
+                Latest <span className="editorial-accent">Automation</span> Strategies
               </>
             )}
           </h2>

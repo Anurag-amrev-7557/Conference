@@ -52,7 +52,7 @@ export function ConferenceCountdown() {
         <ul className="flex justify-center gap-4 sm:gap-8 list-none p-0 m-0">
           {units.map(({ label, value }) => (
             <li key={label} className="text-center min-w-[4.5rem]">
-              <span className="block text-3xl sm:text-5xl font-serif font-bold text-text tabular-nums">
+              <span className="block text-3xl sm:text-5xl font-semibold tracking-tight text-text tabular-nums">
                 {String(value).padStart(2, '0')}
               </span>
               <span className="text-xs uppercase tracking-wider text-muted mt-1 block">{label}</span>

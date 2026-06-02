@@ -34,7 +34,7 @@ export function ConferenceSponsors() {
         copy={copy}
         fallback={
           <>
-            Our <span className="italic editorial-accent">sponsors</span>
+            Our <span className="editorial-accent">sponsors</span>
           </>
         }
         ledeFallback="Proudly supported by teams building the infrastructure and workflows behind modern AI."

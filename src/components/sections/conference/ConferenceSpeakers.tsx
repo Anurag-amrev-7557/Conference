@@ -36,7 +36,7 @@ export function ConferenceSpeakers() {
         copy={copy}
         fallback={
           <>
-            Featured <span className="italic editorial-accent">Speakers</span>
+            Featured <span className="editorial-accent">Speakers</span>
           </>
         }
         ledeFallback="Learn directly from the innovators and leaders who are shaping the future of AI."

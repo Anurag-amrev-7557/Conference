@@ -36,7 +36,7 @@ export function AppDialog({
             <Dialog.Description className="sr-only">{description}</Dialog.Description>
           ) : null}
           <div className="flex items-start justify-between gap-4 mb-6">
-            <Dialog.Title className="text-xl font-serif font-normal text-text pr-8">{title}</Dialog.Title>
+            <Dialog.Title className="text-xl font-semibold tracking-tight text-text pr-8">{title}</Dialog.Title>
             <Dialog.Close
               type="button"
               aria-label="Close"

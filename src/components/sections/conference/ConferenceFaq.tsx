@@ -13,7 +13,7 @@ export function ConferenceFaq() {
               {copy.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-text">
+          <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-text">
             {copy?.title ?? 'FAQ'}
           </h2>
         </div>

@@ -55,7 +55,7 @@ export function LeadCaptureModal({ isOpen, onClose }: LeadCaptureModalProps) {
       {status === 'success' ? (
         <div className="flex flex-col items-center text-center py-6">
           <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-          <p className="text-2xl font-serif italic mb-2">Identity synchronized</p>
+          <p className="text-2xl font-semibold tracking-tight mb-2">Identity synchronized</p>
           <p className="text-muted text-sm">Your discovery node is initialized.</p>
         </div>
       ) : (

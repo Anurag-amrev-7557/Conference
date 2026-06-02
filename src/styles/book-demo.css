@@ -580,9 +580,9 @@
   align-items: flex-start;
   gap: 0.625rem;
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--bd-headline-size);
-  font-weight: var(--bd-headline-weight);
+  font-weight: 600;
   line-height: var(--bd-headline-lh);
   letter-spacing: var(--bd-headline-ls);
   color: var(--bd-text-primary);

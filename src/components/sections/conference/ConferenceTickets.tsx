@@ -21,7 +21,7 @@ export function ConferenceTickets() {
               {block.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl text-text md:text-5xl font-serif font-bold mb-4">
+          <h2 className="text-4xl text-text md:text-5xl font-semibold tracking-tight mb-4">
             {block.title ?? 'Secure Your Spot'}
           </h2>
           {block.lede && <p className="text-text2 text-lg">{block.lede}</p>}
@@ -44,7 +44,7 @@ export function ConferenceTickets() {
               )}
 
               <div className="mb-8">
-                <h3 className="text-2xl text-text font-bold font-serif mb-2">{tier.name}</h3>
+                <h3 className="text-2xl text-text font-semibold tracking-tight mb-2">{tier.name}</h3>
                 <p className="text-text2 text-sm h-10">{tier.description}</p>
                 <div className="mt-6 flex items-baseline gap-2">
                   <span className="text-5xl font-bold text-text">{tier.price}</span>

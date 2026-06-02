@@ -20,7 +20,7 @@ export function ConferencePartners() {
         copy={copy}
         fallback={
           <>
-            Community <span className="italic editorial-accent">partners</span>
+            Community <span className="editorial-accent">partners</span>
           </>
         }
         ledeFallback="Organizations collaborating to make the summit possible."

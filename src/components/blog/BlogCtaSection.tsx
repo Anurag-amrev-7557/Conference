@@ -22,7 +22,7 @@ export function BlogCtaSection() {
           <h2 id="blog-cta-heading" className="blog-cta__title">
             {cta.title ?? (
               <>
-                Got a use case in mind? <em>Let&apos;s make it real.</em>
+                Got a use case in mind? <span className="editorial-accent">Let&apos;s make it real.</span>
               </>
             )}
           </h2>

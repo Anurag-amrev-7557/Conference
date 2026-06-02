@@ -64,7 +64,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center p-12">
                   <div className="w-full aspect-square bg-[#0052cc] rounded-[24px] flex flex-col items-center justify-center text-center p-8 shadow-2xl">
-                    <h4 className="text-3xl font-serif italic text-white leading-tight mb-4">{event.title}</h4>
+                    <h4 className="text-3xl font-semibold tracking-tight text-white leading-tight mb-4">{event.title}</h4>
                     <p className="text-white/70 text-sm max-w-[200px]">Connecting the world of venture and AI</p>
                     <div className="mt-8 pt-8 border-t border-white/10 w-full flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Progressive Ventures</span>
@@ -76,7 +76,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
 
               {/* Event Details Section */}
               <div className="px-8 py-10">
-                <h1 className="text-3xl font-serif italic text-text leading-tight mb-8">
+                <h1 className="text-3xl font-semibold tracking-tight text-text leading-tight mb-8">
                   {event.title}
                 </h1>
 
@@ -94,7 +94,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
                   <div className="flex gap-4">
                     <div className="w-12 h-12 bg-off rounded-xl flex flex-col items-center justify-center border border-border/40">
                       <span className="text-[9px] font-bold uppercase text-muted tracking-tighter leading-none mb-1">{event.day.split(' ')[1].slice(0, 3)}</span>
-                      <span className="text-xl font-serif italic text-text leading-none">{event.day.split(' ')[0]}</span>
+                      <span className="text-xl font-semibold tracking-tight text-text leading-none">{event.day.split(' ')[0]}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[13px] font-bold text-text">{event.weekday} {event.day}</span>
@@ -121,7 +121,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
                       <div className="flex items-end justify-between">
                         <div className="flex flex-col">
                           <span className="text-[11px] font-bold text-muted uppercase tracking-tight mb-1">Ticket Price</span>
-                          <span className="text-3xl font-serif italic text-text">{event.price || 'Free'}</span>
+                          <span className="text-3xl font-semibold tracking-tight text-text">{event.price || 'Free'}</span>
                         </div>
                         <motion.button
                           whileHover={{ scale: 1.02 }}
@@ -141,7 +141,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
                         <Calendar className="w-4 h-4 text-red-600" />
                         <span className="text-[11px] font-bold text-red-700">Past Event • Ended 6 days ago</span>
                       </div>
-                      <span className="text-3xl font-serif italic text-text/40">{event.price}</span>
+                      <span className="text-3xl font-semibold tracking-tight text-text/40">{event.price}</span>
                       <button disabled className="w-full py-4 bg-off text-muted rounded-2xl text-[13px] font-bold cursor-not-allowed">
                         Registration Closed
                       </button>
@@ -185,7 +185,7 @@ export function EventDetailsDrawer({ event, isOpen, onClose }: EventDetailsDrawe
                 <div className="pt-12 border-t border-border/40 space-y-12 pb-20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-text rounded-2xl flex items-center justify-center text-white font-serif italic text-xl">S</div>
+                      <div className="w-12 h-12 bg-text rounded-2xl flex items-center justify-center text-white font-semibold tracking-tight text-xl">S</div>
                       <div className="flex flex-col">
                         <span className="text-[12px] font-bold">Presented by Founders Creative</span>
                         <span className="text-[11px] text-muted">Building the Agentic Future Together</span>

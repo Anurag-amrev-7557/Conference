@@ -30,7 +30,7 @@ export const NotFoundPage: React.FC = () => {
             <span className="text-playbook text-accent mb-4 tracking-[0.6em]">
               {copy.eyebrow ?? 'Error Code 404'}
             </span>
-            <h1 className="text-5xl sm:text-7xl font-serif italic text-text leading-none mb-6">
+            <h1 className="text-5xl sm:text-7xl font-semibold tracking-tight text-text leading-none mb-6">
               {copy.title ?? 'Record Not Found'}
             </h1>
             <p className="text-lg text-muted max-w-md mx-auto leading-relaxed font-light">

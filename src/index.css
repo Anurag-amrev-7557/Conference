@@ -98,7 +98,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif tracking-tight leading-tight mb-6;
+    @apply font-sans font-semibold tracking-tight leading-tight mb-6;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -142,7 +142,7 @@
   }
 
   .text-authority {
-    @apply font-serif font-normal tracking-tight leading-[1.05];
+    @apply font-sans font-semibold tracking-tight leading-[1.05];
   }
 
   .text-playbook {
@@ -155,20 +155,20 @@
   }
 
   .prose blockquote {
-    @apply not-italic font-serif text-accent border-l-0 text-center py-10 my-16 relative overflow-visible text-4xl leading-tight;
+    @apply not-italic font-sans font-medium text-accent border-l-0 text-center py-10 my-16 relative overflow-visible text-4xl leading-tight;
   }
 
   .prose blockquote::before {
     content: '"';
-    @apply absolute -top-8 -left-4 text-accent/10 text-[160px] font-serif leading-none italic select-none;
+    @apply absolute -top-8 -left-4 text-accent/10 text-[160px] font-sans leading-none not-italic select-none;
   }
 
   .prose h2 {
-    @apply font-serif italic font-normal tracking-playbook text-5xl mb-10 mt-20;
+    @apply font-sans font-semibold not-italic tracking-tight text-5xl mb-10 mt-20;
   }
 
   .prose h3 {
-    @apply font-serif italic font-normal tracking-playbook text-3xl mb-6 mt-16;
+    @apply font-sans font-semibold not-italic tracking-tight text-3xl mb-6 mt-16;
   }
 
   .prose img {
@@ -200,7 +200,7 @@
 }
 
 @utility section-heading {
-  @apply text-[clamp(2rem,5vw,3.25rem)] font-serif leading-tight text-text;
+  @apply text-[clamp(2rem,5vw,3.25rem)] font-sans font-semibold tracking-tight leading-tight text-text;
 }
 
 @utility btn-cta-primary {
@@ -759,11 +759,11 @@
   }
 
   .editorial-heading {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
     line-height: 1.08;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: var(--color-text);
     text-wrap: balance;
   }
@@ -792,8 +792,9 @@
   }
 
   .editorial-accent {
+    font-family: inherit;
     font-style: normal;
-    font-weight: 400;
+    font-weight: 600;
     color: var(--color-accent);
   }
 
@@ -806,12 +807,12 @@
   }
 
   .editorial-tagline {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 500;
     font-size: clamp(1.25rem, 2vw, 1.5rem);
     line-height: 1.35;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--color-text);
   }
 
@@ -1328,10 +1329,10 @@
   }
 
   .community-perk-card__title {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.5rem, 2.2vw, 1.875rem);
-    font-style: italic;
-    font-weight: 400;
+    font-style: normal;
+    font-weight: 600;
     line-height: 1.2;
     letter-spacing: -0.02em;
     color: var(--color-text);
@@ -1444,9 +1445,9 @@
   }
 
   .who-stat-card__value {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
     font-size: clamp(1.75rem, 2.5vw, 2.25rem);
     line-height: 1.1;
     letter-spacing: -0.02em;
@@ -1505,10 +1506,10 @@
   }
 
   .who-pillar-card__title {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.5rem, 2.2vw, 1.875rem);
-    font-style: italic;
-    font-weight: 400;
+    font-style: normal;
+    font-weight: 600;
     line-height: 1.2;
     letter-spacing: -0.02em;
     color: var(--color-text);
@@ -2075,9 +2076,9 @@
 
   .conference-speaker-card__name {
     margin: 0;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.25rem, 1.55vw, 1.4375rem);
-    font-weight: 400;
+    font-weight: 600;
     line-height: 1.22;
     letter-spacing: -0.025em;
     color: var(--color-text);
@@ -2601,17 +2602,21 @@
 
   .catalog-hero__title {
     margin: 0 0 1rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(2rem, 5vw, 3.25rem);
-    font-weight: 400;
+    font-weight: 600;
+    font-style: normal;
     line-height: 1.12;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: var(--color-text);
   }
 
-  .catalog-hero__title em {
-    font-style: italic;
-    font-weight: 400;
+  .catalog-hero__title em,
+  .catalog-hero__title .editorial-accent {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 600;
+    color: var(--color-accent);
   }
 
   .catalog-hero__lede {
@@ -3749,9 +3754,9 @@
   .blog-featured__title {
     margin: 0 0 1.25rem;
     max-width: 48rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.75rem, 4vw, 3rem);
-    font-weight: 400;
+    font-weight: 600;
     line-height: 1.12;
     color: #fff;
     transition: color 0.25s ease;
@@ -3951,9 +3956,9 @@
   .blog-empty__title,
   .blog-empty-filter__title {
     margin: 0 0 0.75rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.5rem, 3vw, 2rem);
-    font-weight: 400;
+    font-weight: 600;
     color: var(--color-text);
   }
 
@@ -4014,17 +4019,21 @@
 
   .blog-cta__title {
     margin: 0 0 1rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.75rem, 4.5vw, 2.75rem);
-    font-weight: 400;
+    font-weight: 600;
+    font-style: normal;
     line-height: 1.15;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: var(--color-text);
   }
 
-  .blog-cta__title em {
-    font-style: italic;
-    font-weight: 400;
+  .blog-cta__title em,
+  .blog-cta__title .editorial-accent {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 600;
+    color: var(--color-accent);
   }
 
   .blog-cta__lede {
@@ -4464,9 +4473,9 @@
   .event-detail__title {
     margin: 0 0 0.75rem;
     max-width: 48rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 400;
+    font-weight: 600;
     line-height: 1.1;
     letter-spacing: -0.02em;
     color: #ffffff;
@@ -4664,9 +4673,9 @@
 
   .event-detail__ticket-price {
     margin: 0 0 1.25rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 2.25rem;
-    font-weight: 400;
+    font-weight: 600;
     color: var(--color-text);
   }
 
@@ -4792,20 +4801,6 @@
   .events-section--visible .events-section__header {
     opacity: 1;
     transform: translateY(0);
-  }
-
-  .events-section .editorial-heading {
-    font-family: var(--font-sans);
-    font-style: normal;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-  }
-
-  .events-section .editorial-accent {
-    font-family: inherit;
-    font-style: normal;
-    font-weight: 600;
-    color: var(--color-accent);
   }
 
   .events-section__empty {
@@ -5617,10 +5612,10 @@
   }
 
   .waitlist-form__success-title {
-    font-family: var(--font-serif);
-    font-style: italic;
+    font-family: var(--font-sans);
+    font-style: normal;
     font-size: clamp(1.5rem, 3vw, 1.75rem);
-    font-weight: 400;
+    font-weight: 600;
     color: var(--color-text);
     margin: 0 0 0.5rem;
   }
@@ -5719,10 +5714,10 @@
     z-index: 0;
     margin: 0;
     transform: translateX(-50%);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(5rem, 18vw, 14rem);
-    font-style: italic;
-    font-weight: 400;
+    font-style: normal;
+    font-weight: 600;
     line-height: 0.85;
     letter-spacing: -0.04em;
     white-space: nowrap;
@@ -5859,10 +5854,10 @@
 
   .site-footer__mark-text {
     display: block;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.9rem, 2.9vw, 2.55rem);
-    font-weight: 400;
-    font-style: italic;
+    font-weight: 600;
+    font-style: normal;
     line-height: 1.05;
     letter-spacing: -0.03em;
     text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
@@ -6654,6 +6649,22 @@
     #fcfcfb;
 }
 
+.public-page-shell h1,
+.public-page-shell h2,
+.public-page-shell h3,
+.public-page-shell h4,
+.public-page-shell h5,
+.public-page-shell h6 {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.public-page-shell .final-cta-section .editorial-accent {
+  color: #b8d4ff;
+}
+
 /* Article read: one flat canvas so the fixed TOC rail does not look like a separate panel */
 .public-article-page.public-page-shell {
   background: #ffffff;
@@ -7082,20 +7093,26 @@
 
 .conference-hero__title {
   margin-top: 1.75rem;
-  max-width: min(100%, 54rem);
-  font-family: var(--font-serif);
-  font-size: clamp(1.35rem, 4.6vw, 5.5rem);
-  line-height: 1.05;
-  letter-spacing: -0.04em;
+  margin-inline: auto;
+  width: 100%;
+  max-width: min(100%, 44rem);
+  font-family: var(--font-sans);
+  font-size: clamp(1.5rem, 3.4vw, 4.125rem);
+  font-weight: 600;
+  font-style: normal;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-align: center;
+  text-wrap: balance;
   color: #fff;
   text-shadow: 0 2px 28px rgba(0, 0, 0, 0.45);
   outline: none;
-  white-space: nowrap;
 }
 
 .conference-hero__title-accent {
   display: inline;
-  font-style: italic;
+  font-style: normal;
+  font-weight: 600;
   color: #a8c8ff;
 }
 
