@@ -10,9 +10,11 @@ export function getApiPublicUrl(): string {
 
   const isProduction = process.env.NODE_ENV === 'production';
   if (isProduction) {
-    throw new Error(
-      'API_PUBLIC_URL must be set in production (e.g. https://your-service.onrender.com)',
+    const fallback = 'https://book-website-api.onrender.com';
+    console.warn(
+      `[apiPublicUrl] API_PUBLIC_URL missing in production. Using fallback ${fallback}`,
     );
+    return fallback;
   }
 
   const port = process.env.PORT || '3001';

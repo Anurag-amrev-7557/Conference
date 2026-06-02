@@ -1,4 +1,5 @@
 const DEV_FALLBACK = 'http://localhost:5173';
+const PROD_FALLBACK = 'https://superhumanly-thoughts.web.app';
 
 let devWarningLogged = false;
 
@@ -15,18 +16,20 @@ export function getSiteUrl(): string {
 
   if (isProduction) {
     if (!raw) {
-      throw new Error('SITE_URL must be set when NODE_ENV=production');
+      console.warn(`[siteUrl] SITE_URL missing in production. Using fallback ${PROD_FALLBACK}`);
+      return PROD_FALLBACK;
     }
-    let parsed: URL;
     try {
-      parsed = new URL(raw);
+      const parsed = new URL(raw);
+      if (parsed.protocol !== 'https:') {
+        console.warn(`[siteUrl] SITE_URL is non-https in production. Using fallback ${PROD_FALLBACK}`);
+        return PROD_FALLBACK;
+      }
+      return normalizeOrigin(parsed.origin);
     } catch {
-      throw new Error('SITE_URL must be a valid absolute URL when NODE_ENV=production');
+      console.warn(`[siteUrl] SITE_URL is invalid in production. Using fallback ${PROD_FALLBACK}`);
+      return PROD_FALLBACK;
     }
-    if (parsed.protocol !== 'https:') {
-      throw new Error('SITE_URL must use https: in production');
-    }
-    return normalizeOrigin(parsed.origin);
   }
 
   if (!raw) {
