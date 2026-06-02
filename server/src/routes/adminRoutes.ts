@@ -1,11 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
-import sharp from 'sharp';
 import prisma from '../lib/prisma';
 import { validateBody } from '../middleware/validateBody';
 import { contentPatchSchema } from '../schemas/content';
@@ -23,9 +19,8 @@ import {
 import { getJwtSecret } from '../lib/jwtSecret';
 import { sanitizeArticleHtml, validateCustomCss, validateInjectedScripts } from '../lib/sanitize';
 import { embedHomepageInSettingsPatch, expandHomepageFromSettings } from '../lib/homepageContent';
-import { publicAssetUrl } from '../lib/apiPublicUrl';
-import { getMediaUploadDir, getOgUploadDir } from '../lib/uploadPaths';
 import { isSafeMediaFilename, listMediaFiles } from '../lib/listMediaFiles';
+import { deleteMediaFile, uploadMediaImage, uploadOgImage } from '../lib/mediaStorage';
 import { loadAdminPermissions, mergeAdminPermissions, resolvePermissionsForRole } from '../lib/adminPermissions';
 import { deepMergeObjects, safeParseJsonRecord } from '../lib/mergePatch';
 import { backupDatabase } from '../lib/backupDatabase';
@@ -193,16 +188,8 @@ router.post('/og-image', (req, res, next) => {
   }
 
   try {
-    const ogDir = getOgUploadDir();
-    await mkdir(ogDir, { recursive: true });
-    const filename = `${randomUUID()}.jpg`;
-    const outPath = join(ogDir, filename);
-    const buffer = await sharp(file.buffer)
-      .resize(1200, 630, { fit: 'cover', position: 'centre' })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    await writeFile(outPath, buffer);
-    res.json({ url: publicAssetUrl(`/og/${filename}`) });
+    const url = await uploadOgImage(file.buffer);
+    res.json({ url });
   } catch {
     res.status(500).json({ error: 'Failed to process image.' });
   }
@@ -230,17 +217,8 @@ router.post('/media-image', (req, res, next) => {
   }
 
   try {
-    const mediaDir = getMediaUploadDir();
-    await mkdir(mediaDir, { recursive: true });
-    const ext = file.mimetype === 'image/png' ? 'png' : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
-    const filename = `${randomUUID()}.${ext}`;
-    const outPath = join(mediaDir, filename);
-    let pipeline = sharp(file.buffer).resize(1920, 1920, { fit: 'inside', withoutEnlargement: true });
-    if (ext === 'png') pipeline = pipeline.png();
-    else if (ext === 'webp') pipeline = pipeline.webp({ quality: 85 });
-    else pipeline = pipeline.jpeg({ quality: 85 });
-    await writeFile(outPath, await pipeline.toBuffer());
-    res.json({ url: publicAssetUrl(`/media/${filename}`) });
+    const url = await uploadMediaImage(file.buffer, file.mimetype);
+    res.json({ url });
   } catch {
     res.status(500).json({ error: 'Failed to process image.' });
   }
@@ -263,15 +241,13 @@ router.delete('/media/:filename', async (req, res) => {
     return res.status(400).json({ error: 'Invalid filename.' });
   }
 
-  const filePath = join(getMediaUploadDir(), filename);
   try {
-    await unlink(filePath);
-    res.json({ success: true });
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code === 'ENOENT') {
+    const result = await deleteMediaFile(filename);
+    if (result === 'not_found') {
       return res.status(404).json({ error: 'File not found.' });
     }
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to delete file.' });
   }
 });

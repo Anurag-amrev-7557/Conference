@@ -12,9 +12,8 @@ describe('admin og-image route (CMS-05)', () => {
     expect(src).toMatch(/ogUpload\.single\(['"]file['"]\)/);
   });
 
-  it('writes under repo-root public/og', () => {
-    expect(src).toMatch(/public\/og/);
-    expect(src).toMatch(/1200,\s*630/);
+  it('delegates image processing to upload helper', () => {
+    expect(src).toMatch(/uploadOgImage\(file\.buffer\)/);
   });
 });
 

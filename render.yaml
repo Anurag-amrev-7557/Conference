@@ -6,21 +6,23 @@ services:
     name: book-website-api
     runtime: node
     rootDir: server
-    buildCommand: npm ci && npm run build && npx prisma generate && npx prisma migrate deploy
+    buildCommand: npm ci && npm run build && npx prisma generate && npx prisma db push
     startCommand: npm start
     healthCheckPath: /health
-    plan: starter
-    disk:
-      name: book-website-uploads
-      mountPath: /var/data
-      sizeGB: 1
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        value: file:/var/data/prod.db
-      - key: UPLOAD_ROOT
-        value: /var/data
+        sync: false
+      - key: STORAGE_PROVIDER
+        value: cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: SITE_URL
@@ -31,8 +33,6 @@ services:
         sync: false
       - key: ADMIN_ALLOWED_ORIGINS
         sync: false
-      - key: BACKUP_ON_START
-        value: "1"
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM

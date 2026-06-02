@@ -17,6 +17,7 @@ import { getMediaUploadDir, getOgUploadDir, getUploadRoot } from './lib/uploadPa
 import { ensureDatabasePath } from './lib/ensureDatabasePath';
 import { bootstrapMediaAssets } from './lib/bootstrapMedia';
 import { getDatabaseStats } from './lib/backupDatabase';
+import { getStorageProvider } from './lib/mediaStorage';
 import { requestIdMiddleware, errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -111,9 +112,13 @@ app.use(errorHandler);
 
 async function startServer() {
   const databaseUrl = await ensureDatabasePath();
-  await mkdir(getMediaUploadDir(), { recursive: true });
-  await mkdir(getOgUploadDir(), { recursive: true });
-  await bootstrapMediaAssets();
+  const storageProvider = getStorageProvider();
+
+  if (storageProvider === 'local') {
+    await mkdir(getMediaUploadDir(), { recursive: true });
+    await mkdir(getOgUploadDir(), { recursive: true });
+    await bootstrapMediaAssets();
+  }
 
   if (process.env.BACKUP_ON_START === '1') {
     const { backupDatabase } = await import('./lib/backupDatabase');
@@ -127,6 +132,7 @@ async function startServer() {
     console.log(`[🚀] API listening on port ${PORT}`);
     console.log(`[🗄️] Database: ${databaseUrl}`);
     console.log(`[📁] Upload root: ${getUploadRoot()}`);
+    console.log(`[🗂️] Storage provider: ${storageProvider}`);
     console.log(`[🔗] Public API URL: ${getApiPublicUrl()}`);
   });
 }

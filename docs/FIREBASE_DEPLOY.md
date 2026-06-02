@@ -35,9 +35,14 @@ Deploy the API **before** the frontend so you have a live `API_PUBLIC_URL`.
 | Start Command | `npm start` |
 | Health Check Path | `/health` |
 
-### Persistent disk (required)
+### Free-plan architecture (recommended here)
 
-Attach a disk **1 GB+** mounted at **`/var/data`**.
+On Render **Free**, use:
+
+- **Neon Postgres** (or Supabase Postgres) for DB
+- **Cloudinary** for media/image uploads
+
+This avoids local disk persistence requirements on Free instances.
 
 ### Environment variables (Render)
 
@@ -45,11 +50,13 @@ Attach a disk **1 GB+** mounted at **`/var/data`**.
 |----------|---------|
 | `NODE_ENV` | `production` |
 | `JWT_SECRET` | long random string |
-| `DATABASE_URL` | `file:/var/data/prod.db` |
-| `UPLOAD_ROOT` | `/var/data` |
+| `DATABASE_URL` | `postgresql://...` (Neon pooled URL with SSL) |
+| `STORAGE_PROVIDER` | `cloudinary` |
+| `CLOUDINARY_CLOUD_NAME` | from Cloudinary dashboard |
+| `CLOUDINARY_API_KEY` | from Cloudinary dashboard |
+| `CLOUDINARY_API_SECRET` | from Cloudinary dashboard |
 | `API_PUBLIC_URL` | `https://book-website-api.onrender.com` |
 | `SITE_URL` | `https://your-project.web.app` (Firebase URL — update after step 2) |
-| `BACKUP_ON_START` | `1` (optional) |
 | `RESEND_API_KEY` | from [resend.com](https://resend.com) — required for registration emails |
 | `EMAIL_FROM` | `Superhumanly Summit <notifications@yourdomain.com>` |
 | `REGISTRATION_NOTIFY_EMAIL` | fallback admin inbox if not set in Admin CRM |
@@ -71,7 +78,7 @@ Render Shell or local against prod DB:
 
 ```bash
 cd server
-DATABASE_URL="file:/var/data/prod.db" npm run seed
+DATABASE_URL="postgresql://..." npm run seed
 ```
 
 Default admin password is set in `server/src/seed.ts` (change after first login).
@@ -80,7 +87,7 @@ Default admin password is set in `server/src/seed.ts` (change after first login)
 
 ```bash
 curl https://YOUR-RENDER-URL.onrender.com/health
-curl -I https://YOUR-RENDER-URL.onrender.com/media/conference-hero.mp4
+curl -I https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/<sample-public-id>.jpg
 ```
 
 ---
@@ -119,7 +126,7 @@ npm run firebase-build
 firebase deploy --only hosting
 ```
 
-`firebase-build` strips large MP4s from `dist/` — hero video is served from Render `/media/`.
+`firebase-build` strips large MP4s from `dist/` — CMS image uploads are served by Cloudinary URLs.
 
 ### Custom domain (optional)
 
@@ -151,10 +158,10 @@ Notes:
 
 ### Smoke test
 
-- [ ] Homepage loads hero video (from Render `/media/`)
+- [ ] Homepage loads and media assets resolve without 404
 - [ ] Admin login at `https://your-site.web.app/admin`
 - [ ] Save a change in Conference → Hero → persists after refresh
-- [ ] Upload image in Admin → Media → URL is `https://…onrender.com/media/…`
+- [ ] Upload image in Admin → Media → URL is `https://res.cloudinary.com/...`
 - [ ] Submit test registration → admin inbox receives Approve/Deny email → click updates CRM
 
 ---
@@ -199,10 +206,10 @@ npm run dev
 
 ## Persistence & backups
 
-CMS data lives on Render’s **persistent disk**, not in Firebase Hosting.
+CMS data lives in **Postgres (Neon/Supabase)** and media lives in **Cloudinary**.
 
-- **Backups:** `cd server && npm run backup:db` or `POST /api/v1/admin/backup`
-- **Do not** re-run seed on a live DB expecting a reset — seed only creates empty DB content
+- For backups, use your Postgres provider snapshots/export tools.
+- Do not re-run seed on a live DB expecting a reset — seed only creates defaults when missing.
 
 See [DEPLOY.md](../DEPLOY.md) section “Persisting admin (CMS) changes” for details.
 
