@@ -21,8 +21,6 @@ import { getStorageProvider } from './lib/mediaStorage';
 import { requestIdMiddleware, errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
-getJwtSecret();
-getSiteUrl();
 
 export const app = express();
 const PORT = process.env.PORT || 3001;
@@ -111,6 +109,10 @@ app.get('/health', async (_req, res) => {
 app.use(errorHandler);
 
 async function startServer() {
+  // Validate required production env early so startup fails loudly.
+  getJwtSecret();
+  getSiteUrl();
+
   const databaseUrl = await ensureDatabasePath();
   const storageProvider = getStorageProvider();
 
@@ -138,5 +140,8 @@ async function startServer() {
 }
 
 if (process.env.NODE_ENV !== 'test') {
-  void startServer();
+  void startServer().catch((err) => {
+    console.error('[startup] Failed to boot API:', err);
+    process.exit(1);
+  });
 }
