@@ -19,7 +19,8 @@ jobs:
         env:
           RENDER_HEALTHCHECK_URL: ${{ secrets.RENDER_HEALTHCHECK_URL }}
         run: |
-          URL="${RENDER_HEALTHCHECK_URL:-https://superhumanly-thoughts.onrender.com/ping}"
+          # /health until latest API is deployed; override with .../ping for a lighter wake-up.
+          URL="${RENDER_HEALTHCHECK_URL:-https://superhumanly-thoughts.onrender.com/health}"
           if [ -z "${RENDER_HEALTHCHECK_URL}" ]; then
             echo "RENDER_HEALTHCHECK_URL secret not set — using default: ${URL}"
             echo "Add repo secret to override: Settings → Secrets → Actions"
