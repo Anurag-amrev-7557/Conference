@@ -50,6 +50,83 @@ function sanitizeArticlePayload(article: Record<string, unknown>) {
   return payload;
 }
 
+const ALLOWED_EVENT_KEYS = [
+  'day',
+  'weekday',
+  'time',
+  'full_time',
+  'title',
+  'host',
+  'location',
+  'description',
+  'tags',
+  'price',
+  'thumbnail',
+  'status',
+  'isPublished',
+  'publishAt',
+  'unpublishAt',
+  'registrationUrl',
+  'registrationOpen',
+  'startDate',
+  'endDate',
+  'coordinates',
+  'lat',
+  'lng',
+  'seoTitle',
+  'seoDescription',
+  'ogImage',
+  'noindex',
+] as const;
+
+type AllowedEventKey = (typeof ALLOWED_EVENT_KEYS)[number];
+
+function normalizeOptionalIsoDatetime(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const d = new Date(String(value));
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function sanitizeEventPayload(event: Record<string, unknown>) {
+  const payload: Partial<Record<AllowedEventKey, unknown>> = {};
+  for (const key of ALLOWED_EVENT_KEYS) {
+    if (key in event && event[key] !== undefined) {
+      payload[key] = event[key];
+    }
+  }
+
+  for (const dateKey of ['publishAt', 'unpublishAt', 'startDate', 'endDate'] as const) {
+    if (dateKey in payload) {
+      payload[dateKey] = normalizeOptionalIsoDatetime(payload[dateKey]);
+    }
+  }
+
+  if ('lat' in payload || 'lng' in payload) {
+    delete payload.coordinates;
+  }
+
+  if (payload.ogImage === '') {
+    delete payload.ogImage;
+  }
+
+  return payload;
+}
+
+function formatApiError(
+  data: { error?: string; details?: Array<{ path?: string; message?: string }> },
+  fallback: string,
+): string {
+  if (Array.isArray(data.details) && data.details.length > 0) {
+    return data.details
+      .map((d) => (d.path ? `${d.path}: ${d.message}` : d.message))
+      .filter(Boolean)
+      .join('; ');
+  }
+  return data.error || fallback;
+}
+
 export const api = {
   // Public content (split endpoints)
   async getContentSite() {
@@ -423,7 +500,7 @@ export const api = {
       body: JSON.stringify(sanitizedArticle)
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update article');
+    if (!res.ok) throw new Error(formatApiError(data, 'Failed to update article'));
     return data;
   },
 
@@ -437,30 +514,32 @@ export const api = {
   },
 
   async createEvent(token: string, event: any) {
+    const sanitizedEvent = sanitizeEventPayload(event as Record<string, unknown>);
     const res = await fetch(`${API_BASE}/admin/events`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(event)
+      body: JSON.stringify(sanitizedEvent)
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create event');
+    if (!res.ok) throw new Error(formatApiError(data, 'Failed to create event'));
     return data;
   },
 
   async updateEvent(token: string, id: string, event: any) {
+    const sanitizedEvent = sanitizeEventPayload(event as Record<string, unknown>);
     const res = await fetch(`${API_BASE}/admin/events/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(event)
+      body: JSON.stringify(sanitizedEvent)
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update event');
+    if (!res.ok) throw new Error(formatApiError(data, 'Failed to update event'));
     return data;
   },
 

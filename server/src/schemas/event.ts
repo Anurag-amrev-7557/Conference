@@ -5,6 +5,17 @@ const eventTagSchema = z.object({
   color: z.string(),
 });
 
+/** Accept ISO strings, datetime-local values, and empty strings from admin forms. */
+const optionalEventDatetime = z.preprocess(
+  (value) => {
+    if (value === undefined) return undefined;
+    if (value === null || value === '') return null;
+    const d = new Date(String(value));
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  },
+  z.string().datetime().nullable().optional(),
+);
+
 export const eventCreateSchema = z
   .object({
     day: z.string().min(1),
@@ -20,12 +31,12 @@ export const eventCreateSchema = z
     thumbnail: z.string().optional(),
     status: z.string().optional(),
     isPublished: z.boolean().optional(),
-    publishAt: z.string().datetime().nullable().optional(),
-    unpublishAt: z.string().datetime().nullable().optional(),
+    publishAt: optionalEventDatetime,
+    unpublishAt: optionalEventDatetime,
     registrationUrl: z.string().max(2048).optional(),
     registrationOpen: z.boolean().optional(),
-    startDate: z.string().datetime().optional().nullable(),
-    endDate: z.string().datetime().optional().nullable(),
+    startDate: optionalEventDatetime,
+    endDate: optionalEventDatetime,
     coordinates: z
       .object({
         lat: z.number(),
