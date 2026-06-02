@@ -89,12 +89,42 @@ function normalizeOptionalIsoDatetime(value: unknown): string | null | undefined
   return d.toISOString();
 }
 
+const EVENT_NULLABLE_STRING_KEYS = new Set<AllowedEventKey>([
+  'seoTitle',
+  'seoDescription',
+  'ogImage',
+]);
+
+const EVENT_EMPTY_STRING_KEYS = new Set<AllowedEventKey>([
+  'weekday',
+  'time',
+  'full_time',
+  'host',
+  'location',
+  'description',
+  'price',
+  'thumbnail',
+  'status',
+  'registrationUrl',
+]);
+
 function sanitizeEventPayload(event: Record<string, unknown>) {
   const payload: Partial<Record<AllowedEventKey, unknown>> = {};
+
   for (const key of ALLOWED_EVENT_KEYS) {
-    if (key in event && event[key] !== undefined) {
-      payload[key] = event[key];
+    if (!(key in event) || event[key] === undefined) continue;
+
+    const raw = event[key];
+    if (raw === null) {
+      if (EVENT_NULLABLE_STRING_KEYS.has(key)) {
+        payload[key] = null;
+      } else if (EVENT_EMPTY_STRING_KEYS.has(key)) {
+        payload[key] = '';
+      }
+      continue;
     }
+
+    payload[key] = raw;
   }
 
   for (const dateKey of ['publishAt', 'unpublishAt', 'startDate', 'endDate'] as const) {
@@ -105,28 +135,6 @@ function sanitizeEventPayload(event: Record<string, unknown>) {
 
   if ('lat' in payload || 'lng' in payload) {
     delete payload.coordinates;
-  }
-
-  const optionalStringKeys = [
-    'weekday',
-    'time',
-    'full_time',
-    'host',
-    'location',
-    'description',
-    'price',
-    'thumbnail',
-    'status',
-    'registrationUrl',
-    'seoTitle',
-    'seoDescription',
-    'ogImage',
-  ] as const;
-
-  for (const key of optionalStringKeys) {
-    if (payload[key] === '') {
-      payload[key] = null;
-    }
   }
 
   return payload;

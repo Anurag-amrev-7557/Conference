@@ -16,24 +16,50 @@ const optionalEventDatetime = z.preprocess(
   z.string().datetime().nullable().optional(),
 );
 
+/** Admin/API may send null for empty optional text; Prisma string columns use "". */
+function optionalEventString(maxLen?: number) {
+  const base = maxLen ? z.string().max(maxLen) : z.string();
+  return z.preprocess(
+    (value) => {
+      if (value === undefined) return undefined;
+      if (value === null) return '';
+      return String(value);
+    },
+    base.optional(),
+  );
+}
+
+/** Nullable SEO columns in the database. */
+function optionalEventNullableString(maxLen?: number) {
+  const base = maxLen ? z.string().max(maxLen) : z.string();
+  return z.preprocess(
+    (value) => {
+      if (value === undefined) return undefined;
+      if (value === null || value === '') return null;
+      return String(value);
+    },
+    base.nullable().optional(),
+  );
+}
+
 export const eventCreateSchema = z
   .object({
     day: z.string().min(1),
-    weekday: z.string().optional(),
-    time: z.string().optional(),
-    full_time: z.string().optional(),
+    weekday: optionalEventString(),
+    time: optionalEventString(),
+    full_time: optionalEventString(),
     title: z.string().min(1),
-    host: z.string().optional(),
-    location: z.string().optional(),
-    description: z.string().max(10000).optional(),
+    host: optionalEventString(),
+    location: optionalEventString(),
+    description: optionalEventString(10000),
     tags: z.array(eventTagSchema).optional(),
-    price: z.string().optional(),
-    thumbnail: z.string().optional(),
-    status: z.string().optional(),
+    price: optionalEventString(),
+    thumbnail: optionalEventString(),
+    status: optionalEventString(),
     isPublished: z.boolean().optional(),
     publishAt: optionalEventDatetime,
     unpublishAt: optionalEventDatetime,
-    registrationUrl: z.string().max(2048).optional(),
+    registrationUrl: optionalEventString(2048),
     registrationOpen: z.boolean().optional(),
     startDate: optionalEventDatetime,
     endDate: optionalEventDatetime,
@@ -43,11 +69,11 @@ export const eventCreateSchema = z
         lng: z.number(),
       })
       .optional(),
-    lat: z.number().optional(),
-    lng: z.number().optional(),
-    seoTitle: z.string().nullable().optional(),
-    seoDescription: z.string().nullable().optional(),
-    ogImage: z.string().max(2048).nullable().optional(),
+    lat: z.number().nullable().optional(),
+    lng: z.number().nullable().optional(),
+    seoTitle: optionalEventNullableString(200),
+    seoDescription: optionalEventNullableString(500),
+    ogImage: optionalEventNullableString(2048),
     noindex: z.boolean().optional(),
   })
   .strict();
