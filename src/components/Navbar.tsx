@@ -7,8 +7,8 @@ import {
 import { NavMagneticCta } from "./NavMagneticCta"
 import { useWebsiteData } from "./WebsiteDataProvider"
 import { cn, formatBrandNameForDisplay } from "../lib/utils"
-import { CONFERENCE_HERO_LOGO_PUBLIC } from "../lib/conferenceDefaults"
-import { resolveMediaUrl } from "../lib/assetUrl"
+import { CmsImage } from "./CmsImage"
+import { getNavbarLogoSrc } from "../lib/brandLogo"
 import type { NavLink } from "../lib/websiteData"
 
 function getNavLinkClass(isDark: boolean, isActive: boolean, mobile = false) {
@@ -265,10 +265,11 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
             to="/"
             className="flex items-center gap-2.5 min-w-0 shrink-0 md:justify-self-start md:self-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 rounded-lg"
           >
-            <img
-              src={resolveMediaUrl(appearance.brandLogoUrl, CONFERENCE_HERO_LOGO_PUBLIC)}
-              alt={appearance.brandName || "Superhumanly AI"}
-              className="nav-dock__brand-logo h-10 sm:h-11 w-auto max-w-[14rem] object-contain object-left shrink-0 transition-transform duration-200 group-hover:scale-[1.04]"
+            <CmsImage
+              src={getNavbarLogoSrc(appearance.brandLogoUrl)}
+              alt=""
+              aria-hidden
+              className="nav-dock__brand-logo h-9 w-9 sm:h-10 sm:w-10 shrink-0 object-contain object-center transition-transform duration-200 group-hover:scale-[1.04]"
             />
             <span
               className={cn(

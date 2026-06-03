@@ -385,7 +385,7 @@ export const DesignSystemManager: React.FC = () => {
                           label="Navbar logo"
                           value={form.brandLogoUrl ?? ''}
                           onChange={(url) => setForm({ ...form, brandLogoUrl: url })}
-                          hint="PNG/WebP with transparent background. Default site logo: /media/superhumanly-logo.png"
+                          hint="Summit mark (robot head). Default: /media/superhumanly-logo.png — same as conference hero."
                         />
                       </AdminEditorSubsection>
                       <AdminEditorSubsection
