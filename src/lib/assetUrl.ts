@@ -3,7 +3,7 @@
  * New uploads return absolute API URLs; legacy rows may still use /media/ or /og/.
  */
 
-function getApiOrigin(): string | undefined {
+export function getApiOrigin(): string | undefined {
   const explicit = import.meta.env.VITE_API_ORIGIN?.trim();
   if (explicit) {
     return explicit.replace(/\/+$/, '');

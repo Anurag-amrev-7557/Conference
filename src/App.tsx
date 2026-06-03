@@ -19,6 +19,7 @@ import { useLocation } from 'react-router-dom'
 import { InjectedScripts } from './components/InjectedScripts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { CookieBanner } from './components/CookieBanner'
+import { ApiKeepAlive } from './components/ApiKeepAlive'
 
 function ThemeSynchronizer() {
   const { data } = useWebsiteData();
@@ -127,6 +128,7 @@ function App() {
   return (
     <>
       <ThemeSynchronizer />
+      <ApiKeepAlive />
       <Router>
         <ConferenceRevealProvider>
         <ScrollToHash />

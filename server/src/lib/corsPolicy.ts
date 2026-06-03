@@ -20,6 +20,10 @@ function isPublicApiRoute(path: string): boolean {
   );
 }
 
+function isKeepAliveRoute(path: string): boolean {
+  return path === '/ping' || path === '/health';
+}
+
 /**
  * Split CORS: public vs admin origin lists (SEC-05 D-13–D-15).
  */
@@ -47,6 +51,10 @@ export function createCorsMiddleware(): RequestHandler {
     const path = req.path;
     const origin = req.headers.origin;
     const adminRoute = isAdminRoute(path);
+
+    if (isKeepAliveRoute(path)) {
+      return cors({ origin: true, credentials: false })(req, res, next);
+    }
 
     if (isProduction && !origin) {
       // Non-browser or same-origin requests may legitimately omit Origin in production.

@@ -2,8 +2,9 @@ name: Render Keepalive
 
 on:
   schedule:
-    # Every 5 minutes — Render free tier sleeps after ~15 min idle.
+    # Best-effort only — GitHub free schedules are often delayed; use UptimeRobot (docs/RENDER_KEEPALIVE.md).
     - cron: "*/5 * * * *"
+    - cron: "2,12,22,32,42,52 * * * *"
   workflow_dispatch:
 
 concurrency:
@@ -19,8 +20,7 @@ jobs:
         env:
           RENDER_HEALTHCHECK_URL: ${{ secrets.RENDER_HEALTHCHECK_URL }}
         run: |
-          # /health until latest API is deployed; override with .../ping for a lighter wake-up.
-          URL="${RENDER_HEALTHCHECK_URL:-https://superhumanly-thoughts.onrender.com/health}"
+          URL="${RENDER_HEALTHCHECK_URL:-https://superhumanly-thoughts.onrender.com/ping}"
           if [ -z "${RENDER_HEALTHCHECK_URL}" ]; then
             echo "RENDER_HEALTHCHECK_URL secret not set — using default: ${URL}"
             echo "Add repo secret to override: Settings → Secrets → Actions"
