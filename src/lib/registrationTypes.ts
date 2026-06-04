@@ -1,4 +1,4 @@
-export type RegistrationDesignation = 'enterprise' | 'student' | 'individual';
+export type RegistrationDesignation = 'enterprise' | 'student' | 'individual' | 'sponsor';
 
 export type RegistrationStatus = 'pending' | 'confirmed' | 'cancelled';
 

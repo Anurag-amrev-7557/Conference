@@ -66,6 +66,11 @@ export const defaultConferenceRegistrationForm = {
       label: 'Individual',
       description: 'Independent founder, operator, or builder',
     },
+    {
+      value: 'sponsor',
+      label: 'Sponsor',
+      description: 'Partner, exhibitor, or sponsorship inquiry',
+    },
   ],
   /** Email that receives new registration alerts with approve/deny links */
   notifyEmail: '',

@@ -1,6 +1,6 @@
 import cors from 'cors';
 import type { Request, RequestHandler } from 'express';
-import { getSiteUrl } from './siteUrl';
+import { getProductionSiteOrigins } from './siteOrigins';
 
 function parseOrigins(value: string | undefined, fallback: string[]): string[] {
   if (!value?.trim()) {
@@ -31,12 +31,7 @@ function mergeSiteOrigin(origins: string[]): string[] {
   if (process.env.NODE_ENV !== 'production') {
     return origins;
   }
-  try {
-    const site = getSiteUrl();
-    return [...new Set([...origins, site])];
-  } catch {
-    return origins;
-  }
+  return [...new Set([...origins, ...getProductionSiteOrigins()])];
 }
 
 export function createCorsMiddleware(): RequestHandler {

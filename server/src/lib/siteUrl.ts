@@ -1,5 +1,5 @@
 const DEV_FALLBACK = 'http://localhost:5173';
-const PROD_FALLBACK = 'https://superhumanly-thoughts.web.app';
+const PROD_FALLBACK = 'https://superhumanly-thoughts.com';
 
 let devWarningLogged = false;
 

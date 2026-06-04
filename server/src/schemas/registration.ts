@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { REGISTRATION_DESIGNATION_VALUES } from '../lib/registrationDesignations';
 
-export const registrationDesignationSchema = z.enum(['enterprise', 'student', 'individual']);
+export const registrationDesignationSchema = z.enum(REGISTRATION_DESIGNATION_VALUES);
 
 const phoneSchema = z
   .string()

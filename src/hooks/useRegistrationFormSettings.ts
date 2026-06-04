@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useWebsiteData } from '../components/WebsiteDataProvider';
 import { defaultConferenceRegistrationForm } from '../lib/registrationDefaults';
+import { mergeDesignationOptions } from '../lib/mergeDesignationOptions';
 import type { ConferenceRegistrationFormSettings } from '../lib/registrationTypes';
 
 export function useRegistrationFormSettings(): ConferenceRegistrationFormSettings {
@@ -43,10 +44,10 @@ export function useRegistrationFormSettings(): ConferenceRegistrationFormSetting
           ...fromSettings.fields?.designation,
         },
       },
-      designationOptions:
-        fromSettings.designationOptions?.length
-          ? fromSettings.designationOptions
-          : defaultConferenceRegistrationForm.designationOptions,
+      designationOptions: mergeDesignationOptions(
+        fromSettings.designationOptions,
+        defaultConferenceRegistrationForm.designationOptions,
+      ),
       panelStats:
         fromSettings.panelStats?.length
           ? fromSettings.panelStats

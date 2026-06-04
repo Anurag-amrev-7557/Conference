@@ -66,6 +66,11 @@ export const defaultConferenceRegistrationForm: ConferenceRegistrationFormSettin
       label: 'Individual',
       description: 'Independent founder, operator, or builder',
     },
+    {
+      value: 'sponsor',
+      label: 'Sponsor',
+      description: 'Partner, exhibitor, or sponsorship inquiry',
+    },
   ],
   notifyEmail: '',
   notifyOnSubmit: true,

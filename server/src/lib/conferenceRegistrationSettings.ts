@@ -1,4 +1,5 @@
 import prisma from './prisma';
+import { mergeDesignationOptions } from './registrationDesignations';
 import { defaultConferenceRegistrationForm } from './registrationDefaults';
 
 export const DEFAULT_TICKET_PRICE_CENTS = 2000;
@@ -38,10 +39,12 @@ export async function getConferenceRegistrationSettings() {
       ...defaultConferenceRegistrationForm.fields,
       ...(saved?.fields as Record<string, unknown> | undefined),
     },
-    designationOptions:
-      Array.isArray(saved?.designationOptions) && saved.designationOptions.length
-        ? saved.designationOptions
-        : defaultConferenceRegistrationForm.designationOptions,
+    designationOptions: mergeDesignationOptions(
+      Array.isArray(saved?.designationOptions)
+        ? (saved.designationOptions as { value: string; label: string; description?: string }[])
+        : undefined,
+      defaultConferenceRegistrationForm.designationOptions,
+    ),
     panelStats:
       Array.isArray(saved?.panelStats) && saved.panelStats.length
         ? saved.panelStats

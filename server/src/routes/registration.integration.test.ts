@@ -205,6 +205,33 @@ describe('Registration admin ↔ website integration', () => {
     await prisma.conferenceRegistration.delete({ where: { id: String(data.id) } }).catch(() => {});
   });
 
+  it('POST /content/conference-registration accepts sponsor designation', async () => {
+    const email = `sponsor-${Date.now()}@example.com`;
+    const { status, data } = await requestJson('/api/v1/content/conference-registration', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Sponsor Prospect',
+        email,
+        phone: '+1 555 0400',
+        linkedIn: 'linkedin.com/in/sponsor-test',
+        designation: 'sponsor',
+      }),
+    });
+    expect(status).toBe(201);
+    const row = await prisma.conferenceRegistration.findUnique({ where: { id: String(data.id) } });
+    expect(row?.designation).toBe('sponsor');
+    await prisma.conferenceRegistration.delete({ where: { id: String(data.id) } }).catch(() => {});
+  });
+
+  it('GET /content/site includes sponsor in designation options', async () => {
+    const { status, data } = await requestJson('/api/v1/content/site');
+    expect(status).toBe(200);
+    const reg = (data.settings as Record<string, unknown>).conferenceRegistration as {
+      designationOptions: { value: string }[];
+    };
+    expect(reg.designationOptions.some((o) => o.value === 'sponsor')).toBe(true);
+  });
+
   it('POST /content/conference-registration creates row with phone and linkedIn', async () => {
     const siteBefore = await requestJson('/api/v1/content/site');
     const expectedCents = (

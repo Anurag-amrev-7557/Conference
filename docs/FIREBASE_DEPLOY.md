@@ -56,7 +56,7 @@ This avoids local disk persistence requirements on Free instances.
 | `CLOUDINARY_API_KEY` | from Cloudinary dashboard |
 | `CLOUDINARY_API_SECRET` | from Cloudinary dashboard |
 | `API_PUBLIC_URL` | `https://book-website-api.onrender.com` |
-| `SITE_URL` | `https://your-project.web.app` (Firebase URL — update after step 2) |
+| `SITE_URL` | `https://superhumanly-thoughts.com` (canonical custom domain) |
 | `RESEND_API_KEY` | from [resend.com](https://resend.com) — required for registration emails |
 | `EMAIL_FROM` | `Superhumanly Summit <notifications@yourdomain.com>` |
 | `REGISTRATION_NOTIFY_EMAIL` | fallback admin inbox if not set in Admin CRM |
@@ -66,11 +66,11 @@ After you connect a custom Firebase domain, update `SITE_URL` to that URL and re
 Optional CORS extras (comma-separated):
 
 ```env
-ALLOWED_ORIGINS=https://your-project.web.app,https://your-project.firebaseapp.com
-ADMIN_ALLOWED_ORIGINS=https://your-project.web.app
+ALLOWED_ORIGINS=https://superhumanly-thoughts.com,https://www.superhumanly-thoughts.com,https://superhumanly-thoughts.web.app,https://superhumanly-thoughts.firebaseapp.com
+ADMIN_ALLOWED_ORIGINS=https://superhumanly-thoughts.com,https://www.superhumanly-thoughts.com,https://superhumanly-thoughts.web.app
 ```
 
-If omitted, `SITE_URL` is merged into CORS automatically.
+If omitted, production CORS still merges `SITE_URL`, its `www` pair, and the Firebase default hosts automatically.
 
 ### Seed admin (once)
 
