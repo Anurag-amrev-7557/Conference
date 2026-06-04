@@ -10,6 +10,7 @@ import { registrationLimiter, newsletterLimiter } from '../middleware/rateLimite
 import { scheduledArticleWhere, scheduledEventWhere } from '../lib/publishSchedule';
 import { getNewsletterSettings } from '../lib/newsletterSettings';
 import { newsletterSignupSchema } from '../schemas/newsletter';
+import { sanitizeAppearanceRecord } from '../lib/brandLogo';
 
 const router = Router();
 
@@ -83,7 +84,9 @@ async function fetchSitePayload() {
     pillars,
     perks,
     settings,
-    appearance: safeParse(content?.appearance),
+    appearance: sanitizeAppearanceRecord(
+      (safeParse(content?.appearance) ?? {}) as Record<string, unknown>,
+    ),
     contentVersion: content?.version ?? 1,
   };
 }

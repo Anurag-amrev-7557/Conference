@@ -74,8 +74,8 @@ export async function uploadOgImage(file: Buffer): Promise<string> {
     .toBuffer();
 
   if (getStorageProvider() === 'cloudinary') {
-    const filename = `${randomUUID()}.jpg`;
-    return uploadToCloudinary(optimized, filename, [OG_TAG]);
+    const publicId = randomUUID();
+    return uploadToCloudinary(optimized, publicId, [OG_TAG]);
   }
 
   const ogDir = getOgUploadDir();
@@ -97,7 +97,8 @@ export async function uploadMediaImage(file: Buffer, mimetype: string): Promise<
   const optimized = await pipeline.toBuffer();
 
   if (getStorageProvider() === 'cloudinary') {
-    return uploadToCloudinary(optimized, filename, [MEDIA_TAG]);
+    const publicId = randomUUID();
+    return uploadToCloudinary(optimized, publicId, [MEDIA_TAG]);
   }
 
   const mediaDir = getMediaUploadDir();
