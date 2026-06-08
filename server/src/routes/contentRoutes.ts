@@ -14,6 +14,14 @@ import { sanitizeAppearanceRecord } from '../lib/brandLogo';
 
 const router = Router();
 
+const CONTENT_CACHE_CONTROL = 'no-store, no-cache, must-revalidate';
+
+router.use((_req, res, next) => {
+  res.setHeader('Cache-Control', CONTENT_CACHE_CONTROL);
+  res.setHeader('Pragma', 'no-cache');
+  next();
+});
+
 const safeParse = (str: string | null | undefined, fallback: unknown = {}) => {
   try {
     return str ? JSON.parse(str) : fallback;

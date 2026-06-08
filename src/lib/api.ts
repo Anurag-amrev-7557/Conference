@@ -17,6 +17,13 @@ export const API_BASE =
     ? (!envApiBase || envApiBase === LEGACY_BROKEN_API_BASE ? PROD_API_BASE : envApiBase)
     : (envApiBase || '/api/v1');
 
+/** CMS content must never be served from the browser HTTP cache. */
+const NO_STORE: RequestInit = { cache: 'no-store' };
+
+function authHeaders(token: string): HeadersInit {
+  return { Authorization: `Bearer ${token}` };
+}
+
 const ALLOWED_ARTICLE_KEYS = [
   'slug',
   'title',
@@ -156,13 +163,13 @@ function formatApiError(
 export const api = {
   // Public content (split endpoints)
   async getContentSite() {
-    const res = await fetch(`${API_BASE}/content/site`);
+    const res = await fetch(`${API_BASE}/content/site`, NO_STORE);
     if (!res.ok) throw new Error('Failed to fetch site content');
     return res.json();
   },
 
   async getArticles(limit = 50, offset = 0) {
-    const res = await fetch(`${API_BASE}/content/articles?limit=${limit}&offset=${offset}`);
+    const res = await fetch(`${API_BASE}/content/articles?limit=${limit}&offset=${offset}`, NO_STORE);
     if (!res.ok) throw new Error('Failed to fetch articles');
     const data = await res.json();
     return data.items ?? data;
@@ -171,7 +178,8 @@ export const api = {
   async getAdminArticles(token: string, options?: { trash?: boolean }) {
     const q = options?.trash ? '?trash=1' : '';
     const res = await fetch(`${API_BASE}/admin/blogs${q}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      ...NO_STORE,
+      headers: authHeaders(token),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch admin articles');
@@ -181,7 +189,8 @@ export const api = {
   async getAdminEvents(token: string, options?: { trash?: boolean }) {
     const q = options?.trash ? '?trash=1' : '';
     const res = await fetch(`${API_BASE}/admin/events${q}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      ...NO_STORE,
+      headers: authHeaders(token),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch admin events');
@@ -232,7 +241,7 @@ export const api = {
   },
 
   async getEvents(limit = 50, offset = 0) {
-    const res = await fetch(`${API_BASE}/content/events?limit=${limit}&offset=${offset}`);
+    const res = await fetch(`${API_BASE}/content/events?limit=${limit}&offset=${offset}`, NO_STORE);
     if (!res.ok) throw new Error('Failed to fetch events');
     const data = await res.json();
     return data.items ?? data;
@@ -240,7 +249,7 @@ export const api = {
 
   /** @deprecated Use split getContentSite + getArticles + getEvents */
   async getContent() {
-    const res = await fetch(`${API_BASE}/content`);
+    const res = await fetch(`${API_BASE}/content`, NO_STORE);
     if (!res.ok) throw new Error('Failed to fetch content');
     return res.json();
   },
