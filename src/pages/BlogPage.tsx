@@ -1,6 +1,8 @@
 import { useMemo, useState, type CSSProperties } from "react"
 import { ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom"
+import { PlaybookArticleCard } from "../components/blog/PlaybookArticleCard"
+import { PlaybookArticlesSkeleton } from "../components/blog/PlaybookArticlesSkeleton"
 import { useWebsiteData } from "../components/WebsiteDataProvider"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
@@ -90,9 +92,10 @@ export function BlogPage() {
           />
 
           {loading ? (
-            <p className="blog-loading" aria-live="polite">
-              Loading articles…
-            </p>
+            <div aria-live="polite" aria-busy="true">
+              <PlaybookArticlesSkeleton count={3} variant="grid" />
+              <span className="sr-only">Loading articles</span>
+            </div>
           ) : articles.length === 0 ? (
             <div className="blog-empty">
               <h2 className="blog-empty__title">Playbooks are on the way</h2>
@@ -133,47 +136,7 @@ export function BlogPage() {
                     className="playbook-article-card group"
                     style={{ "--article-i": idx } as CSSProperties}
                   >
-                    <Link
-                      to={`/blog/${article.slug}`}
-                      className="playbook-article-card__link"
-                    >
-                      <div className="playbook-article-card__media">
-                        <img
-                          src={article.thumbnail}
-                          alt={article.title}
-                          width={640}
-                          height={400}
-                          loading="lazy"
-                          className="playbook-article-card__img"
-                        />
-                      </div>
-
-                      <div className="playbook-article-card__body">
-                        <p className="playbook-article-card__meta">
-                          <span className="playbook-article-card__category">
-                            {article.category}
-                          </span>
-                          <span
-                            className="playbook-article-card__meta-dot"
-                            aria-hidden
-                          />
-                          <span>{article.time} read</span>
-                        </p>
-
-                        <h3 className="playbook-article-card__title">{article.title}</h3>
-                        <p className="playbook-article-card__excerpt editorial-lede max-w-none">
-                          {article.excerpt}
-                        </p>
-
-                        <span className="playbook-article-card__cta">
-                          Get the strategy
-                          <ArrowRight
-                            className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                            aria-hidden
-                          />
-                        </span>
-                      </div>
-                    </Link>
+                    <PlaybookArticleCard article={article} featured={idx === 0} />
                   </li>
                 ))}
               </ul>

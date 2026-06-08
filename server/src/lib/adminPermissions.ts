@@ -54,7 +54,17 @@ function allSectionsEnabled(): RoleAccessConfig['sections'] {
     settings: { seo: true, navigation: true, pages: true, advanced: true },
     blogs: { articles: true, page: true, seo: true },
     events: { events: true, page: true, seo: true },
-    conference: { hero: true, sections: true, lists: true, seo: true, publish: true },
+    conference: {
+      hero: true,
+      sections: true,
+      lists: true,
+      'speakers-page': true,
+      embedded: true,
+      visibility: true,
+      seo: true,
+      advanced: true,
+      publish: true,
+    },
     registrations: { submissions: true, form: true },
   };
 }

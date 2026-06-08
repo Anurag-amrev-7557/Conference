@@ -170,4 +170,75 @@ describe('Admin CMS ↔ public content integration', () => {
     expect(site.status).toBe(200);
     expect((site.data.hero as { headline?: string })?.headline).toBe(headline);
   });
+
+  it('PATCH /admin/content persists conference video metrics and speakers catalog', async () => {
+    const catalogTitle = `Speakers hero ${Date.now()}`;
+    const metricValue = `Metric ${Date.now()}`;
+
+    const existing = await requestJson('/api/v1/content/site');
+    expect(existing.status).toBe(200);
+    const settings = (existing.data.settings ?? {}) as Record<string, unknown>;
+    const conference = (settings.conference ?? {}) as Record<string, unknown>;
+    const sections = (conference.sections ?? {}) as Record<string, unknown>;
+    const video = (sections.video ?? {}) as Record<string, unknown>;
+
+    const patch = await requestJson('/api/v1/admin/content', {
+      method: 'PATCH',
+      headers: authHeaders(token),
+      body: JSON.stringify({
+        settings: {
+          catalogPages: {
+            speakers: {
+              eyebrow: 'Speakers',
+              title: catalogTitle,
+              titleAccent: 'on stage',
+              lede: 'Integration catalog lede',
+            },
+          },
+          conference: {
+            ...conference,
+            sections: {
+              ...sections,
+              video: {
+                ...video,
+                metrics: [{ id: 'integration-metric', value: metricValue, label: 'Labs' }],
+              },
+              sponsors: {
+                ...(sections.sponsors as Record<string, unknown> | undefined),
+                ctaLabel: 'Become a sponsor (integration)',
+              },
+            },
+            speakers: [
+              {
+                id: 'integration-speaker',
+                name: 'Integration Speaker',
+                title: 'CTO',
+                company: 'QA Corp',
+                image: '',
+                featured: true,
+              },
+            ],
+          },
+        },
+      }),
+    });
+    expect(patch.status).toBe(200);
+
+    const site = await requestJson('/api/v1/content/site');
+    expect(site.status).toBe(200);
+    const nextSettings = (site.data.settings ?? {}) as {
+      catalogPages?: { speakers?: { title?: string } };
+      conference?: {
+        sections?: { video?: { metrics?: Array<{ value?: string }> }; sponsors?: { ctaLabel?: string } };
+        speakers?: Array<{ featured?: boolean }>;
+      };
+    };
+
+    expect(nextSettings.catalogPages?.speakers?.title).toBe(catalogTitle);
+    expect(nextSettings.conference?.sections?.video?.metrics?.[0]?.value).toBe(metricValue);
+    expect(nextSettings.conference?.sections?.sponsors?.ctaLabel).toBe(
+      'Become a sponsor (integration)',
+    );
+    expect(nextSettings.conference?.speakers?.[0]?.featured).toBe(true);
+  });
 });

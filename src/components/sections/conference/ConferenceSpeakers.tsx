@@ -1,97 +1,108 @@
 import { ArrowUpRight } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
-import { resolveAssetUrl } from '../../../lib/assetUrl'
+import {
+  getFeaturedSpeakers,
+  getPublishableSpeakers,
+} from '../../../lib/speakers'
+import type { ConferenceSectionCopy } from '../../../lib/websiteData'
+import { SpeakerDetailDialog } from '../../speakers/SpeakerDetailDialog'
+import { SectionCarousel, SectionCarouselItem } from '../SectionCarousel'
 import { ConferenceSectionHeader } from './ConferenceSectionHeader'
 import { ConferenceSectionShell } from './ConferenceSectionShell'
+import { SpeakerCard } from './SpeakerCard'
+import type { ConferenceSpeaker } from '../../../lib/websiteData'
+
+function getSpeakersSectionCtaLabel(
+  copy: ConferenceSectionCopy | undefined,
+  speakerCount: number,
+): string {
+  const cms = copy?.ctaLabel?.trim()
+  if (cms && !/agenda/i.test(cms)) {
+    return cms
+  }
+  if (speakerCount > 0) {
+    return `Meet all ${speakerCount} speakers`
+  }
+  return 'Meet all speakers'
+}
 
 export function ConferenceSpeakers() {
   const { speakers, sections } = useConferenceContent()
   const copy = sections.speakers
+  const publishableSpeakers = useMemo(() => getPublishableSpeakers(speakers), [speakers])
+  const featuredSpeakers = useMemo(() => getFeaturedSpeakers(speakers), [speakers])
+  const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null)
 
-  const headerActions = copy?.ctaLabel ? (
-    <button
-      type="button"
-      className="conference-section__link-cta group"
-      onClick={() =>
-        document.getElementById('conference-agenda')?.scrollIntoView({ behavior: 'smooth' })
-      }
-    >
-      {copy.ctaLabel}
-      <ArrowUpRight
-        className="h-[1.125rem] w-[1.125rem] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-        aria-hidden
-      />
-    </button>
-  ) : null
+  const lede =
+    copy?.lede?.trim() ||
+    (publishableSpeakers.length > 0
+      ? `Featuring ${featuredSpeakers.length} of ${publishableSpeakers.length} summit voices — innovators and leaders shaping the future of AI.`
+      : 'Learn directly from the innovators and leaders who are shaping the future of AI.')
+
+  const catalogCta =
+    publishableSpeakers.length > 0 ? (
+      <Link to="/speakers" className="conference-section__cta-btn group">
+        {getSpeakersSectionCtaLabel(copy, publishableSpeakers.length)}
+        <ArrowUpRight
+          className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          aria-hidden
+        />
+      </Link>
+    ) : null
 
   return (
-    <ConferenceSectionShell
-      id="conference-speakers"
-      sectionClass="conference-speakers-section"
-      visibleClass="conference-speakers-section--visible"
-      variant="white"
-    >
-      <ConferenceSectionHeader
-        copy={copy}
-        fallback={
-          <>
-            Featured <span className="editorial-accent">Speakers</span>
-          </>
-        }
-        ledeFallback="Learn directly from the innovators and leaders who are shaping the future of AI."
-        actions={headerActions}
-      />
+    <>
+      <ConferenceSectionShell
+        id="conference-speakers"
+        sectionClass="conference-speakers-section"
+        visibleClass="conference-speakers-section--visible"
+        variant="white"
+      >
+        <ConferenceSectionHeader
+          copy={copy}
+          fallback={
+            <>
+              Featured <span className="editorial-accent">Speakers</span>
+            </>
+          }
+          lede={lede}
+          actions={catalogCta}
+        />
 
-      {speakers.length === 0 ? (
-        <p className="conference-speakers-empty">Speaker lineup coming soon.</p>
-      ) : (
-        <ul className="conference-speakers-grid list-none p-0 m-0">
-          {speakers.map((speaker, idx) => (
-            <li
-              key={speaker.id}
-              className="conference-speaker-card"
-              style={{ '--speaker-i': idx } as CSSProperties}
-            >
-              <article className="conference-speaker-card__inner">
-                <div className="conference-speaker-card__frame">
-                  <img
-                    src={resolveAssetUrl(speaker.image)}
-                    alt={`Portrait of ${speaker.name}`}
-                    loading={idx < 2 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    className="conference-speaker-card__img"
-                  />
-                </div>
-                <div className="conference-speaker-card__body">
-                  <h3 className="conference-speaker-card__name">{speaker.name}</h3>
-                  {(speaker.title?.trim() || speaker.company?.trim()) && (
-                    <div className="conference-speaker-card__details">
-                      {speaker.title?.trim() ? (
-                        <p className="conference-speaker-card__role">{speaker.title}</p>
-                      ) : null}
-                      {speaker.company?.trim() ? (
-                        <p className="conference-speaker-card__company">{speaker.company}</p>
-                      ) : null}
-                    </div>
-                  )}
-                  {speaker.talkTitle?.trim() ? (
-                    <p className="conference-speaker-card__talk text-sm text-muted mt-2">
-                      {speaker.talkTitle}
-                      {speaker.timeSlot?.trim() ? ` · ${speaker.timeSlot}` : ''}
-                    </p>
-                  ) : null}
-                  {speaker.bio?.trim() ? (
-                    <p className="conference-speaker-card__bio text-sm text-text2 mt-2 leading-relaxed">
-                      {speaker.bio}
-                    </p>
-                  ) : null}
-                </div>
-              </article>
-            </li>
-          ))}
-        </ul>
-      )}
-    </ConferenceSectionShell>
+        {featuredSpeakers.length === 0 ? (
+          <p className="conference-speakers-empty">Speaker lineup coming soon.</p>
+        ) : (
+          <SectionCarousel
+            ariaLabel="Featured speakers"
+            variant="speakers"
+            showScrollHints
+          >
+            {featuredSpeakers.map((speaker, idx) => (
+              <SectionCarouselItem
+                key={speaker.id}
+                className="speaker-card-item"
+                style={{ '--speaker-i': idx } as CSSProperties}
+              >
+                <SpeakerCard
+                  speaker={speaker}
+                  priority={idx < 2}
+                  interactive
+                  showFeaturedBadge
+                  showTalkChip
+                  onSelect={setSelectedSpeaker}
+                />
+              </SectionCarouselItem>
+            ))}
+          </SectionCarousel>
+        )}
+      </ConferenceSectionShell>
+
+      <SpeakerDetailDialog
+        speaker={selectedSpeaker}
+        onClose={() => setSelectedSpeaker(null)}
+      />
+    </>
   )
 }

@@ -129,10 +129,11 @@ export const defaultConferenceContent: ConferenceContent = {
   },
   sections: {
     sponsors: {
-      eyebrow: 'Partners',
+      eyebrow: 'Sponsors',
       title: 'Our',
       titleAccent: 'sponsors',
       lede: 'Proudly supported by teams building the infrastructure and workflows behind modern AI.',
+      ctaLabel: 'Become a sponsor',
     },
     video: {
       eyebrow: 'Experience',
@@ -140,18 +141,27 @@ export const defaultConferenceContent: ConferenceContent = {
       titleAccent: 'in motion',
       lede:
         'Step inside the energy of Superhumanly Summit — keynotes, workshops, and the conversations that shape what ships next.',
+      ctaLabel: 'Register for the summit',
+      caption:
+        'Official summit highlight — keynotes, workshops, and the conversations that shape what ships next.',
+      metrics: [
+        { id: 'vm1', value: '3,500+', label: 'Attendees' },
+        { id: 'vm2', value: '150+', label: 'Speakers' },
+        { id: 'vm3', value: '50+', label: 'Sessions' },
+      ],
     },
     speakers: {
-      eyebrow: 'Speakers',
+      eyebrow: 'Summit Lineup',
       title: 'Featured',
       titleAccent: 'Speakers',
-      lede: 'Learn directly from the innovators and leaders who are shaping the future of AI.',
-      ctaLabel: 'Explore the agenda',
+      lede: 'Innovators and leaders shaping the future of AI — on stage and in the room with you.',
+      ctaLabel: 'Meet all speakers',
     },
     agenda: {
       eyebrow: 'Program',
       title: 'Agenda',
       lede: 'Two days. Zero fluff. Just the sessions worth your calendar.',
+      ctaLabel: 'Download full agenda',
     },
     faq: {
       eyebrow: 'FAQ',
@@ -177,9 +187,9 @@ export const defaultConferenceContent: ConferenceContent = {
   },
   tickets: defaultConferenceTickets,
   logos: [
-    { id: 'l1', name: 'Acme Corp' },
-    { id: 'l2', name: 'GlobalTech' },
-    { id: 'l3', name: 'Innovate AI' },
+    { id: 'l1', name: 'Acme Corp', tier: 'Platinum' },
+    { id: 'l2', name: 'GlobalTech', tier: 'Platinum' },
+    { id: 'l3', name: 'Innovate AI', tier: 'Gold' },
     { id: 'l4', name: 'Nexus Systems' },
     { id: 'l5', name: 'Quantum Data' },
     { id: 'l6', name: 'CloudScale' },
@@ -195,6 +205,7 @@ export const defaultConferenceContent: ConferenceContent = {
       name: 'Dr. Sarah Chen',
       title: 'Chief AI Scientist',
       company: 'GlobalTech',
+      featured: true,
       image:
         'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800',
     },
@@ -203,6 +214,7 @@ export const defaultConferenceContent: ConferenceContent = {
       name: 'Michael Rivera',
       title: 'VP of Engineering',
       company: 'Innovate AI',
+      featured: true,
       image:
         'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
     },
@@ -211,6 +223,7 @@ export const defaultConferenceContent: ConferenceContent = {
       name: 'Elena Rostova',
       title: 'Director of Research',
       company: 'Quantum Data',
+      featured: true,
       image:
         'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=800',
     },
@@ -219,6 +232,7 @@ export const defaultConferenceContent: ConferenceContent = {
       name: 'David Kim',
       title: 'Founder & CEO',
       company: 'NeuralNet',
+      featured: true,
       image:
         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=800',
     },
@@ -233,21 +247,36 @@ export const defaultConferenceContent: ConferenceContent = {
           time: '09:00 AM',
           title: 'Opening Keynote: The AI Imperative',
           speaker: 'David Kim, NeuralNet',
+          speakerId: 's4',
           track: 'Main Stage',
+          duration: '90 min',
+          room: 'Main Hall',
+          description:
+            'A forward-looking keynote on why enterprise AI adoption is no longer optional — and what leaders must prioritize in the next 18 months.',
         },
         {
           id: 'd1s2',
           time: '10:30 AM',
           title: 'Generative AI in the Enterprise',
           speaker: 'Elena Rostova, Quantum Data',
+          speakerId: 's3',
           track: 'Enterprise',
+          duration: '60 min',
+          room: 'Room B',
+          description:
+            'Practical patterns for deploying generative AI in production workflows without sacrificing governance or velocity.',
         },
         {
           id: 'd1s3',
           time: '11:45 AM',
           title: 'Ethics and Governance Workshop',
           speaker: 'Dr. Sarah Chen, GlobalTech',
+          speakerId: 's1',
           track: 'Ethics',
+          duration: '75 min',
+          room: 'Workshop Studio',
+          description:
+            'Hands-on frameworks for responsible AI — bias review, policy design, and cross-functional accountability.',
         },
         {
           id: 'd1s4',
@@ -255,13 +284,21 @@ export const defaultConferenceContent: ConferenceContent = {
           title: 'Networking Lunch',
           speaker: '',
           track: 'Networking',
+          duration: '90 min',
+          room: 'Garden Terrace',
+          description: 'Hosted lunch with curated table topics and sponsor demo stations.',
         },
         {
           id: 'd1s5',
           time: '02:30 PM',
           title: 'Building Scalable AI Infrastructure',
           speaker: 'Michael Rivera, Innovate AI',
+          speakerId: 's2',
           track: 'Technical',
+          duration: '60 min',
+          room: 'Room C',
+          description:
+            'Architecture deep-dive on inference pipelines, observability, and cost controls at scale.',
         },
       ],
     },
@@ -275,6 +312,10 @@ export const defaultConferenceContent: ConferenceContent = {
           title: 'Day 2 Kickoff: State of Open Source',
           speaker: 'Guest Panel',
           track: 'Main Stage',
+          duration: '60 min',
+          room: 'Main Hall',
+          description:
+            'Panel on the open-source AI ecosystem — tooling, licensing, and what teams should bet on next.',
         },
         {
           id: 'd2s2',
@@ -282,13 +323,21 @@ export const defaultConferenceContent: ConferenceContent = {
           title: 'AI-Driven Customer Experiences',
           speaker: 'Marketing Leaders',
           track: 'Enterprise',
+          duration: '45 min',
+          room: 'Room B',
+          description:
+            'How GTM and product teams are using AI to personalize journeys without eroding trust.',
         },
         {
           id: 'd2s3',
           time: '01:00 PM',
           title: 'AI Awards & Closing Remarks',
           speaker: 'David Kim',
+          speakerId: 's4',
           track: 'Main Stage',
+          duration: '45 min',
+          room: 'Main Hall',
+          description: 'Celebrating standout summit projects and closing notes from the NeuralNet team.',
         },
       ],
     },
@@ -352,7 +401,11 @@ function mergeSection(
   patch: ConferenceSectionCopy | undefined,
 ): ConferenceSectionCopy | undefined {
   if (!base && !patch) return undefined
-  return { ...base, ...patch }
+  return {
+    ...base,
+    ...patch,
+    metrics: patch?.metrics?.length ? patch.metrics : base?.metrics,
+  }
 }
 
 /** CMS may still store the old dual-CTA hero label — always show Register now on the public site. */

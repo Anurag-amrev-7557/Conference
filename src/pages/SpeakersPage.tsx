@@ -1,0 +1,179 @@
+import { useMemo, useState } from 'react'
+import { Footer } from '../components/Footer'
+import { Navbar } from '../components/Navbar'
+import { BlogCtaSection } from '../components/blog/BlogCtaSection'
+import { CatalogHero } from '../components/catalog/CatalogHero'
+import { CatalogPagination } from '../components/catalog/CatalogPagination'
+import { SpeakerCard } from '../components/sections/conference/SpeakerCard'
+import { SpeakerDetailDialog } from '../components/speakers/SpeakerDetailDialog'
+import { SpeakerListRow } from '../components/speakers/SpeakerListRow'
+import { SpeakersCatalogToolbar } from '../components/speakers/SpeakersCatalogToolbar'
+import { useConferenceContent } from '../hooks/useConferenceContent'
+import {
+  SPEAKERS_CATALOG_PAGE_SIZE,
+  countFeaturedSpeakers,
+  filterSpeakers,
+  getSpeakerCompanies,
+  sortSpeakers,
+  type SpeakerCatalogFilter,
+  type SpeakerSort,
+  type SpeakerViewMode,
+} from '../lib/speakers'
+import { renderCatalogTitle } from '../lib/renderSectionTitle'
+import { usePagination } from '../lib/usePagination'
+import type { ConferenceSpeaker } from '../lib/websiteData'
+import { useWebsiteData } from '../components/WebsiteDataProvider'
+import { JsonLd } from '../seo/JsonLd'
+import { SeoHead } from '../seo/SeoHead'
+import { usePageJsonLd } from '../seo/usePageJsonLd'
+import { usePageSeo } from '../seo/usePageSeo'
+
+const SPEAKER_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'featured', label: 'Featured' },
+] as const
+
+export function SpeakersPage() {
+  const { data } = useWebsiteData()
+  const conference = useConferenceContent()
+  const seo = usePageSeo()
+  const jsonLd = usePageJsonLd()
+  const speakers = conference.speakers
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<SpeakerCatalogFilter>('all')
+  const [activeCompany, setActiveCompany] = useState('all')
+  const [sort, setSort] = useState<SpeakerSort>('featured-first')
+  const [viewMode, setViewMode] = useState<SpeakerViewMode>('grid')
+  const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null)
+
+  const companies = useMemo(() => getSpeakerCompanies(speakers), [speakers])
+  const featuredCount = countFeaturedSpeakers(speakers)
+  const showFeaturedFilter = featuredCount > 0
+
+  const filteredSpeakers = useMemo(() => {
+    const filtered = filterSpeakers(speakers, {
+      query: searchQuery,
+      filter: activeFilter,
+      company: activeCompany,
+    })
+    return sortSpeakers(filtered, sort)
+  }, [speakers, searchQuery, activeFilter, activeCompany, sort])
+
+  const { page, setPage, totalPages, paginatedItems, showPagination } = usePagination(
+    filteredSpeakers,
+    SPEAKERS_CATALOG_PAGE_SIZE,
+  )
+
+  const resetFilters = () => {
+    setActiveFilter('all')
+    setActiveCompany('all')
+    setSearchQuery('')
+    setSort('featured-first')
+  }
+
+  const catalog = data.settings.catalogPages?.speakers
+  const speakerCountLabel =
+    speakers.length === 1 ? '1 speaker' : `${speakers.length} speakers`
+
+  return (
+    <>
+      <SeoHead seo={seo} />
+      <JsonLd graph={jsonLd} />
+      <div className="speakers-page overflow-x-hidden public-page-shell public-inner-page">
+        <Navbar />
+
+        <CatalogHero
+          eyebrow={catalog?.eyebrow?.trim() || 'Speakers'}
+          title={renderCatalogTitle(catalog, (
+            <>
+              The minds shaping <em>agentic AI</em>
+            </>
+          ))}
+          lede={
+            catalog?.lede?.trim() ||
+            `Browse ${speakerCountLabel} from across industry, research, and venture—each bringing hard-won insight to the summit stage.`
+          }
+        />
+
+        <main className="catalog-main premium-catalog-main speakers-page__main w-full max-w-none mx-auto px-5 sm:px-8 lg:px-10 xl:px-12">
+          <div className="speakers-catalog-stack">
+            <SpeakersCatalogToolbar
+              searchId="speakers-search-input"
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={showFeaturedFilter ? [...SPEAKER_FILTERS] : []}
+              activeFilterId={activeFilter}
+              onFilterChange={(id) => setActiveFilter(id as SpeakerCatalogFilter)}
+              companies={companies}
+              activeCompany={activeCompany}
+              onCompanyChange={setActiveCompany}
+              sort={sort}
+              onSortChange={setSort}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+
+            {speakers.length === 0 ? (
+            <div className="speakers-empty">
+              <p>Speaker lineup coming soon.</p>
+            </div>
+          ) : filteredSpeakers.length === 0 ? (
+            <div className="speakers-empty">
+              <p>No speakers match your filters.</p>
+              {(searchQuery.trim() || activeFilter !== 'all' || activeCompany !== 'all') && (
+                <button type="button" className="speakers-empty__reset" onClick={resetFilters}>
+                  Show all speakers
+                </button>
+              )}
+            </div>
+          ) : viewMode === 'list' ? (
+            <>
+              <div className="speakers-catalog-list" role="list">
+                {paginatedItems.map((speaker) => (
+                  <SpeakerListRow
+                    key={speaker.id}
+                    speaker={speaker}
+                    onSelect={setSelectedSpeaker}
+                  />
+                ))}
+              </div>
+              {showPagination ? (
+                <CatalogPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <ul className="speakers-catalog-grid">
+                {paginatedItems.map((speaker, idx) => (
+                  <li key={speaker.id} className="speakers-catalog-grid__item">
+                    <SpeakerCard
+                      speaker={speaker}
+                      priority={idx < 4}
+                      interactive
+                      variant="compact"
+                      showFeaturedBadge
+                      onSelect={setSelectedSpeaker}
+                    />
+                  </li>
+                ))}
+              </ul>
+              {showPagination ? (
+                <CatalogPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              ) : null}
+            </>
+            )}
+          </div>
+
+          <BlogCtaSection />
+        </main>
+
+        <Footer />
+      </div>
+
+      <SpeakerDetailDialog
+        speaker={selectedSpeaker}
+        onClose={() => setSelectedSpeaker(null)}
+      />
+    </>
+  )
+}

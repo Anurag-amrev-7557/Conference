@@ -19,31 +19,18 @@ export function renderCatalogTitle(
   )
 }
 
+/** Renders title + accent inline so the heading stays on one line when space allows and wraps when it does not. */
 export function renderSectionHeading(
   content: SectionBlockContent | undefined,
   fallback: ReactNode,
-  options?: { singleLine?: boolean },
 ): ReactNode {
   if (!content?.title && !content?.titleAccent) return fallback
-  if (options?.singleLine) {
-    return (
-      <>
-        {content.title}
-        {content.titleAccent ? (
-          <>
-            {' '}
-            <span className="editorial-accent">{content.titleAccent}</span>
-          </>
-        ) : null}
-      </>
-    )
-  }
   return (
     <>
       {content.title}
       {content.titleAccent ? (
         <>
-          <br />
+          {' '}
           <span className="editorial-accent">{content.titleAccent}</span>
         </>
       ) : null}

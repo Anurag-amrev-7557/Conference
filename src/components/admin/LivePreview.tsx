@@ -2,6 +2,7 @@ import React, { useCallback, useRef } from 'react';
 import { ConferencePage } from '../../pages/ConferencePage';
 import { ConferenceRegisterPage } from '../../pages/ConferenceRegisterPage';
 import { EventsPage } from '../../pages/EventsPage';
+import { SpeakersPage } from '../../pages/SpeakersPage';
 import { Navbar } from '../Navbar';
 import { Laptop, Smartphone, Tablet, Globe, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -13,7 +14,7 @@ const previewControlBtn =
 interface LivePreviewProps {
   onToggleSidebar?: () => void;
   isSidebarCollapsed?: boolean;
-  variant?: 'conference' | 'events' | 'register';
+  variant?: 'conference' | 'events' | 'register' | 'speakers';
 }
 
 export const LivePreview: React.FC<LivePreviewProps> = ({
@@ -123,6 +124,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
                 <EventsPage />
               ) : variant === 'register' ? (
                 <ConferenceRegisterPage />
+              ) : variant === 'speakers' ? (
+                <SpeakersPage />
               ) : (
                 <ConferencePage />
               )}

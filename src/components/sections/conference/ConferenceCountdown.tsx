@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
+import { ConferenceSectionShell } from './ConferenceSectionShell'
 
 type TimeLeft = {
   days: number
@@ -44,22 +45,25 @@ export function ConferenceCountdown() {
   ]
 
   return (
-    <section className="conference-countdown" aria-label="Event countdown">
-      <div className="mx-auto max-w-5xl px-6 lg:px-8 py-10">
-        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.15em] text-muted mb-4">
-          Summit begins in
-        </p>
-        <ul className="flex justify-center gap-4 sm:gap-8 list-none p-0 m-0">
+    <ConferenceSectionShell
+      id="conference-countdown"
+      sectionClass="conference-countdown-section conference-section--compact"
+      visibleClass="conference-countdown-section--visible"
+      variant="white"
+    >
+      <div className="conference-countdown__inner" aria-label="Event countdown">
+        <p className="conference-countdown__label">Summit begins in</p>
+        <ul className="conference-countdown__units list-none p-0 m-0">
           {units.map(({ label, value }) => (
-            <li key={label} className="text-center min-w-[4.5rem]">
-              <span className="block text-3xl sm:text-5xl font-semibold tracking-tight text-text tabular-nums">
+            <li key={label} className="conference-countdown__unit">
+              <span className="conference-countdown__value tabular-nums">
                 {String(value).padStart(2, '0')}
               </span>
-              <span className="text-xs uppercase tracking-wider text-muted mt-1 block">{label}</span>
+              <span className="conference-countdown__unit-label">{label}</span>
             </li>
           ))}
         </ul>
       </div>
-    </section>
+    </ConferenceSectionShell>
   )
 }

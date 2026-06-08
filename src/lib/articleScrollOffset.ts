@@ -1,27 +1,31 @@
 /** Pixels below the fixed navbar used as the “current section” read line. */
 const READ_LINE_BUFFER_PX = 16
 
-/** Matches `--header-offset` + read buffer (sticky TOC / scroll spy). */
-export function getArticleScrollOffsetPx(): number {
-  if (typeof window === 'undefined') return 104
+/** Resolves `--header-offset` (rem/px) to pixels for JS APIs that require px (e.g. IntersectionObserver). */
+export function getHeaderOffsetPx(): number {
+  if (typeof window === 'undefined') return 88
 
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue('--header-offset')
-    .trim()
+  const raw =
+    getComputedStyle(document.documentElement).getPropertyValue('--header-offset').trim() ||
+    '5.5rem'
 
-  let headerPx = 88
   if (raw.endsWith('rem')) {
     const rem = parseFloat(raw)
     if (!Number.isNaN(rem)) {
       const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-      headerPx = rem * rootSize
+      return rem * rootSize
     }
   } else if (raw.endsWith('px')) {
     const px = parseFloat(raw)
-    if (!Number.isNaN(px)) headerPx = px
+    if (!Number.isNaN(px)) return px
   }
 
-  return headerPx + READ_LINE_BUFFER_PX
+  return 88
+}
+
+/** Matches `--header-offset` + read buffer (sticky TOC / scroll spy). */
+export function getArticleScrollOffsetPx(): number {
+  return getHeaderOffsetPx() + READ_LINE_BUFFER_PX
 }
 
 export function scrollToArticleSection(

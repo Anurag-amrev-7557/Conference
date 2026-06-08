@@ -67,7 +67,15 @@ export const EVENTS_TAB_INTROS: Record<
 }
 
 export const CONFERENCE_TAB_INTROS: Record<
-  'hero' | 'sections' | 'lists' | 'embedded' | 'visibility' | 'seo' | 'advanced' | 'publish',
+  | 'hero'
+  | 'sections'
+  | 'lists'
+  | 'speakers-page'
+  | 'embedded'
+  | 'visibility'
+  | 'seo'
+  | 'advanced'
+  | 'publish',
   EditorTabIntro
 > = {
   hero: {
@@ -86,6 +94,12 @@ export const CONFERENCE_TAB_INTROS: Record<
     breadcrumb: 'Summit · Lists',
     title: 'Lists',
     description: 'Sponsors, speakers, agenda, partners, FAQ, and testimonials.',
+    status: 'published',
+  },
+  'speakers-page': {
+    breadcrumb: 'Summit · Speakers page',
+    title: 'Speakers catalog',
+    description: 'Hero copy and SEO for the /speakers listing page. Speaker profiles are edited under Lists.',
     status: 'published',
   },
   embedded: {

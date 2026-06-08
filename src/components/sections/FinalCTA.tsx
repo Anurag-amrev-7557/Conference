@@ -4,6 +4,7 @@ import { ArrowRight, Check } from "lucide-react"
 import { WaitlistForm } from "../landing/WaitlistForm"
 import { useWebsiteData } from "../WebsiteDataProvider"
 import { renderSectionHeading } from "../../lib/renderSectionTitle"
+import { EditorialEyebrow } from "../ui/EditorialEyebrow"
 
 const DEFAULT_TRUST_ITEMS = [
   "2,500+ on the registry",
@@ -117,21 +118,20 @@ export function FinalCTA({
         <div className="final-cta-section__grid">
           <div className="final-cta-section__copy">
             <header className="final-cta-section__header">
-              <div className="editorial-eyebrow mb-5 sm:mb-6">
-                <span className="editorial-eyebrow__rule" aria-hidden />
-                <span className="section-eyebrow final-cta-section__eyebrow !mb-0">
-                  {copy?.eyebrow?.trim() || "Final Registry"}
-                </span>
-              </div>
+              <EditorialEyebrow
+                theme="dark"
+                className="mb-5 sm:mb-6"
+                textClassName="final-cta-section__eyebrow"
+              >
+                {copy?.eyebrow?.trim() || "Final Registry"}
+              </EditorialEyebrow>
 
               <h2 className="editorial-heading editorial-heading--cta final-cta-section__title">
-                {renderSectionHeading(
-                  copy,
+                {renderSectionHeading(copy, (
                   <>
                     Secure your <span className="editorial-accent">spot</span>.
-                  </>,
-                  { singleLine: true },
-                )}
+                  </>
+                ))}
               </h2>
 
               <p className="editorial-lede final-cta-section__lede">

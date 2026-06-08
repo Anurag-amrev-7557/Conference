@@ -1,11 +1,45 @@
+import { useLayoutEffect, useRef, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { ArrowRight, BookOpen } from "lucide-react"
 import { useWebsiteData } from "../WebsiteDataProvider"
 import { cn } from "../../lib/utils"
+import { EditorialEyebrow } from "../ui/EditorialEyebrow"
 
-function BookCoverFace({ coverUrl }: { coverUrl?: string }) {
+const DEFAULT_HIGHLIGHTS = [
+  "Agent frameworks",
+  "Deployment checklists",
+  "Real-world workflows",
+] as const
+
+const DEFAULT_TITLE_ACCENT = "Agentic AI"
+
+function renderBookTitle(title: string, accentPhrase?: string): ReactNode {
+  const accent = accentPhrase?.trim() || DEFAULT_TITLE_ACCENT
+  const accentIndex = title.indexOf(accent)
+
+  if (accentIndex === -1) return title
+
+  const before = title.slice(0, accentIndex)
+  const after = title.slice(accentIndex + accent.length)
+
+  return (
+    <>
+      {before}
+      <span className="editorial-accent">{accent}</span>
+      {after}
+    </>
+  )
+}
+
+function BookCoverFace({
+  coverUrl,
+  coverAlt,
+}: {
+  coverUrl?: string
+  coverAlt: string
+}) {
   if (coverUrl) {
-    return <img src={coverUrl} alt="" className="book-3d__cover-img" />
+    return <img src={coverUrl} alt={coverAlt} className="book-3d__cover-img" />
   }
 
   return (
@@ -23,19 +57,30 @@ function BookCoverFace({ coverUrl }: { coverUrl?: string }) {
   )
 }
 
-function Book3D({ coverUrl }: { coverUrl?: string }) {
+function Book3D({
+  coverUrl,
+  coverAlt,
+}: {
+  coverUrl?: string
+  coverAlt: string
+}) {
   return (
-    <div className="book-3d-scene">
-      <div className="book-3d-pivot">
-        <div className="book-3d__ground" aria-hidden />
-        <div className="book-3d">
-          <div className="book-3d__back" aria-hidden />
-          <div className="book-3d__top" aria-hidden />
-          <div className="book-3d__bottom" aria-hidden />
-          <div className="book-3d__spine" aria-hidden />
-          <div className="book-3d__edge" aria-hidden />
-          <div className="book-3d__cover">
-            <BookCoverFace coverUrl={coverUrl} />
+    <div
+      className="book-3d-scene"
+      {...(!coverUrl ? { role: "img" as const, "aria-label": coverAlt } : {})}
+    >
+      <div className="book-3d-float">
+        <div className="book-3d-pivot">
+          <div className="book-3d__ground" aria-hidden />
+          <div className="book-3d">
+            <div className="book-3d__back" aria-hidden />
+            <div className="book-3d__top" aria-hidden />
+            <div className="book-3d__bottom" aria-hidden />
+            <div className="book-3d__spine" aria-hidden />
+            <div className="book-3d__edge" aria-hidden />
+            <div className="book-3d__cover">
+              <BookCoverFace coverUrl={coverUrl} coverAlt={coverAlt} />
+            </div>
           </div>
         </div>
       </div>
@@ -48,6 +93,7 @@ export function BookShowcase({ className }: { className?: string }) {
   const book = data.settings.book
   const copy = data.settings.sections?.bookShowcase
   const { hero } = data
+  const sectionRef = useRef<HTMLElement>(null)
 
   const title =
     book?.title?.trim() || "The Blueprint for Automating Business with Agentic AI"
@@ -56,100 +102,101 @@ export function BookShowcase({ className }: { className?: string }) {
     book?.abstract?.trim() ||
     hero.subtitle ||
     "A practical guide to building and scaling agentic AI in your business."
-  const authorName = book?.authorName?.trim()
-  const publisherName = book?.publisherName?.trim()
-  const isbn = book?.isbn?.trim()
   const coverUrl = book?.coverImageUrl?.trim()
+  const titleAccent = copy?.titleAccent?.trim()
 
-  const abstractParagraphs = abstract.split(/\n\n+/).filter(Boolean)
+  const overview =
+    copy?.lede?.trim() || abstract.split(/\n\n+/).filter(Boolean)[0] || abstract
   const coverAlt = `Cover: ${title}`
+
+  useLayoutEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const markVisible = () => {
+      el.classList.add("book-section--visible")
+    }
+
+    const rect = el.getBoundingClientRect()
+    const inView = rect.top < window.innerHeight && rect.bottom > 0
+    if (inView) {
+      markVisible()
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          markVisible()
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "0px 0px 80px 0px", threshold: 0.01 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <section
+      ref={sectionRef}
       id="book"
       className={cn(
-        "book-section-bg relative w-full pt-10 sm:pt-14 lg:pt-16 pb-16 sm:pb-20 lg:pb-24",
+        "book-section book-section-bg book-section--borderless relative w-full",
         className,
       )}
       aria-labelledby="book-section-title"
     >
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
         <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-10 lg:gap-14 xl:gap-16 items-center max-w-[1600px] mx-auto">
-          <div className="flex justify-center shrink-0 w-full lg:w-auto">
-            <div role="img" aria-label={coverAlt} className="max-w-full mx-auto">
-              <Book3D coverUrl={coverUrl} />
+          <div className="book-section__visual flex justify-center shrink-0 w-full lg:w-auto">
+            <div className="max-w-full mx-auto">
+              <Book3D coverUrl={coverUrl} coverAlt={coverAlt} />
             </div>
           </div>
 
-          <div className="flex flex-col items-start text-left max-w-2xl lg:max-w-none">
-            <div className="editorial-eyebrow mb-4 sm:mb-5">
-              <span className="editorial-eyebrow__rule" aria-hidden />
-              <span className="section-eyebrow !mb-0 text-muted">
-                {copy?.eyebrow?.trim() || "The Playbook"}
-              </span>
-            </div>
+          <div className="book-section__copy flex flex-col items-start text-left max-w-2xl lg:max-w-none">
+            <EditorialEyebrow
+              className="mb-4 sm:mb-5"
+              textClassName="!tracking-[0.08em] !text-xs"
+            >
+              {copy?.eyebrow?.trim() || "The Playbook"}
+            </EditorialEyebrow>
 
-            <h2 id="book-section-title" className="editorial-heading editorial-heading--book mb-4">
-              {title}
+            <h2
+              id="book-section-title"
+              className="editorial-heading editorial-heading--showcase mb-4"
+            >
+              {renderBookTitle(title, titleAccent)}
             </h2>
 
             {tagline ? (
-              <p className="editorial-tagline mb-6 sm:mb-8 max-w-xl">{tagline}</p>
+              <p className="editorial-tagline editorial-tagline--secondary mb-6 sm:mb-8 max-w-xl">
+                {tagline}
+              </p>
             ) : null}
 
-            <div className="space-y-4 mb-8 sm:mb-10">
-              {abstractParagraphs.map((paragraph) => (
-                <p key={paragraph.slice(0, 48)} className="editorial-lede max-w-none">
-                  {paragraph}
-                </p>
+            <ul className="book-section__highlights list-none p-0 m-0" aria-label="What's inside">
+              {DEFAULT_HIGHLIGHTS.map((item) => (
+                <li key={item}>
+                  <span className="book-section__chip">{item}</span>
+                </li>
               ))}
-            </div>
+            </ul>
 
-            {(authorName || publisherName || isbn) && (
-              <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-text2 mb-8 sm:mb-10">
-                {authorName ? (
-                  <div>
-                    <dt className="sr-only">Author</dt>
-                    <dd>
-                      <span className="text-text2/70">By </span>
-                      {book?.authorUrl ? (
-                        <a
-                          href={book.authorUrl}
-                          className="font-medium text-text hover:underline underline-offset-4"
-                        >
-                          {authorName}
-                        </a>
-                      ) : (
-                        <span className="font-medium text-text">{authorName}</span>
-                      )}
-                    </dd>
-                  </div>
-                ) : null}
-                {publisherName ? (
-                  <div>
-                    <dt className="sr-only">Publisher</dt>
-                    <dd className="text-text2/80">{publisherName}</dd>
-                  </div>
-                ) : null}
-                {isbn ? (
-                  <div>
-                    <dt className="sr-only">ISBN</dt>
-                    <dd className="font-mono text-xs text-text2/70">ISBN {isbn}</dd>
-                  </div>
-                ) : null}
-              </dl>
-            )}
+            <p className="book-section__overview editorial-lede mb-6 sm:mb-8">{overview}</p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+            <div className="book-section__actions flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
               <Link
                 to={copy?.ctaHref?.trim() || "/#final-cta"}
-                className="btn-cta-primary w-full sm:w-auto text-center"
+                className="btn-cta-primary w-full sm:w-auto text-center transition-all duration-150 active:scale-[0.97]"
               >
                 {copy?.ctaLabel?.trim() || "Get the playbook"}
               </Link>
               <Link
                 to={copy?.secondaryCtaHref?.trim() || "/blog"}
-                className="btn-cta-secondary group w-full sm:w-auto justify-center sm:justify-start"
+                className="btn-cta-secondary group w-full sm:w-auto justify-center sm:justify-start transition-all duration-150 active:scale-[0.97]"
               >
                 {copy?.secondaryCtaLabel?.trim() || "Read excerpts"}
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />

@@ -58,6 +58,12 @@ async function main() {
           titleAccent: "come together",
           lede: "Explore upcoming masterclasses, networking sessions, and venture workshops—built for founders shaping the future of agentic AI.",
         },
+        speakers: {
+          eyebrow: "Speakers",
+          title: "The minds shaping",
+          titleAccent: "agentic AI",
+          lede: "Browse summit speakers from across industry, research, and venture—each bringing hard-won insight to the stage.",
+        },
       },
       sections: {
         finalCta: {
@@ -216,11 +222,43 @@ async function main() {
   // 3. Articles (sample content for local UI: blog index, read page, TOC, related guides)
   const articles = [
     {
+      id: 'article-ai-roi-leaders',
+      slug: 'ai-roi-industry-leaders',
+      title: 'Proving AI ROI: What Industry Leaders Do Differently',
+      category: 'STRATEGY',
+      time: '5 MIN',
+      excerpt:
+        'Discover how industry leaders are moving past the AI hype cycle to deliver measurable ROI in production workflows.',
+      content: `# Proving AI ROI
+
+Executive teams want proof before they fund the next wave of AI projects. The teams that win treat ROI as a weekly operating metric—not a slide in a quarterly review.
+
+## Anchor on one workflow
+
+Pick a process with clear inputs, owners, and success criteria. Support triage, quote generation, and vendor onboarding are strong first candidates.
+
+## Measure what operators feel
+
+Track cycle time, rework rate, and override frequency. If humans override agents more than a third of the time, narrow scope before scaling spend.
+
+## Publish a 30-day scorecard
+
+Share baseline vs. current performance with finance and operations. Transparency builds the trust required for the next automation lane.`,
+      thumbnail:
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000',
+      isPublished: true,
+      authorName: 'Jordan Ellis',
+      authorRole: 'Systems Architect',
+      authorAvatar:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
+      publishedAt: '2026-06-08',
+    },
+    {
       id: 'article-evolution-agentic',
       slug: 'evolution-of-agentic-orchestration',
       title: 'The Evolution of Agentic Orchestration',
       category: 'RESEARCH',
-      time: '6 MIN',
+      time: '8 MIN',
       excerpt:
         'How small businesses are moving from simple automation to complex agentic ecosystems that coordinate work across tools.',
       content: `# The Evolution of Agentic Orchestration
@@ -307,8 +345,8 @@ Once one lane is stable, add retrieval quality, evaluation suites, and role-base
       thumbnail:
         'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=2000',
       isPublished: true,
-      authorName: 'Systems Architect',
-      authorRole: 'Lead',
+      authorName: 'Jordan Ellis',
+      authorRole: 'Systems Architect',
       authorAvatar:
         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
       publishedAt: '2026-06-02',
@@ -354,6 +392,66 @@ Once one lane is stable, add retrieval quality, evaluation suites, and role-base
       where: { id: event.id },
       update: {},
       create: event
+    });
+  }
+
+  // 5. Community posts (Implementation Wins feed)
+  const communityPosts = [
+    {
+      id: 'cp-1',
+      title: 'Deployed inbound triage agent — 40% faster response time',
+      content:
+        'Used the Ch. 2 ingestion template to pipe Intercom tickets into our agent swarm. First week: 127 tickets auto-routed, 3 escalations only.',
+      authorName: 'Sarah Kim',
+      authorAvatar: 'SK',
+      authorRole: 'Series A SaaS',
+      category: 'Shipped',
+      votes: 12,
+      isPinned: true,
+    },
+    {
+      id: 'cp-2',
+      title: 'Outbound sequence agent — config + prompt pack',
+      content:
+        'Shared the exact agent config from last week\'s sync. Includes CRM webhook setup and the 3-prompt chain for personalization.',
+      authorName: 'Maria Rodriguez',
+      authorAvatar: 'MR',
+      authorRole: 'Operator',
+      category: 'Template',
+      votes: 28,
+      isPinned: false,
+    },
+    {
+      id: 'cp-3',
+      title: 'How do you handle agent failure loops in production?',
+      content:
+        'My dispatch agent keeps retrying the same API call. Looking for patterns from Ch. 3 or real-world guardrails.',
+      authorName: 'James T.',
+      authorAvatar: 'JT',
+      authorRole: 'Pre-seed founder',
+      category: 'Question',
+      votes: 6,
+      isPinned: false,
+    },
+    {
+      id: 'cp-4',
+      title: 'Stuck on multi-agent handoff between CRM and email',
+      content:
+        'Agents lose context when passing from enrichment to outreach. Anyone solved this with a shared state store?',
+      authorName: 'Priya Lal',
+      authorAvatar: 'PL',
+      authorRole: 'Founder',
+      category: 'Stuck',
+      votes: 4,
+      isPinned: false,
+    },
+  ];
+
+  for (const post of communityPosts) {
+    await prisma.communityPost.upsert({
+      where: { id: post.id },
+      update: {},
+      create: post,
     });
   }
 

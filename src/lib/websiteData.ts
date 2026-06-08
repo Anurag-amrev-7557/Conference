@@ -174,8 +174,12 @@ export interface ConferenceSectionCopy {
   titleAccent?: string;
   lede?: string;
   ctaLabel?: string;
+  caption?: string;
+  /** Optional stat chips — used by the featured video section. */
+  metrics?: ConferenceMetric[];
 }
 
+/** Video asset URLs on the conference root — caption, CTA, and metrics live on `sections.video`. */
 export interface ConferenceVideoContent {
   eyebrow?: string;
   title?: string;
@@ -191,6 +195,8 @@ export interface ConferenceSpeaker {
   title: string;
   company: string;
   image: string;
+  /** When true, shown on the summit homepage speaker carousel. */
+  featured?: boolean;
   bio?: string;
   talkTitle?: string;
   timeSlot?: string;
@@ -204,6 +210,12 @@ export interface ConferenceAgendaSession {
   title: string;
   speaker: string;
   track: string;
+  /** Optional link to a speaker record in the roster. */
+  speakerId?: string;
+  /** e.g. "90 min" or "1 hr" */
+  duration?: string;
+  room?: string;
+  description?: string;
 }
 
 export interface ConferenceAgendaDay {
@@ -371,6 +383,7 @@ export interface SiteSettings {
   catalogPages?: {
     blog?: CatalogHeroContent;
     events?: CatalogHeroContent;
+    speakers?: CatalogHeroContent;
   };
   sections?: {
     finalCta?: FinalCtaContent;
@@ -390,7 +403,10 @@ export interface SiteSettings {
   };
   adminPermissions?: import('./adminPermissions').AdminPermissionsConfig;
   routeSeo?: Partial<
-    Record<'/' | '/home' | '/blog' | '/events' | '/conference' | '/register', RouteSeoOverride>
+    Record<
+      '/' | '/home' | '/blog' | '/events' | '/speakers' | '/conference' | '/register',
+      RouteSeoOverride
+    >
   >;
   conference?: ConferenceContent;
   conferenceRegistration?: ConferenceRegistrationFormSettings;
@@ -494,6 +510,14 @@ export const initialData: WebsiteData = {
     },
     newsletter: {
       enabled: true,
+    },
+    catalogPages: {
+      speakers: {
+        eyebrow: 'Speakers',
+        title: 'The minds shaping',
+        titleAccent: 'agentic AI',
+        lede: 'Browse summit speakers from across industry, research, and venture—each bringing hard-won insight to the stage.',
+      },
     },
     customCss: "",
     scripts: {

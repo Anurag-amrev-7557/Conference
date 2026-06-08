@@ -174,15 +174,25 @@ Use this checklist route-by-route. For every step, verify:
 
 ### Sections
 - [ ] Section copy fields across all section blocks
+- [ ] Video section: register CTA, caption, highlight metrics (max 3)
+- [ ] Speakers / sponsors / agenda section CTA labels
 - [ ] Ticket tiers add/edit/remove/reorder
 
 ### Lists
-- [ ] Sponsors list
+- [ ] Sponsors list (tier field drives featured sponsor row)
 - [ ] Speakers list
+- [ ] Speaker **Featured on summit homepage** checkbox + fallback helper copy
 - [ ] Agenda days/sessions
+- [ ] Agenda session: linked speaker dropdown, duration, room, description
 - [ ] Partners list
 - [ ] FAQ list
 - [ ] Testimonials list
+
+### Speakers page (`/speakers`)
+- [ ] Catalog hero (eyebrow, title, accent, lede) persists on save/reload
+- [ ] Route SEO (title, description, OG image) persists on save/reload
+- [ ] Live preview shows `/speakers` when tab active
+- [ ] Public `/speakers` reflects CMS hero + conference speaker list
 
 ### Embedded
 - [ ] Embedded block copy and links

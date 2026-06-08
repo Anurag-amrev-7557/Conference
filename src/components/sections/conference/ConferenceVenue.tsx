@@ -1,4 +1,5 @@
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
+import { ConferenceSectionHeader } from './ConferenceSectionHeader'
 import { ConferenceSectionShell } from './ConferenceSectionShell'
 
 export function ConferenceVenue() {
@@ -12,35 +13,34 @@ export function ConferenceVenue() {
       visibleClass="conference-venue-section--visible"
       variant="light"
     >
-      <div className="mx-auto max-w-5xl px-6 lg:px-8 py-16">
-        <div className="grid lg:grid-cols-2 gap-10 items-start">
-          <div>
-            {venue.eyebrow ? (
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
-                {venue.eyebrow}
-              </p>
-            ) : null}
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text mb-4">
-              {venue.title || 'Venue'}
-            </h2>
-            {venue.lede ? <p className="text-text2 leading-relaxed mb-4">{venue.lede}</p> : null}
-            {venue.address ? (
-              <p className="text-sm text-muted font-medium">{venue.address}</p>
-            ) : null}
+      <ConferenceSectionHeader
+        copy={{
+          eyebrow: venue.eyebrow,
+          title: venue.title,
+          lede: venue.lede,
+        }}
+        fallback={venue.title || 'Venue'}
+        centered={false}
+        className="conference-venue-section__header"
+      />
+
+      <div className="conference-venue-grid">
+        {venue.address ? (
+          <p className="conference-venue-section__address">{venue.address}</p>
+        ) : null}
+
+        {venue.mapEmbedUrl ? (
+          <div className="conference-venue-section__map">
+            <iframe
+              title="Venue map"
+              src={venue.mapEmbedUrl}
+              className="conference-venue-section__map-frame"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
           </div>
-          {venue.mapEmbedUrl ? (
-            <div className="rounded-2xl overflow-hidden border border-black/10 aspect-video min-h-[240px]">
-              <iframe
-                title="Venue map"
-                src={venue.mapEmbedUrl}
-                className="w-full h-full border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
-            </div>
-          ) : null}
-        </div>
+        ) : null}
       </div>
     </ConferenceSectionShell>
   )

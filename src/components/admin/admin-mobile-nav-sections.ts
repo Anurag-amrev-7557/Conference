@@ -110,6 +110,7 @@ export const MOBILE_NAV_SECTIONS: Record<string, MobileNavSectionGroup[]> = {
         { id: 'hero', label: 'Hero', icon: Sparkles },
         { id: 'sections', label: 'Section copy', icon: List },
         { id: 'lists', label: 'Lists', icon: Users },
+        { id: 'speakers-page', label: 'Speakers page', icon: Globe },
         { id: 'embedded', label: 'Embedded blocks', icon: Layers },
       ],
     },

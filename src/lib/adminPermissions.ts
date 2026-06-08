@@ -69,6 +69,7 @@ export const ADMIN_PAGE_SECTIONS: Partial<Record<AdminPageId, { id: string; labe
     { id: 'hero', label: 'Hero' },
     { id: 'sections', label: 'Section copy' },
     { id: 'lists', label: 'Lists' },
+    { id: 'speakers-page', label: 'Speakers page' },
     { id: 'embedded', label: 'Embedded blocks' },
     { id: 'visibility', label: 'Visibility' },
     { id: 'seo', label: 'SEO' },

@@ -1,16 +1,25 @@
-import { useEffect, useRef, type CSSProperties } from "react"
+import { useEffect, useMemo, useRef, type CSSProperties } from "react"
+import { selectPreviewArticles } from "../../lib/articleCard"
 import { ArrowRight, BookOpen } from "lucide-react"
 import { useWebsiteData } from "../../components/WebsiteDataProvider"
 import { Link } from "react-router-dom"
-import { CmsImage } from "../CmsImage"
+import { SectionCarousel, SectionCarouselItem } from "./SectionCarousel"
+import { EditorialEyebrow } from "../ui/EditorialEyebrow"
+import { renderSectionHeading } from "../../lib/renderSectionTitle"
+import { PlaybookArticleCard } from "../blog/PlaybookArticleCard"
+import { PlaybookArticlesSkeleton } from "../blog/PlaybookArticlesSkeleton"
+
+const DEFAULT_LEDE =
+  "Frameworks, research, and field-tested playbooks for shipping agentic AI—without the hype."
 
 export function BlogSection() {
-  const { data } = useWebsiteData()
+  const { data, loading } = useWebsiteData()
   const preview = data.settings.sections?.blogPreview
-  const articles = data.articles.filter((a) => a.isPublished).slice(0, 3)
+  const articles = useMemo(
+    () => selectPreviewArticles(data.articles, 3),
+    [data.articles],
+  )
   const sectionRef = useRef<HTMLElement>(null)
-  const layout =
-    articles.length <= 1 ? "featured" : articles.length === 2 ? "duo" : "trio"
 
   useEffect(() => {
     const el = sectionRef.current
@@ -35,80 +44,50 @@ export function BlogSection() {
       <div className="playbook-section__ambient" aria-hidden />
 
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">
-        <header className="playbook-section__header flex flex-col items-center text-center max-w-3xl mx-auto mb-12 sm:mb-14 lg:mb-16">
-          <div className="editorial-eyebrow editorial-eyebrow--center mb-6 sm:mb-7">
-            <span className="editorial-eyebrow__rule" aria-hidden />
-            <span className="section-eyebrow !mb-0 text-muted">
-              {preview?.eyebrow ?? 'The Playbook'}
-            </span>
-            <span className="editorial-eyebrow__rule" aria-hidden />
-          </div>
+        <header className="playbook-section__header flex flex-col items-center text-center max-w-4xl mx-auto mb-12 sm:mb-14 lg:mb-16">
+          <EditorialEyebrow
+            centered
+            className="mb-6 sm:mb-7"
+            textClassName="!tracking-[0.08em] !text-xs"
+          >
+            {preview?.eyebrow ?? "The Playbook"}
+          </EditorialEyebrow>
 
           <h2 className="editorial-heading editorial-heading--section mb-0">
-            {preview?.title ? (
-              preview.title
-            ) : (
+            {renderSectionHeading(preview, (
               <>
                 Latest <span className="editorial-accent">Automation</span> Strategies
               </>
-            )}
+            ))}
           </h2>
-          {preview?.lede ? (
-            <p className="editorial-lede mt-4 max-w-2xl mx-auto">{preview.lede}</p>
-          ) : null}
+
+          <p className="editorial-lede mt-4 max-w-2xl mx-auto">
+            {preview?.lede?.trim() || DEFAULT_LEDE}
+          </p>
         </header>
 
-        {articles.length > 0 ? (
-          <ul
-            className={`playbook-articles playbook-articles--${layout} list-none p-0 m-0`}
+        {loading ? (
+          <div aria-live="polite" aria-busy="true">
+            <PlaybookArticlesSkeleton />
+            <span className="sr-only">Loading playbook articles</span>
+          </div>
+        ) : articles.length > 0 ? (
+          <SectionCarousel
+            ariaLabel="Latest playbook articles"
+            variant="articles"
+            trackClassName="playbook-articles"
+            showScrollHints
           >
             {articles.map((article, idx) => (
-              <li
+              <SectionCarouselItem
                 key={article.id}
-                className="playbook-article-card group"
+                className={`playbook-article-card group${idx === 0 ? " playbook-article-card--featured" : ""}`}
                 style={{ "--article-i": idx } as CSSProperties}
               >
-                <Link
-                  to={`/blog/${article.slug}`}
-                  className={`playbook-article-card__link ${
-                    layout === "featured" ? "playbook-article-card__link--featured" : ""
-                  }`}
-                >
-                  <div className="playbook-article-card__media">
-                    <CmsImage
-                      src={article.thumbnail}
-                      alt=""
-                      width={640}
-                      height={400}
-                      loading="lazy"
-                      className="playbook-article-card__img"
-                    />
-                  </div>
-
-                  <div className="playbook-article-card__body">
-                    <p className="playbook-article-card__meta">
-                      <span className="playbook-article-card__category">{article.category}</span>
-                      <span className="playbook-article-card__meta-dot" aria-hidden />
-                      <span>{article.time} read</span>
-                    </p>
-
-                    <h3 className="playbook-article-card__title">{article.title}</h3>
-                    <p className="playbook-article-card__excerpt editorial-lede max-w-none">
-                      {article.excerpt}
-                    </p>
-
-                    <span className="playbook-article-card__cta">
-                      Get the strategy
-                      <ArrowRight
-                        className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-                        aria-hidden
-                      />
-                    </span>
-                  </div>
-                </Link>
-              </li>
+                <PlaybookArticleCard article={article} featured={idx === 0} />
+              </SectionCarouselItem>
             ))}
-          </ul>
+          </SectionCarousel>
         ) : (
           <p className="playbook-section__empty editorial-lede text-center max-w-lg mx-auto">
             {preview?.emptyState?.trim() ||
@@ -119,7 +98,7 @@ export function BlogSection() {
         <div className="playbook-section__footer">
           <Link
             to={preview?.ctaHref?.trim() || "/blog"}
-            className="btn-cta-secondary group"
+            className="btn-cta-secondary group playbook-section__cta"
           >
             <BookOpen className="w-4 h-4 text-accent" aria-hidden />
             {preview?.ctaLabel?.trim() || "View playbook"}

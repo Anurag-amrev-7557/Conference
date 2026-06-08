@@ -203,5 +203,15 @@ export function resolvePageJsonLd(input: {
     return graph
   }
 
+  if (pathname === '/speakers') {
+    graph.push(
+      buildBreadcrumbSchema([
+        { name: homeLabel(data), path: '/' },
+        { name: 'Speakers', path: '/speakers' },
+      ]),
+    )
+    return graph
+  }
+
   return graph
 }

@@ -9,6 +9,7 @@ import { BlogPostPage } from './pages/BlogPostPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ConferencePage } from './pages/ConferencePage'
 import { ConferenceRegisterPage } from './pages/ConferenceRegisterPage'
+import { SpeakersPage } from './pages/SpeakersPage'
 import { Navbar } from './components/Navbar'
 import { ConferenceRevealProvider } from './context/ConferenceRevealContext'
 import { useWebsiteData } from './components/WebsiteDataProvider'
@@ -143,6 +144,7 @@ function App() {
             <Route path="/register" element={<ConferenceRegisterPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:id" element={<EventDetailPage />} />
+            <Route path="/speakers" element={<SpeakersPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />

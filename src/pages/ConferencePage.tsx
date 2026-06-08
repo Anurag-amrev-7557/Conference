@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react';
 import { ConferenceHero } from '../components/sections/conference/ConferenceHero';
 import { ConferenceSpeakers } from '../components/sections/conference/ConferenceSpeakers';
 import { ConferenceVideo } from '../components/sections/conference/ConferenceVideo';
@@ -20,10 +19,7 @@ import { usePageSeo } from '../seo/usePageSeo';
 import { useConferenceContent } from '../hooks/useConferenceContent';
 import { conferenceSectionVisible } from '../lib/conferenceDefaults';
 import { NotFoundPage } from './NotFoundPage';
-
-const BookShowcase = lazy(() =>
-  import('../components/sections/BookShowcase').then((m) => ({ default: m.BookShowcase })),
-);
+import { BookShowcase } from '../components/sections/BookShowcase';
 
 export function ConferencePage() {
   const seo = usePageSeo();
@@ -55,9 +51,7 @@ export function ConferencePage() {
           {conferenceSectionVisible(sectionVis, 'faq') ? <ConferenceFaq /> : null}
 
           {visibility.showcase ? (
-            <Suspense fallback={<section className="min-h-[40vh] bg-transparent" aria-hidden />}>
-              <BookShowcase className="book-section-bg--conference !pt-0 !pb-0 sm:!pt-0 sm:!pb-0 lg:!pt-0 lg:!pb-0" />
-            </Suspense>
+            <BookShowcase className="book-section-bg--conference" />
           ) : null}
           {visibility.blog ? <BlogSection /> : null}
           {visibility.events ? <EventsSection /> : null}

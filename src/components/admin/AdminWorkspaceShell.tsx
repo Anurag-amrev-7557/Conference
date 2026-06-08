@@ -35,7 +35,7 @@ type AdminWorkspaceShellProps = {
   panelFlush?: boolean
   headerAction?: React.ReactNode
   editorHeaderAside?: React.ReactNode
-  previewVariant?: 'conference' | 'events' | 'register'
+  previewVariant?: 'conference' | 'events' | 'register' | 'speakers'
   children: React.ReactNode
 }
 

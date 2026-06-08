@@ -11,7 +11,7 @@ interface CatalogToolbarProps {
   searchPlaceholder: string
   searchValue: string
   onSearchChange: (value: string) => void
-  filters: CatalogFilterOption[]
+  filters?: CatalogFilterOption[]
   activeFilterId: string
   onFilterChange: (id: string) => void
   filterAriaLabel: string
@@ -22,11 +22,12 @@ export function CatalogToolbar({
   searchPlaceholder,
   searchValue,
   onSearchChange,
-  filters,
+  filters = [],
   activeFilterId,
   onFilterChange,
   filterAriaLabel,
 }: CatalogToolbarProps) {
+  const segmentFilters = filters
   const segmentsRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const [indicator, setIndicator] = useState({ x: 0, y: 0, width: 0, height: 0 })
@@ -53,7 +54,7 @@ export function CatalogToolbar({
       window.removeEventListener("resize", update)
       ro?.disconnect()
     }
-  }, [activeFilterId, filters])
+  }, [activeFilterId, segmentFilters])
 
   return (
     <div className="catalog-toolbar">
@@ -72,6 +73,7 @@ export function CatalogToolbar({
         />
       </div>
 
+      {segmentFilters.length > 0 ? (
       <div
         ref={segmentsRef}
         className="catalog-segments"
@@ -87,7 +89,7 @@ export function CatalogToolbar({
           }}
           aria-hidden
         />
-        {filters.map((filter) => {
+        {segmentFilters.map((filter) => {
           const isActive = activeFilterId === filter.id
           return (
             <button
@@ -107,6 +109,7 @@ export function CatalogToolbar({
           )
         })}
       </div>
+      ) : null}
     </div>
   )
 }

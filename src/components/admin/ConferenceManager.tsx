@@ -52,6 +52,7 @@ import {
   CONFERENCE_HERO_VIDEO,
 } from '../../lib/conferenceDefaults';
 import type { SiteSettings } from '../../lib/websiteData';
+import { SpeakersCatalogPageFields } from './PageWorkspacePanel';
 import { SummitHomepageSettings } from './summit/SummitHomepageSettings';
 import {
   AdminButton,
@@ -71,6 +72,7 @@ type TabId =
   | 'hero'
   | 'sections'
   | 'lists'
+  | 'speakers-page'
   | 'embedded'
   | 'visibility'
   | 'seo'
@@ -84,6 +86,7 @@ const CONFERENCE_SUBNAV_GROUPS = [
       { id: 'hero', label: 'Hero', icon: Sparkles },
       { id: 'sections', label: 'Section copy', icon: List },
       { id: 'lists', label: 'Lists', icon: Users },
+      { id: 'speakers-page', label: 'Speakers page', icon: Globe },
       { id: 'embedded', label: 'Embedded blocks', icon: Layers },
     ],
   },
@@ -140,6 +143,12 @@ export const ConferenceManager: React.FC = () => {
   const [scriptsForm, setScriptsForm] = useState<SiteSettings['scripts']>(
     () => sourceData.settings.scripts ?? { header: '', footer: '' },
   );
+  const [speakersCatalog, setSpeakersCatalog] = useState(
+    () => sourceData.settings.catalogPages?.speakers ?? {},
+  );
+  const [speakersRouteSeo, setSpeakersRouteSeo] = useState(
+    () => sourceData.settings.routeSeo?.['/speakers'] ?? {},
+  );
 
   useEffect(() => {
     skipDirtyRef.current = true;
@@ -150,6 +159,10 @@ export const ConferenceManager: React.FC = () => {
     setBookForm(sourceData.settings.book ?? {});
     setCustomCss(sourceData.settings.customCss ?? '');
     setScriptsForm(sourceData.settings.scripts ?? { header: '', footer: '' });
+    setSpeakersCatalog(sourceData.settings.catalogPages?.speakers ?? {});
+    setSpeakersRouteSeo(sourceData.settings.routeSeo?.['/speakers'] ?? {});
+    const rs = sourceData.settings.routeSeo;
+    setRouteSeo(rs?.['/'] ?? rs?.['/conference'] ?? {});
   }, [sourceData.settings]);
 
   useEffect(() => {
@@ -158,7 +171,17 @@ export const ConferenceManager: React.FC = () => {
       return;
     }
     setIsDirty(true);
-  }, [form, routeSeo, sharedVisibility, sectionsForm, bookForm, customCss, scriptsForm]);
+  }, [
+    form,
+    routeSeo,
+    sharedVisibility,
+    sectionsForm,
+    bookForm,
+    customCss,
+    scriptsForm,
+    speakersCatalog,
+    speakersRouteSeo,
+  ]);
 
   useEffect(() => {
     if (!isPreviewVisible) {
@@ -169,7 +192,15 @@ export const ConferenceManager: React.FC = () => {
       settings: {
         ...sourceData.settings,
         conference: { ...form, published: form.published !== false },
-        routeSeo: { ...sourceData.settings.routeSeo, '/': routeSeo },
+        routeSeo: {
+          ...sourceData.settings.routeSeo,
+          '/': routeSeo,
+          '/speakers': speakersRouteSeo,
+        },
+        catalogPages: {
+          ...sourceData.settings.catalogPages,
+          speakers: speakersCatalog,
+        },
         visibility: sharedVisibility,
         sections: sectionsForm,
         book: bookForm,
@@ -181,6 +212,8 @@ export const ConferenceManager: React.FC = () => {
   }, [
     form,
     routeSeo,
+    speakersRouteSeo,
+    speakersCatalog,
     sharedVisibility,
     sectionsForm,
     bookForm,
@@ -198,7 +231,15 @@ export const ConferenceManager: React.FC = () => {
       await updateSettings({
         ...sourceData.settings,
         conference: form,
-        routeSeo: { ...sourceData.settings.routeSeo, '/': routeSeo },
+        routeSeo: {
+          ...sourceData.settings.routeSeo,
+          '/': routeSeo,
+          '/speakers': speakersRouteSeo,
+        },
+        catalogPages: {
+          ...sourceData.settings.catalogPages,
+          speakers: speakersCatalog,
+        },
         visibility: sharedVisibility,
         sections: sectionsForm,
         book: bookForm,
@@ -294,6 +335,8 @@ export const ConferenceManager: React.FC = () => {
   const saveLabel =
     activeTab === 'seo'
       ? 'Save SEO'
+      : activeTab === 'speakers-page'
+        ? 'Save speakers page'
       : activeTab === 'advanced'
         ? 'Save advanced'
         : activeTab === 'visibility' || activeTab === 'embedded'
@@ -302,6 +345,9 @@ export const ConferenceManager: React.FC = () => {
             ? 'Save publish settings'
             : 'Save homepage';
 
+  const previewVariant =
+    activeTab === 'speakers-page' ? 'speakers' : 'conference';
+
   return (
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
@@ -309,7 +355,7 @@ export const ConferenceManager: React.FC = () => {
       isPreviewVisible={isPreviewVisible}
       isSidebarCollapsed={isSidebarCollapsed}
       onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
-      previewVariant="conference"
+      previewVariant={previewVariant}
       toolbar={
         <AdminPageIntro
           compact
@@ -321,9 +367,14 @@ export const ConferenceManager: React.FC = () => {
       saveStatus={saveStatus}
       headerAction={
         <>
-          <Link to="/" target="_blank" rel="noopener noreferrer" className="inline-flex">
+          <Link
+            to={activeTab === 'speakers-page' ? '/speakers' : '/'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex"
+          >
             <AdminButton variant="secondary" className="shrink-0">
-              Open homepage
+              {activeTab === 'speakers-page' ? 'Open /speakers' : 'Open homepage'}
               <ExternalLink className="w-4 h-4" />
             </AdminButton>
           </Link>
@@ -581,6 +632,111 @@ export const ConferenceManager: React.FC = () => {
                     onChange={(v) => patchSection('video', 'lede', v)}
                     multiline
                   />
+                  <Field
+                    label="Register CTA"
+                    value={form.sections.video?.ctaLabel ?? ''}
+                    onChange={(v) => patchSection('video', 'ctaLabel', v)}
+                  />
+                  <Field
+                    label="Video caption"
+                    value={form.sections.video?.caption ?? ''}
+                    onChange={(v) => patchSection('video', 'caption', v)}
+                    multiline
+                  />
+                </AdminEditorSubsection>
+                <AdminEditorSubsection
+                  title="Highlight metrics"
+                  description="Up to three stat chips shown below the video. Leave empty to fall back to hero metrics."
+                >
+                  {(form.sections.video?.metrics ?? []).map((metric, index) => (
+                    <div key={metric.id} className="admin-editor-item-group">
+                      <div className="admin-editor-item-group__header">
+                        <span className="admin-editor-item-group__title">Metric {index + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              sections: {
+                                ...prev.sections,
+                                video: {
+                                  ...prev.sections.video,
+                                  metrics: (prev.sections.video?.metrics ?? []).filter(
+                                    (item) => item.id !== metric.id,
+                                  ),
+                                },
+                              },
+                            }))
+                          }
+                          className="admin-catalog-item__action admin-catalog-item__action--danger"
+                          aria-label="Remove metric"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <AdminFieldGrid columns={2}>
+                        <AdminEditorField label="Value">
+                          <AdminEditorInput
+                            aria-label={`Video metric ${index + 1} value`}
+                            value={metric.value}
+                            onChange={(e) => {
+                              const metrics = [...(form.sections.video?.metrics ?? [])]
+                              metrics[index] = { ...metric, value: e.target.value }
+                              setForm((prev) => ({
+                                ...prev,
+                                sections: {
+                                  ...prev.sections,
+                                  video: { ...prev.sections.video, metrics },
+                                },
+                              }))
+                            }}
+                            placeholder="3,500+"
+                          />
+                        </AdminEditorField>
+                        <AdminEditorField label="Label">
+                          <AdminEditorInput
+                            aria-label={`Video metric ${index + 1} label`}
+                            value={metric.label}
+                            onChange={(e) => {
+                              const metrics = [...(form.sections.video?.metrics ?? [])]
+                              metrics[index] = { ...metric, label: e.target.value }
+                              setForm((prev) => ({
+                                ...prev,
+                                sections: {
+                                  ...prev.sections,
+                                  video: { ...prev.sections.video, metrics },
+                                },
+                              }))
+                            }}
+                            placeholder="Attendees"
+                          />
+                        </AdminEditorField>
+                      </AdminFieldGrid>
+                    </div>
+                  ))}
+                  <AdminButton
+                    type="button"
+                    variant="ghost"
+                    disabled={(form.sections.video?.metrics ?? []).length >= 3}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        sections: {
+                          ...prev.sections,
+                          video: {
+                            ...prev.sections.video,
+                            metrics: [
+                              ...(prev.sections.video?.metrics ?? []),
+                              { id: newId(), value: '', label: '' },
+                            ],
+                          },
+                        },
+                      }))
+                    }
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add metric
+                  </AdminButton>
                 </AdminEditorSubsection>
                 <AdminEditorSubsection title="Video assets">
                   <MediaUrlField
@@ -639,11 +795,11 @@ export const ConferenceManager: React.FC = () => {
                       onChange={(v) => patchSection(key, 'lede', v)}
                       multiline
                     />
-                    {key === 'speakers' && (
+                    {(key === 'speakers' || key === 'sponsors' || key === 'agenda') && (
                       <Field
                         label="CTA label"
-                        value={form.sections.speakers?.ctaLabel ?? ''}
-                        onChange={(v) => patchSection('speakers', 'ctaLabel', v)}
+                        value={form.sections[key]?.ctaLabel ?? ''}
+                        onChange={(v) => patchSection(key, 'ctaLabel', v)}
                       />
                     )}
                   </AdminEditorSubsection>
@@ -905,6 +1061,21 @@ export const ConferenceManager: React.FC = () => {
                       className="admin-editor-input"
                       placeholder="Company"
                     />
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={sp.featured === true}
+                        onChange={(e) =>
+                          updateAt(setForm, 'speakers', i, { ...sp, featured: e.target.checked })
+                        }
+                        className="w-4 h-4 accent-[var(--admin-accent)]"
+                      />
+                      Featured on summit homepage
+                    </label>
+                    <p className="text-xs text-[var(--admin-text-muted)]">
+                      Up to four featured speakers appear on the homepage carousel. If none are
+                      checked, the first four speakers in this list are shown instead.
+                    </p>
                     <MediaUrlField
                       label="Photo"
                       value={sp.image}
@@ -1034,6 +1205,51 @@ export const ConferenceManager: React.FC = () => {
                             className="admin-editor-input"
                             placeholder="Track"
                             aria-label="Session track"
+                          />
+                          <AdminEditorField label="Linked speaker">
+                            <select
+                              value={session.speakerId ?? ''}
+                              onChange={(e) =>
+                                patchSession(setForm, di, si, {
+                                  speakerId: e.target.value || undefined,
+                                })
+                              }
+                              className="admin-editor-input"
+                              aria-label="Session linked speaker"
+                            >
+                              <option value="">No linked speaker</option>
+                              {form.speakers.map((speaker) => (
+                                <option key={speaker.id} value={speaker.id}>
+                                  {speaker.name}
+                                  {speaker.company ? ` — ${speaker.company}` : ''} ({speaker.id})
+                                </option>
+                              ))}
+                            </select>
+                          </AdminEditorField>
+                          <input
+                            value={session.duration ?? ''}
+                            onChange={(e) =>
+                              patchSession(setForm, di, si, { duration: e.target.value })
+                            }
+                            className="admin-editor-input"
+                            placeholder="Duration (e.g. 60 min)"
+                            aria-label="Session duration"
+                          />
+                          <input
+                            value={session.room ?? ''}
+                            onChange={(e) => patchSession(setForm, di, si, { room: e.target.value })}
+                            className="admin-editor-input"
+                            placeholder="Room"
+                            aria-label="Session room"
+                          />
+                          <textarea
+                            value={session.description ?? ''}
+                            onChange={(e) =>
+                              patchSession(setForm, di, si, { description: e.target.value })
+                            }
+                            className="admin-editor-input min-h-[4.5rem]"
+                            placeholder="Session description"
+                            aria-label="Session description"
                           />
                         </div>
                       )}
@@ -1231,6 +1447,15 @@ export const ConferenceManager: React.FC = () => {
                 />
               </ListBlock>
             </>
+          )}
+
+          {activeTab === 'speakers-page' && (
+            <SpeakersCatalogPageFields
+              catalog={speakersCatalog}
+              onCatalogChange={setSpeakersCatalog}
+              routeSeo={speakersRouteSeo}
+              onRouteSeoChange={setSpeakersRouteSeo}
+            />
           )}
 
           {activeTab === 'seo' && (
