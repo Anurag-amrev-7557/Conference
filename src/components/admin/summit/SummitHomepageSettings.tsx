@@ -129,7 +129,7 @@ export function SummitHomepageSettings({
         <SectionCopyFields
           icon={Newspaper}
           title="Blog preview"
-          description="Headline and footer link for the article grid on the homepage."
+          description="Headline and footer link for the article grid on the homepage. Shows the three newest published articles automatically — there is no per-article homepage featured toggle."
           showCta
           showEmptyState
           value={sections?.blogPreview}
@@ -139,7 +139,7 @@ export function SummitHomepageSettings({
         <SectionCopyFields
           icon={Calendar}
           title="Events preview"
-          description="Headline and footer link for the events timeline on the homepage."
+          description="Headline and footer link for the events timeline on the homepage. Shows up to four upcoming published events (by date) automatically — manage which appear via publish status in Events admin."
           showCta
           showEmptyState
           value={sections?.eventsPreview}

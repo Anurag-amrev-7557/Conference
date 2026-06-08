@@ -16,11 +16,14 @@ export function getPublishableSpeakers(speakers: ConferenceSpeaker[]): Conferenc
   return speakers.filter(isPublishableSpeaker)
 }
 
+/**
+ * Speakers shown on the summit homepage carousel.
+ * Only explicitly featured speakers appear — no fallback to the full roster.
+ */
 export function getFeaturedSpeakers(speakers: ConferenceSpeaker[]): ConferenceSpeaker[] {
-  const valid = getPublishableSpeakers(speakers)
-  const flagged = valid.filter((speaker) => speaker.featured)
-  const pool = flagged.length > 0 ? flagged : valid
-  return pool.slice(0, HOMEPAGE_FEATURED_SPEAKER_LIMIT)
+  return getPublishableSpeakers(speakers)
+    .filter((speaker) => speaker.featured === true)
+    .slice(0, HOMEPAGE_FEATURED_SPEAKER_LIMIT)
 }
 
 export function countFeaturedSpeakers(speakers: ConferenceSpeaker[]): number {

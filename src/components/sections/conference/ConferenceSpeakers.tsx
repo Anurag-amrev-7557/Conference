@@ -72,7 +72,11 @@ export function ConferenceSpeakers() {
         />
 
         {featuredSpeakers.length === 0 ? (
-          <p className="conference-speakers-empty">Speaker lineup coming soon.</p>
+          <p className="conference-speakers-empty">
+            {publishableSpeakers.length > 0
+              ? 'No speakers are featured on the homepage yet. In the admin, open Summit → Lists → Speakers and check “Featured on summit homepage”.'
+              : 'Speaker lineup coming soon.'}
+          </p>
         ) : (
           <SectionCarousel
             ariaLabel="Featured speakers"

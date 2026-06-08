@@ -1073,8 +1073,8 @@ export const ConferenceManager: React.FC = () => {
                       Featured on summit homepage
                     </label>
                     <p className="text-xs text-[var(--admin-text-muted)]">
-                      Up to four featured speakers appear on the homepage carousel. If none are
-                      checked, the first four speakers in this list are shown instead.
+                      Only checked speakers appear on the homepage carousel (max four). Unchecked
+                      speakers remain on the full /speakers catalog only.
                     </p>
                     <MediaUrlField
                       label="Photo"
