@@ -1,8 +1,14 @@
 import type {
+  ConferenceSectionId,
   ConferenceSectionVisibility,
+  EmbeddedBlockId,
   SiteBookSettings,
   SiteSettings,
 } from '../../../lib/websiteData'
+import {
+  DEFAULT_CONFERENCE_SECTION_ORDER,
+  DEFAULT_EMBEDDED_BLOCK_ORDER,
+} from '../../../lib/conferenceSectionOrder'
 import type { ConferenceSectionVisibilityKey } from '../../../lib/conferenceDefaults'
 import { DEFAULT_CONFERENCE_SECTION_VISIBILITY } from '../../../lib/conferenceDefaults'
 import {
@@ -19,7 +25,7 @@ import {
   AdminEditorSubsection,
   AdminEditorTextarea,
 } from '../admin-editor-ui'
-import { FinalCtaFields, SectionCopyFields } from '../admin-workspace-fields'
+import { FinalCtaFields, PreviewCurationFields, SectionCopyFields } from '../admin-workspace-fields'
 import { BookOpen, Calendar, Code, FileCode, Layout, Newspaper } from 'lucide-react'
 
 type Props = {
@@ -36,6 +42,66 @@ type Props = {
   onCustomCssChange: (value: string) => void
   scripts: SiteSettings['scripts']
   onScriptsChange: (next: SiteSettings['scripts']) => void
+  sectionOrder?: ConferenceSectionId[]
+  embeddedBlockOrder?: EmbeddedBlockId[]
+  onSectionOrderChange?: (next: ConferenceSectionId[]) => void
+  onEmbeddedBlockOrderChange?: (next: EmbeddedBlockId[]) => void
+  articleOptions?: { id: string; label: string }[]
+  eventOptions?: { id: string; label: string }[]
+}
+
+function moveItem<T>(list: T[], index: number, direction: -1 | 1): T[] {
+  const next = [...list]
+  const target = index + direction
+  if (target < 0 || target >= next.length) return next
+  ;[next[index], next[target]] = [next[target], next[index]]
+  return next
+}
+
+function SectionOrderEditor<T extends string>({
+  title,
+  order,
+  defaults,
+  labels,
+  onChange,
+}: {
+  title: string
+  order: T[]
+  defaults: T[]
+  labels: Record<string, string>
+  onChange: (next: T[]) => void
+}) {
+  const resolved = order.length ? order : defaults
+
+  return (
+    <AdminEditorSubsection title={title}>
+      <div className="space-y-2">
+        {resolved.map((id, index) => (
+          <div key={id} className="flex items-center gap-2 text-sm">
+            <span className="flex-1">{labels[id] ?? id}</span>
+            <button
+              type="button"
+              className="admin-list-editor__remove w-8 h-8"
+              disabled={index === 0}
+              onClick={() => onChange(moveItem(resolved, index, -1))}
+              aria-label="Move up"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className="admin-list-editor__remove w-8 h-8"
+              disabled={index === resolved.length - 1}
+              onClick={() => onChange(moveItem(resolved, index, 1))}
+              aria-label="Move down"
+            >
+              ↓
+            </button>
+          </div>
+        ))}
+      </div>
+    </AdminEditorSubsection>
+  )
 }
 
 export function SummitHomepageSettings({
@@ -52,6 +118,12 @@ export function SummitHomepageSettings({
   onCustomCssChange,
   scripts,
   onScriptsChange,
+  sectionOrder,
+  embeddedBlockOrder,
+  onSectionOrderChange,
+  onEmbeddedBlockOrderChange,
+  articleOptions = [],
+  eventOptions = [],
 }: Props) {
   const patchBook = (field: keyof SiteBookSettings, value: string) =>
     onBookChange({ ...book, [field]: value })
@@ -129,21 +201,35 @@ export function SummitHomepageSettings({
         <SectionCopyFields
           icon={Newspaper}
           title="Blog preview"
-          description="Headline and footer link for the article grid on the homepage. Shows the three newest published articles automatically — there is no per-article homepage featured toggle."
+          description="Headline and footer link for the article grid on the homepage."
           showCta
           showEmptyState
           value={sections?.blogPreview}
           onChange={(next) => onSectionsChange({ ...sections, blogPreview: next })}
         />
+        <PreviewCurationFields
+          value={sections?.blogPreview}
+          onChange={(next) => onSectionsChange({ ...sections, blogPreview: next })}
+          itemOptions={articleOptions}
+          itemLabel="articles"
+          featuredKey="featuredArticleIds"
+        />
 
         <SectionCopyFields
           icon={Calendar}
           title="Events preview"
-          description="Headline and footer link for the events timeline on the homepage. Shows up to four upcoming published events (by date) automatically — manage which appear via publish status in Events admin."
+          description="Headline and footer link for the events timeline on the homepage."
           showCta
           showEmptyState
           value={sections?.eventsPreview}
           onChange={(next) => onSectionsChange({ ...sections, eventsPreview: next })}
+        />
+        <PreviewCurationFields
+          value={sections?.eventsPreview}
+          onChange={(next) => onSectionsChange({ ...sections, eventsPreview: next })}
+          itemOptions={eventOptions}
+          itemLabel="events"
+          featuredKey="featuredEventIds"
         />
 
         <FinalCtaFields
@@ -193,6 +279,33 @@ export function SummitHomepageSettings({
             }))}
           />
         </AdminEditorSubsection>
+        {onSectionOrderChange ? (
+          <SectionOrderEditor
+            title="Summit section order"
+            order={sectionOrder ?? DEFAULT_CONFERENCE_SECTION_ORDER}
+            defaults={DEFAULT_CONFERENCE_SECTION_ORDER}
+            labels={Object.fromEntries(
+              (
+                Object.keys(CONFERENCE_SECTION_VISIBILITY_META) as ConferenceSectionVisibilityKey[]
+              ).map((key) => [key, CONFERENCE_SECTION_VISIBILITY_META[key].label]),
+            )}
+            onChange={onSectionOrderChange}
+          />
+        ) : null}
+        {onEmbeddedBlockOrderChange ? (
+          <SectionOrderEditor
+            title="Embedded block order"
+            order={embeddedBlockOrder ?? DEFAULT_EMBEDDED_BLOCK_ORDER}
+            defaults={DEFAULT_EMBEDDED_BLOCK_ORDER}
+            labels={Object.fromEntries(
+              SUMMIT_EMBEDDED_VISIBILITY_KEYS.map((key) => [
+                key,
+                SUMMIT_VISIBILITY_META[key].label,
+              ]),
+            )}
+            onChange={onEmbeddedBlockOrderChange}
+          />
+        ) : null}
       </AdminEditorSection>
     )
   }

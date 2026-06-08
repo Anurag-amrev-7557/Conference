@@ -1,5 +1,12 @@
 import type { ElementType } from 'react'
-import type { CatalogHeroContent, FinalCtaContent, RouteSeoOverride, SectionBlockContent } from '../../lib/websiteData'
+import type {
+  CatalogHeroContent,
+  CatalogPageSettings,
+  ConferenceSectionCopy,
+  FinalCtaContent,
+  RouteSeoOverride,
+  SectionBlockContent,
+} from '../../lib/websiteData'
 import { cn } from '../../lib/utils'
 import { AdminButton } from './admin-ui'
 import {
@@ -390,6 +397,35 @@ export function FinalCtaFields({
       }
     >
       <AdminEditorFields>
+        <AdminEditorSubsection title="Display mode">
+          <AdminEditorField
+            label="Layout"
+            hint="Summit buttons on /; waitlist form on legacy book pages."
+          >
+            <select
+              className="admin-input"
+              value={value?.displayMode ?? 'auto'}
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  displayMode: e.target.value as FinalCtaContent['displayMode'],
+                })
+              }
+            >
+              <option value="auto">Auto (page-driven)</option>
+              <option value="summit-buttons">Summit button pair</option>
+              <option value="waitlist">Waitlist form</option>
+            </select>
+          </AdminEditorField>
+          <label className="flex items-center gap-2 text-sm mt-2">
+            <input
+              type="checkbox"
+              checked={value?.hideTrustRow === true}
+              onChange={(e) => onChange({ ...value, hideTrustRow: e.target.checked })}
+            />
+            Hide trust bullet row
+          </label>
+        </AdminEditorSubsection>
         <AdminEditorSubsection
           title="Main copy"
           description="Headline block above trust bullets and CTAs."
@@ -623,6 +659,247 @@ export function FinalCtaFields({
         </AdminEditorSubsection>
       </AdminEditorFields>
     </AdminEditorSection>
+  )
+}
+
+export function ConferenceSectionCtaFields({
+  value,
+  onChange,
+  showSecondary,
+  showRegister,
+  showDownload,
+  showEmptyState,
+  showFeaturedBadge,
+}: {
+  value: ConferenceSectionCopy | undefined
+  onChange: (next: ConferenceSectionCopy) => void
+  showSecondary?: boolean
+  showRegister?: boolean
+  showDownload?: boolean
+  showEmptyState?: boolean
+  showFeaturedBadge?: boolean
+}) {
+  const patch = (field: keyof ConferenceSectionCopy, v: string) =>
+    onChange({ ...value, [field]: v })
+
+  return (
+    <AdminEditorSubsection title="CTAs & empty state">
+      <AdminEditorField label="CTA label">
+        <AdminEditorInput
+          value={value?.ctaLabel || ''}
+          onChange={(e) => patch('ctaLabel', e.target.value)}
+        />
+      </AdminEditorField>
+      <AdminEditorField label="CTA URL">
+        <AdminEditorInput
+          value={value?.ctaHref || ''}
+          onChange={(e) => patch('ctaHref', e.target.value)}
+          placeholder="/register, /speakers, #section-id"
+          className="font-mono text-sm"
+        />
+      </AdminEditorField>
+      {showSecondary ? (
+        <>
+          <AdminEditorField label="Secondary CTA label">
+            <AdminEditorInput
+              value={value?.secondaryCtaLabel || ''}
+              onChange={(e) => patch('secondaryCtaLabel', e.target.value)}
+            />
+          </AdminEditorField>
+          <AdminEditorField label="Secondary CTA URL">
+            <AdminEditorInput
+              value={value?.secondaryCtaHref || ''}
+              onChange={(e) => patch('secondaryCtaHref', e.target.value)}
+              className="font-mono text-sm"
+            />
+          </AdminEditorField>
+        </>
+      ) : null}
+      {showRegister ? (
+        <>
+          <AdminEditorField label="Register CTA label">
+            <AdminEditorInput
+              value={value?.registerCtaLabel || ''}
+              onChange={(e) => patch('registerCtaLabel', e.target.value)}
+            />
+          </AdminEditorField>
+          <AdminEditorField label="Register CTA URL">
+            <AdminEditorInput
+              value={value?.registerCtaHref || ''}
+              onChange={(e) => patch('registerCtaHref', e.target.value)}
+              className="font-mono text-sm"
+            />
+          </AdminEditorField>
+        </>
+      ) : null}
+      {showDownload ? (
+        <AdminEditorField label="Download CTA label">
+          <AdminEditorInput
+            value={value?.downloadCtaLabel || ''}
+            onChange={(e) => patch('downloadCtaLabel', e.target.value)}
+          />
+        </AdminEditorField>
+      ) : null}
+      {showFeaturedBadge ? (
+        <AdminEditorField label="Featured badge label">
+          <AdminEditorInput
+            value={value?.featuredBadgeLabel || ''}
+            onChange={(e) => patch('featuredBadgeLabel', e.target.value)}
+            placeholder="Featured"
+          />
+        </AdminEditorField>
+      ) : null}
+      {showEmptyState ? (
+        <>
+          <AdminEditorField label="Empty state title">
+            <AdminEditorInput
+              value={value?.emptyStateTitle || ''}
+              onChange={(e) => patch('emptyStateTitle', e.target.value)}
+            />
+          </AdminEditorField>
+          <AdminEditorField label="Empty state body">
+            <AdminEditorTextarea
+              rows={2}
+              value={value?.emptyStateBody || ''}
+              onChange={(e) => patch('emptyStateBody', e.target.value)}
+            />
+          </AdminEditorField>
+          <AdminEditorField label="Empty state CTA label">
+            <AdminEditorInput
+              value={value?.emptyStateCtaLabel || ''}
+              onChange={(e) => patch('emptyStateCtaLabel', e.target.value)}
+            />
+          </AdminEditorField>
+          <AdminEditorField label="Empty state CTA URL">
+            <AdminEditorInput
+              value={value?.emptyStateCtaHref || ''}
+              onChange={(e) => patch('emptyStateCtaHref', e.target.value)}
+              className="font-mono text-sm"
+            />
+          </AdminEditorField>
+        </>
+      ) : null}
+    </AdminEditorSubsection>
+  )
+}
+
+export function CatalogPageSettingsFields({
+  value,
+  onChange,
+}: {
+  value: CatalogPageSettings | undefined
+  onChange: (next: CatalogPageSettings) => void
+}) {
+  const patch = (field: keyof CatalogPageSettings, v: string | number) =>
+    onChange({ ...value, [field]: v })
+
+  return (
+    <>
+      <CatalogHeroFields value={value} onChange={onChange} />
+      <AdminEditorSubsection title="Listing UX">
+        <AdminEditorField label="Search placeholder">
+          <AdminEditorInput
+            value={value?.searchPlaceholder || ''}
+            onChange={(e) => patch('searchPlaceholder', e.target.value)}
+          />
+        </AdminEditorField>
+        <AdminEditorField label="Items per page">
+          <AdminEditorInput
+            type="number"
+            min={1}
+            max={48}
+            value={value?.pageSize ?? ''}
+            onChange={(e) => patch('pageSize', Number(e.target.value) || 9)}
+          />
+        </AdminEditorField>
+        <AdminEditorField label="Empty state title">
+          <AdminEditorInput
+            value={value?.emptyStateTitle || ''}
+            onChange={(e) => patch('emptyStateTitle', e.target.value)}
+          />
+        </AdminEditorField>
+        <AdminEditorField label="Empty state body">
+          <AdminEditorTextarea
+            rows={2}
+            value={value?.emptyStateBody || ''}
+            onChange={(e) => patch('emptyStateBody', e.target.value)}
+          />
+        </AdminEditorField>
+        <AdminEditorField label="Empty state CTA label">
+          <AdminEditorInput
+            value={value?.emptyStateCtaLabel || ''}
+            onChange={(e) => patch('emptyStateCtaLabel', e.target.value)}
+          />
+        </AdminEditorField>
+        <AdminEditorField label="Empty state CTA URL">
+          <AdminEditorInput
+            value={value?.emptyStateCtaHref || ''}
+            onChange={(e) => patch('emptyStateCtaHref', e.target.value)}
+            className="font-mono text-sm"
+          />
+        </AdminEditorField>
+      </AdminEditorSubsection>
+    </>
+  )
+}
+
+export function PreviewCurationFields({
+  value,
+  onChange,
+  itemOptions,
+  itemLabel,
+  featuredKey,
+}: {
+  value: SectionBlockContent | undefined
+  onChange: (next: SectionBlockContent) => void
+  itemOptions: { id: string; label: string }[]
+  itemLabel: string
+  featuredKey: 'featuredArticleIds' | 'featuredEventIds'
+}) {
+  const selected = new Set(value?.[featuredKey] ?? [])
+
+  const toggleId = (id: string) => {
+    const current = value?.[featuredKey] ?? []
+    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
+    onChange({ ...value, [featuredKey]: next })
+  }
+
+  return (
+    <AdminEditorSubsection title="Homepage preview curation">
+      <AdminEditorField
+        label="Preview count"
+        hint="How many items to show when no manual selection is set."
+      >
+        <AdminEditorInput
+          type="number"
+          min={1}
+          max={12}
+          value={value?.previewCount ?? ''}
+          onChange={(e) =>
+            onChange({ ...value, previewCount: Number(e.target.value) || undefined })
+          }
+        />
+      </AdminEditorField>
+      {itemOptions.length > 0 ? (
+        <AdminEditorField
+          label={`Featured ${itemLabel}`}
+          hint="Leave unchecked to use automatic selection (newest / upcoming)."
+        >
+          <div className="space-y-2 max-h-48 overflow-y-auto border border-[var(--ds-border)] rounded-lg p-3">
+            {itemOptions.map((item) => (
+              <label key={item.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selected.has(item.id)}
+                  onChange={() => toggleId(item.id)}
+                />
+                <span className="truncate">{item.label}</span>
+              </label>
+            ))}
+          </div>
+        </AdminEditorField>
+      ) : null}
+    </AdminEditorSubsection>
   )
 }
 

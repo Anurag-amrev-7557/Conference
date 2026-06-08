@@ -21,6 +21,7 @@ import { InjectedScripts } from './components/InjectedScripts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { CookieBanner } from './components/CookieBanner'
 import { ApiKeepAlive } from './components/ApiKeepAlive'
+import { RouteVisibilityGuard } from './components/RouteVisibilityGuard'
 
 function ThemeSynchronizer() {
   const { data } = useWebsiteData();
@@ -141,11 +142,11 @@ function App() {
             <Route path="/" element={<><Navbar /><ConferencePage /></>} />
             <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/conference" element={<Navigate to="/" replace />} />
-            <Route path="/register" element={<ConferenceRegisterPage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/events/:id" element={<EventDetailPage />} />
-            <Route path="/speakers" element={<SpeakersPage />} />
-            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/register" element={<RouteVisibilityGuard route="register"><ConferenceRegisterPage /></RouteVisibilityGuard>} />
+            <Route path="/events" element={<RouteVisibilityGuard route="events"><EventsPage /></RouteVisibilityGuard>} />
+            <Route path="/events/:id" element={<RouteVisibilityGuard route="events"><EventDetailPage /></RouteVisibilityGuard>} />
+            <Route path="/speakers" element={<RouteVisibilityGuard route="speakers"><SpeakersPage /></RouteVisibilityGuard>} />
+            <Route path="/blog" element={<RouteVisibilityGuard route="blog"><BlogPage /></RouteVisibilityGuard>} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/admin/*" element={<AdminPage />} />

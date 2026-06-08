@@ -17,15 +17,13 @@ import { usePageSeo } from "../seo/usePageSeo"
 import { usePageJsonLd } from "../seo/usePageJsonLd"
 import { renderCatalogTitle } from "../lib/renderSectionTitle"
 
-const categories = ["ALL", "RESEARCH", "STRATEGY", "PLAYBOOK", "GUIDE"] as const
-
-const CATEGORY_FILTERS = categories.map((cat) => ({
-  id: cat,
-  label:
-    cat === "ALL"
-      ? "All"
-      : cat.charAt(0) + cat.slice(1).toLowerCase(),
-}))
+const DEFAULT_CATEGORY_FILTERS = [
+  { id: "ALL", label: "All" },
+  { id: "RESEARCH", label: "Research" },
+  { id: "STRATEGY", label: "Strategy" },
+  { id: "PLAYBOOK", label: "Playbook" },
+  { id: "GUIDE", label: "Guide" },
+]
 
 export function BlogPage() {
   const { data, loading } = useWebsiteData()
@@ -51,8 +49,17 @@ export function BlogPage() {
     return list
   }, [articles, selectedCategory, q])
 
+  const catalog = data.settings.catalogPages?.blog
+  const categoryFilters: { id: string; label: string }[] = [
+    { id: "ALL", label: "All" },
+    ...(data.settings.blogCategories?.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+    })) ?? DEFAULT_CATEGORY_FILTERS.slice(1)),
+  ]
+  const pageSize = catalog?.pageSize && catalog.pageSize > 0 ? catalog.pageSize : 9
   const { page, setPage, totalPages, paginatedItems, showPagination } =
-    usePagination(filteredArticles)
+    usePagination(filteredArticles, pageSize)
 
   const resetFilters = () => {
     setSelectedCategory("ALL")
@@ -82,10 +89,10 @@ export function BlogPage() {
         <main className="catalog-main premium-catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12">
           <CatalogToolbar
             searchId="blog-search-input"
-            searchPlaceholder="Search for articles"
+            searchPlaceholder={catalog?.searchPlaceholder?.trim() || "Search for articles"}
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
-            filters={CATEGORY_FILTERS}
+            filters={categoryFilters}
             activeFilterId={selectedCategory}
             onFilterChange={setSelectedCategory}
             filterAriaLabel="Article categories"

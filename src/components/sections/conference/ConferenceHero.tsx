@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode, type SVGProps } from "react"
-import { Link } from "react-router-dom"
 import { ArrowRight, Calendar, MapPin } from "lucide-react"
 import { motion } from "framer-motion"
 import { useConferenceReveal } from "../../../context/ConferenceRevealContext"
 import { useConferenceContent } from "../../../hooks/useConferenceContent"
 import { normalizeRegisterCtaLabel, resolveConferenceHeroMedia, CONFERENCE_HERO_LOGO_PUBLIC, CONFERENCE_HERO_VIDEO_PUBLIC } from "../../../lib/conferenceDefaults"
+import { resolveCtaHref, resolveCtaLabel, SectionCtaLink } from "../../../lib/sectionCta"
 import { resolveMediaUrl } from "../../../lib/assetUrl"
 
 const revealEase = [0.22, 1, 0.36, 1] as const
@@ -145,13 +145,17 @@ export function ConferenceHero() {
             transition={{ duration: entranceDuration, delay: delay(4), ease: revealEase }}
             className="conference-hero__cta-row"
           >
-            <Link to="/register" className="conference-hero__cta-register">
-              {normalizeRegisterCtaLabel(hero.primaryCtaLabel)}
+            <SectionCtaLink
+              href={resolveCtaHref(hero.primaryCtaHref, '/register')}
+              className="conference-hero__cta-register"
+            >
+              {normalizeRegisterCtaLabel(resolveCtaLabel(hero.primaryCtaLabel, 'Register'))}
               <ArrowRight className="h-5 w-5" aria-hidden />
-            </Link>
+            </SectionCtaLink>
           </motion.div>
         </div>
 
+        {hero.showMetrics !== false ? (
         <motion.div
           initial={false}
           animate={heroRevealReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
@@ -168,6 +172,7 @@ export function ConferenceHero() {
             ))}
           </div>
         </motion.div>
+        ) : null}
       </div>
     </section>
   )

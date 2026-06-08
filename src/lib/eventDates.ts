@@ -133,9 +133,23 @@ export function formatEventHost(
   }
 }
 
-export function getPreviewEvents(events: AppEvent[], limit = 4): AppEvent[] {
-  return events
-    .filter((e) => e.isPublished)
+export function getPreviewEvents(
+  events: AppEvent[],
+  limit = 4,
+  featuredIds?: string[],
+): AppEvent[] {
+  const published = events.filter((e) => e.isPublished)
+  const curatedIds = featuredIds?.filter(Boolean) ?? []
+
+  if (curatedIds.length > 0) {
+    const byId = new Map(published.map((event) => [event.id, event]))
+    return curatedIds
+      .map((id) => byId.get(id))
+      .filter((event): event is AppEvent => Boolean(event))
+      .slice(0, limit)
+  }
+
+  return published
     .sort((a, b) => {
       if (a.status !== b.status) {
         return a.status === "Upcoming" ? -1 : 1

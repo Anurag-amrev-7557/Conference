@@ -406,6 +406,41 @@ export const SettingsManager: React.FC = () => {
                    {activeTab === 'navigation' && (
                      <>
                        <AdminEditorSection
+                         icon={Navigation}
+                         title="Navbar visibility"
+                         description="Hide the global header on all public pages when disabled."
+                       >
+                         <Toggle
+                           label="Show site navbar"
+                           checked={form.navigation.navbarVisible !== false}
+                           onChange={(checked) =>
+                             setForm({
+                               ...form,
+                               navigation: {
+                                 ...form.navigation,
+                                 navbarVisible: checked,
+                               },
+                             })
+                           }
+                         />
+                         <AdminEditorField label="Logo alt text" className="mt-4">
+                           <AdminEditorInput
+                             value={form.navigation.brandLogoAlt ?? ''}
+                             onChange={(e) =>
+                               setForm({
+                                 ...form,
+                                 navigation: {
+                                   ...form.navigation,
+                                   brandLogoAlt: e.target.value,
+                                 },
+                               })
+                             }
+                             placeholder="Superhumanly logo"
+                           />
+                         </AdminEditorField>
+                       </AdminEditorSection>
+
+                       <AdminEditorSection
                          icon={MousePointerClick}
                          title="Header primary CTA"
                          description="Pill button in the site header (desktop) and mobile menu."
@@ -455,7 +490,7 @@ export const SettingsManager: React.FC = () => {
                        <AdminEditorSection
                          icon={Menu}
                          title="Header menu links"
-                         description="Primary navigation items in the site header."
+                         description="Shown left-to-right in the header in list order. Use /blog, /events, or /speakers for pages; #section-id for homepage anchors; full URLs for external links."
                          action={
                            <AdminButton
                              variant="secondary"
@@ -493,7 +528,7 @@ export const SettingsManager: React.FC = () => {
                        <AdminEditorSection
                          icon={Link2}
                          title="Footer links"
-                         description="Links shown in the global site footer."
+                         description="Link column in the footer (order matches the list). Homepage sections work best as /#section-id from any page."
                          action={
                            <AdminButton
                              variant="secondary"
@@ -531,7 +566,7 @@ export const SettingsManager: React.FC = () => {
                        <AdminEditorSection
                          icon={Share2}
                          title="Social profiles"
-                         description="Profile URLs linked from the footer and sharing blocks."
+                         description="Icons in the footer Connection column. Leave a URL empty to hide that network."
                        >
                          <AdminFieldGrid columns={2}>
                            {form.navigation.socials.map((social) => (
@@ -539,21 +574,18 @@ export const SettingsManager: React.FC = () => {
                                <AdminEditorInput
                                  value={social.href}
                                  onChange={(e) => updateSocialLink(social.id, e.target.value)}
+                                 placeholder="https://"
                                  className="font-mono text-sm"
                                />
                              </AdminEditorField>
                            ))}
                          </AdminFieldGrid>
                        </AdminEditorSection>
-                     </>
-                   )}
 
-                   {activeTab === 'pages' && (
-                     <>
                        <AdminEditorSection
                          icon={PanelBottom}
-                         title="Footer"
-                         description="Global footer tagline, copyright, and legal links."
+                         title="Footer brand & legal"
+                         description="Tagline, column titles, registry row, and legal links in the global footer. The registry button uses the header CTA URL unless you override the label below."
                        >
                          <AdminFieldGrid>
                            <AdminEditorField label="Tagline" className="admin-editor-field--wide">
@@ -565,6 +597,7 @@ export const SettingsManager: React.FC = () => {
                                    footer: { ...form.footer, tagline: e.target.value },
                                  })
                                }
+                               placeholder="Orchestrating the future of automated business systems."
                              />
                            </AdminEditorField>
                            <AdminEditorField label="Copyright line" className="admin-editor-field--wide">
@@ -576,6 +609,7 @@ export const SettingsManager: React.FC = () => {
                                    footer: { ...form.footer, copyright: e.target.value },
                                  })
                                }
+                               placeholder={`© ${new Date().getFullYear()} Superhumanly AI Playbook.`}
                              />
                            </AdminEditorField>
                            <AdminEditorField label="Registry status label">
@@ -587,6 +621,58 @@ export const SettingsManager: React.FC = () => {
                                    footer: { ...form.footer, registryStatusLabel: e.target.value },
                                  })
                                }
+                               placeholder="Registry open"
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField
+                             label="Registry button label"
+                             hint="Uses header CTA URL. Leave blank to match the header button label."
+                           >
+                             <AdminEditorInput
+                               value={form.footer?.registryCtaLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, registryCtaLabel: e.target.value },
+                                 })
+                               }
+                               placeholder={form.navigation.primaryCta?.label ?? 'Join the registry'}
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Footer links column title">
+                             <AdminEditorInput
+                               value={form.footer?.navColumnTitle ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, navColumnTitle: e.target.value },
+                                 })
+                               }
+                               placeholder="Section Index"
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Social column title">
+                             <AdminEditorInput
+                               value={form.footer?.socialColumnTitle ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, socialColumnTitle: e.target.value },
+                                 })
+                               }
+                               placeholder="Connection"
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Privacy policy label">
+                             <AdminEditorInput
+                               value={form.footer?.privacyLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, privacyLabel: e.target.value },
+                                 })
+                               }
+                               placeholder="Privacy Policy"
                              />
                            </AdminEditorField>
                            <AdminEditorField label="Privacy policy URL">
@@ -598,15 +684,134 @@ export const SettingsManager: React.FC = () => {
                                    footer: { ...form.footer, privacyUrl: e.target.value },
                                  })
                                }
+                               placeholder="/privacy"
+                               className="font-mono text-sm"
                              />
                            </AdminEditorField>
-                           <AdminEditorField label="Terms of service URL">
+                           <AdminEditorField label="Terms label">
+                             <AdminEditorInput
+                               value={form.footer?.termsLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   footer: { ...form.footer, termsLabel: e.target.value },
+                                 })
+                               }
+                               placeholder="Terms of Service"
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Terms URL">
                              <AdminEditorInput
                                value={form.footer?.termsUrl ?? ''}
                                onChange={(e) =>
                                  setForm({
                                    ...form,
                                    footer: { ...form.footer, termsUrl: e.target.value },
+                                 })
+                               }
+                               placeholder="/terms"
+                               className="font-mono text-sm"
+                             />
+                           </AdminEditorField>
+                         </AdminFieldGrid>
+                       </AdminEditorSection>
+                     </>
+                   )}
+
+                   {activeTab === 'pages' && (
+                     <>
+                       <AdminEditorSection
+                         icon={Globe}
+                         title="Route visibility"
+                         description="Hide entire catalog or register routes (returns 404)."
+                       >
+                         <AdminFieldGrid columns={2}>
+                           {(
+                             [
+                               ['blog', 'Blog (/blog)'],
+                               ['events', 'Events (/events)'],
+                               ['speakers', 'Speakers (/speakers)'],
+                               ['register', 'Register (/register)'],
+                             ] as const
+                           ).map(([key, label]) => (
+                             <AdminEditorField key={key} label={label}>
+                               <Toggle
+                                 label="Route live"
+                                 checked={form.routeVisibility?.[key] !== false}
+                                 onChange={(checked) =>
+                                   setForm({
+                                     ...form,
+                                     routeVisibility: {
+                                       ...form.routeVisibility,
+                                       [key]: checked,
+                                     },
+                                   })
+                                 }
+                               />
+                             </AdminEditorField>
+                           ))}
+                         </AdminFieldGrid>
+                       </AdminEditorSection>
+
+                       <AdminEditorSection
+                         icon={Mail}
+                         title="Lead capture modal"
+                         description="Shown when visitors click the blog CTA block."
+                       >
+                         <AdminFieldGrid>
+                           <AdminEditorField label="Modal title">
+                             <AdminEditorInput
+                               value={form.leadCaptureModal?.title ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   leadCaptureModal: {
+                                     ...form.leadCaptureModal,
+                                     title: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Modal lede" className="admin-editor-field--wide">
+                             <AdminEditorTextarea
+                               rows={2}
+                               value={form.leadCaptureModal?.lede ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   leadCaptureModal: {
+                                     ...form.leadCaptureModal,
+                                     lede: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Submit label">
+                             <AdminEditorInput
+                               value={form.leadCaptureModal?.submitLabel ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   leadCaptureModal: {
+                                     ...form.leadCaptureModal,
+                                     submitLabel: e.target.value,
+                                   },
+                                 })
+                               }
+                             />
+                           </AdminEditorField>
+                           <AdminEditorField label="Success title">
+                             <AdminEditorInput
+                               value={form.leadCaptureModal?.successTitle ?? ''}
+                               onChange={(e) =>
+                                 setForm({
+                                   ...form,
+                                   leadCaptureModal: {
+                                     ...form.leadCaptureModal,
+                                     successTitle: e.target.value,
+                                   },
                                  })
                                }
                              />

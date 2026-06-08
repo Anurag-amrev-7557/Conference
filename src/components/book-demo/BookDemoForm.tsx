@@ -42,7 +42,9 @@ export function BookDemoForm() {
     return (
       <div className="book-demo-form-stage">
         <div className="book-demo-form-card book-demo-form-card--register p-8 sm:p-10 text-center">
-          <h2 className="book-demo-form-card__title mb-4">Registration closed</h2>
+          <h2 className="book-demo-form-card__title mb-4">
+            {copy.registrationClosedTitle?.trim() || 'Registration closed'}
+          </h2>
           <p className="text-white/70 leading-relaxed max-w-md mx-auto">
             {copy.registrationClosedMessage ||
               'Registration is currently closed. Check back soon or visit the homepage to join our waitlist.'}
@@ -62,16 +64,17 @@ export function BookDemoForm() {
     event.preventDefault()
     if (phase !== 'idle') return
 
+    const validation = copy.validationMessages ?? {}
     if (!form.name.trim()) {
-      setError('Please enter your full name.')
+      setError(validation.nameRequired?.trim() || 'Please enter your full name.')
       return
     }
     if (!form.email.trim()) {
-      setError('Please enter your email.')
+      setError(validation.emailRequired?.trim() || 'Please enter your email.')
       return
     }
     if (!form.phone.trim()) {
-      setError('Please enter your phone number.')
+      setError(validation.phoneRequired?.trim() || 'Please enter your phone number.')
       return
     }
     if (!form.linkedIn.trim()) {
@@ -79,7 +82,7 @@ export function BookDemoForm() {
       return
     }
     if (!form.designation) {
-      setError('Please select how you are registering.')
+      setError(validation.designationRequired?.trim() || 'Please select how you are registering.')
       return
     }
 
@@ -102,7 +105,11 @@ export function BookDemoForm() {
       setPhase('success')
     } catch (err: unknown) {
       setPhase('idle')
-      setError(err instanceof Error ? err.message : 'Something went wrong. Try again.')
+      setError(
+        err instanceof Error
+          ? err.message
+          : copy.genericErrorMessage?.trim() || 'Something went wrong. Try again.',
+      )
     }
   }
 
@@ -268,7 +275,9 @@ export function BookDemoForm() {
                   {phase === 'submitting' ? (
                     <>
                       <span className="book-demo-submit__spinner" aria-hidden />
-                      <span className="book-demo-submit__loading-label">Reserving your pass…</span>
+                      <span className="book-demo-submit__loading-label">
+                        {copy.submitLoadingLabel?.trim() || 'Reserving your pass…'}
+                      </span>
                     </>
                   ) : (
                     <>

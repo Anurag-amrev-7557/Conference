@@ -4,8 +4,11 @@ import { initialData, pillarIcons, perkIcons } from '../lib/websiteData';
 import { mergeConferenceContent } from '../lib/conferenceDefaults';
 import { defaultConferenceRegistrationForm } from '../lib/registrationDefaults';
 import { hydrateHomepage } from '../lib/homepageContent';
+import { mergeRemoteSettings } from '../lib/mergeRemoteSettings';
 import { api } from '../lib/api';
 import { setSiteOrigin } from '../seo/siteUrl';
+
+const PREVIEW_STORAGE_KEY = 'adminPreviewVisible';
 
 interface WebsiteDataContextType {
   /** Merged view used by the live preview (includes preview overrides). */
@@ -25,6 +28,7 @@ interface WebsiteDataContextType {
   updateAppearance: (appearance: WebsiteData['appearance']) => Promise<void>;
   setPreview: (preview: Partial<WebsiteData> | null) => void;
   isPreviewVisible: boolean;
+  togglePreviewVisible: () => void;
   resetData: () => void;
   refresh: () => Promise<void>;
   contentVersion: number;
@@ -35,7 +39,9 @@ const WebsiteDataContext = createContext<WebsiteDataContextType | undefined>(und
 export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<WebsiteData>(initialData);
   const [previewData, setPreviewData] = useState<WebsiteData | null>(null);
-  const isPreviewVisible = false;
+  const [isPreviewVisible, setIsPreviewVisible] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem(PREVIEW_STORAGE_KEY) === 'true',
+  );
   const [loading, setLoading] = useState(true);
   const [contentVersion, setContentVersion] = useState(1);
   const dataRef = useRef(data);
@@ -83,46 +89,7 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           }
         }
         if (remoteData.settings) {
-          merged.settings = { ...initialData.settings, ...remoteData.settings };
-          if (remoteData.settings.seo) {
-            merged.settings.seo = { ...initialData.settings.seo, ...remoteData.settings.seo };
-          }
-          if (remoteData.settings.visibility) {
-            const { community: _community, ...visibility } = remoteData.settings.visibility as Record<string, boolean> & { community?: boolean };
-            merged.settings.visibility = { ...initialData.settings.visibility, ...visibility };
-          }
-          if (remoteData.settings.navigation) {
-            merged.settings.navigation = {
-              ...initialData.settings.navigation,
-              ...remoteData.settings.navigation,
-              primaryCta: {
-                ...initialData.settings.navigation.primaryCta,
-                ...remoteData.settings.navigation.primaryCta,
-              },
-            };
-          }
-          if (remoteData.settings.catalogPages) {
-            merged.settings.catalogPages = {
-              ...initialData.settings.catalogPages,
-              ...remoteData.settings.catalogPages,
-            };
-          }
-          if (remoteData.settings.sections) {
-            const { community: _community, ...sections } = (remoteData.settings.sections ?? {}) as Record<string, unknown> & { community?: unknown };
-            merged.settings.sections = {
-              ...initialData.settings.sections,
-              ...sections,
-            };
-          }
-          if (remoteData.settings.routeSeo) {
-            const { '/community': _communitySeo, ...routeSeo } = remoteData.settings.routeSeo as Record<string, unknown>;
-            merged.settings.routeSeo = {
-              ...initialData.settings.routeSeo,
-              ...routeSeo,
-            };
-          }
-          const { communityPage: _communityPage, ...settingsRest } = merged.settings as typeof merged.settings & { communityPage?: unknown };
-          merged.settings = settingsRest;
+          merged.settings = mergeRemoteSettings(remoteData.settings);
           merged.settings.conference = mergeConferenceContent(remoteData.settings.conference);
           if (remoteData.settings.conferenceRegistration) {
             const fromApi = remoteData.settings.conferenceRegistration;
@@ -334,15 +301,44 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ...base,
         ...preview,
         ...(preview.settings != null && {
-          settings: { ...base.settings, ...preview.settings },
+          settings: mergeRemoteSettings({
+            ...base.settings,
+            ...preview.settings,
+            conference: preview.settings.conference
+              ? mergeConferenceContent({
+                  ...base.settings.conference,
+                  ...preview.settings.conference,
+                })
+              : base.settings.conference,
+          }),
         }),
         ...(preview.appearance != null && {
-          appearance: { ...base.appearance, ...preview.appearance },
+          appearance: {
+            ...base.appearance,
+            ...preview.appearance,
+            typography: {
+              ...base.appearance.typography,
+              ...preview.appearance.typography,
+            },
+            theme: {
+              ...base.appearance.theme,
+              ...preview.appearance.theme,
+            },
+          },
         }),
       };
       if (prev && JSON.stringify(prev) === JSON.stringify(next)) {
         return prev;
       }
+      return hydrateHomepage(next);
+    });
+  }, []);
+
+  const togglePreviewVisible = useCallback(() => {
+    setIsPreviewVisible((visible) => {
+      const next = !visible;
+      localStorage.setItem(PREVIEW_STORAGE_KEY, String(next));
+      if (!next) setPreviewData(null);
       return next;
     });
   }, []);
@@ -370,6 +366,7 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateAppearance,
       setPreview,
       isPreviewVisible,
+      togglePreviewVisible,
       resetData,
       refresh: fetchContent,
       contentVersion,

@@ -18,14 +18,70 @@ import { SeoHead } from '../seo/SeoHead';
 import { usePageSeo } from '../seo/usePageSeo';
 import { useConferenceContent } from '../hooks/useConferenceContent';
 import { conferenceSectionVisible } from '../lib/conferenceDefaults';
+import {
+  resolveEmbeddedBlockOrder,
+  resolveSectionOrder,
+} from '../lib/conferenceSectionOrder';
+import type { ConferenceSectionId, EmbeddedBlockId } from '../lib/websiteData';
 import { NotFoundPage } from './NotFoundPage';
 import { BookShowcase } from '../components/sections/BookShowcase';
+
+function SummitSection({ id }: { id: ConferenceSectionId }) {
+  const conference = useConferenceContent();
+  const sectionVis = conference.sectionVisibility;
+
+  if (!conferenceSectionVisible(sectionVis, id)) return null;
+
+  switch (id) {
+    case 'countdown':
+      return <ConferenceCountdown />;
+    case 'speakers':
+      return <ConferenceSpeakers />;
+    case 'video':
+      return <ConferenceVideo />;
+    case 'agenda':
+      return <ConferenceAgenda />;
+    case 'sponsors':
+      return <ConferenceSponsors />;
+    case 'partners':
+      return <ConferencePartners />;
+    case 'testimonials':
+      return <ConferenceTestimonials />;
+    case 'venue':
+      return <ConferenceVenue />;
+    case 'tickets':
+      return <ConferenceTickets />;
+    case 'faq':
+      return <ConferenceFaq />;
+    default:
+      return null;
+  }
+}
+
+function EmbeddedBlock({ id }: { id: EmbeddedBlockId }) {
+  const { visibility } = useWebsiteData().data.settings;
+
+  switch (id) {
+    case 'showcase':
+      return visibility.showcase ? <BookShowcase className="book-section-bg--conference" /> : null;
+    case 'blog':
+      return visibility.blog ? <BlogSection /> : null;
+    case 'events':
+      return visibility.events ? <EventsSection /> : null;
+    case 'finalCta':
+      return (visibility.finalCta ?? true) ? <FinalCTA useSummitRegister /> : null;
+    default:
+      return null;
+  }
+}
 
 export function ConferencePage() {
   const seo = usePageSeo();
   const conference = useConferenceContent();
   const sectionVis = conference.sectionVisibility;
   const { visibility } = useWebsiteData().data.settings;
+  const sectionOrder = resolveSectionOrder(conference.sectionOrder);
+  const embeddedOrder = resolveEmbeddedBlockOrder(conference.embeddedBlockOrder);
 
   if (conference.published === false) {
     return <NotFoundPage />;
@@ -39,23 +95,13 @@ export function ConferencePage() {
         {conferenceSectionVisible(sectionVis, 'hero') ? <ConferenceHero /> : null}
 
         <div className="conference-flow public-flow-stack">
-          {conferenceSectionVisible(sectionVis, 'countdown') ? <ConferenceCountdown /> : null}
-          {conferenceSectionVisible(sectionVis, 'speakers') ? <ConferenceSpeakers /> : null}
-          {conferenceSectionVisible(sectionVis, 'video') ? <ConferenceVideo /> : null}
-          {conferenceSectionVisible(sectionVis, 'agenda') ? <ConferenceAgenda /> : null}
-          {conferenceSectionVisible(sectionVis, 'sponsors') ? <ConferenceSponsors /> : null}
-          {conferenceSectionVisible(sectionVis, 'partners') ? <ConferencePartners /> : null}
-          {conferenceSectionVisible(sectionVis, 'testimonials') ? <ConferenceTestimonials /> : null}
-          {conferenceSectionVisible(sectionVis, 'venue') ? <ConferenceVenue /> : null}
-          {conferenceSectionVisible(sectionVis, 'tickets') ? <ConferenceTickets /> : null}
-          {conferenceSectionVisible(sectionVis, 'faq') ? <ConferenceFaq /> : null}
+          {sectionOrder.map((id) => (
+            <SummitSection key={id} id={id} />
+          ))}
 
-          {visibility.showcase ? (
-            <BookShowcase className="book-section-bg--conference" />
-          ) : null}
-          {visibility.blog ? <BlogSection /> : null}
-          {visibility.events ? <EventsSection /> : null}
-          {(visibility.finalCta ?? true) ? <FinalCTA useSummitRegister /> : null}
+          {embeddedOrder.map((id) => (
+            <EmbeddedBlock key={id} id={id} />
+          ))}
         </div>
 
         {(visibility.footer ?? true) ? <Footer /> : null}

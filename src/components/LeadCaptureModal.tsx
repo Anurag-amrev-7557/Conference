@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2, Loader2, Building2, User, Mail } from 'lucide-react';
 import { MarketingService } from '../lib/marketing';
+import { useWebsiteData } from './WebsiteDataProvider';
 import { AppDialog } from './ui/AppDialog';
 
 interface LeadCaptureModalProps {
@@ -9,6 +10,8 @@ interface LeadCaptureModalProps {
 }
 
 export function LeadCaptureModal({ isOpen, onClose }: LeadCaptureModalProps) {
+  const { data } = useWebsiteData();
+  const modal = data.settings.leadCaptureModal ?? {};
   const [formData, setFormData] = useState({ name: '', email: '', company: '' });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
@@ -48,19 +51,25 @@ export function LeadCaptureModal({ isOpen, onClose }: LeadCaptureModalProps) {
     <AppDialog
       open={isOpen}
       onOpenChange={handleOpenChange}
-      title="Request Strategy Session"
-      description="Lead capture for strategy session"
+      title={modal.title?.trim() || 'Request Strategy Session'}
+      description={modal.lede?.trim() || 'Lead capture for strategy session'}
       className="max-w-lg"
     >
       {status === 'success' ? (
         <div className="flex flex-col items-center text-center py-6">
           <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-          <p className="text-2xl font-semibold tracking-tight mb-2">Identity synchronized</p>
-          <p className="text-muted text-sm">Your discovery node is initialized.</p>
+          <p className="text-2xl font-semibold tracking-tight mb-2">
+            {modal.successTitle?.trim() || 'Identity synchronized'}
+          </p>
+          <p className="text-muted text-sm">
+            {modal.successMessage?.trim() || 'Your discovery node is initialized.'}
+          </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-muted text-base mb-2">Join innovators scaling with Agentic AI.</p>
+          <p className="text-muted text-base mb-2">
+            {modal.lede?.trim() || 'Join innovators scaling with Agentic AI.'}
+          </p>
           <div className="space-y-2">
             <label className="text-[11px] font-black uppercase tracking-widest text-muted">Full name</label>
             <div className="relative">

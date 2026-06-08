@@ -72,6 +72,7 @@ export function NavLinkEditor({
               <input
                 className="admin-input font-mono text-sm"
                 value={link.href}
+                placeholder="/blog, /speakers, #who-we-are"
                 onChange={(e) => {
                   const next = [...links]
                   next[idx] = { ...next[idx], href: e.target.value }
@@ -80,14 +81,44 @@ export function NavLinkEditor({
               />
             </div>
           </div>
-          <button
-            type="button"
-            className="admin-list-editor__remove shrink-0 w-9 h-9 flex items-center justify-center rounded-[var(--ds-radius-md)] text-[var(--ds-danger-text)] hover:bg-[var(--ds-danger-bg)] border border-transparent hover:border-[var(--ds-danger-border)] ds-transition-base"
-            aria-label="Remove link"
-            onClick={() => onChange(links.filter((l) => l.id !== link.id))}
-          >
-            ×
-          </button>
+          <div className="flex flex-col gap-1 shrink-0">
+            <button
+              type="button"
+              className="admin-list-editor__remove w-9 h-9 flex items-center justify-center rounded-[var(--ds-radius-md)] text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-muted)] border border-transparent hover:border-[var(--ds-border)] ds-transition-base disabled:opacity-40"
+              aria-label="Move link up"
+              disabled={idx === 0}
+              onClick={() => {
+                if (idx === 0) return
+                const next = [...links]
+                ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
+                onChange(next)
+              }}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className="admin-list-editor__remove w-9 h-9 flex items-center justify-center rounded-[var(--ds-radius-md)] text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-muted)] border border-transparent hover:border-[var(--ds-border)] ds-transition-base disabled:opacity-40"
+              aria-label="Move link down"
+              disabled={idx === links.length - 1}
+              onClick={() => {
+                if (idx === links.length - 1) return
+                const next = [...links]
+                ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+                onChange(next)
+              }}
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              className="admin-list-editor__remove w-9 h-9 flex items-center justify-center rounded-[var(--ds-radius-md)] text-[var(--ds-danger-text)] hover:bg-[var(--ds-danger-bg)] border border-transparent hover:border-[var(--ds-danger-border)] ds-transition-base"
+              aria-label="Remove link"
+              onClick={() => onChange(links.filter((l) => l.id !== link.id))}
+            >
+              ×
+            </button>
+          </div>
         </div>
       ))}
     </div>

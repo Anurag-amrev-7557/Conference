@@ -1,11 +1,11 @@
 import { ArrowUpRight } from 'lucide-react'
 import { useMemo, useState, type CSSProperties } from 'react'
-import { Link } from 'react-router-dom'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
 import {
-  getFeaturedSpeakers,
+  getHomepageSpeakers,
   getPublishableSpeakers,
 } from '../../../lib/speakers'
+import { resolveCtaHref, SectionCtaLink } from '../../../lib/sectionCta'
 import type { ConferenceSectionCopy } from '../../../lib/websiteData'
 import { SpeakerDetailDialog } from '../../speakers/SpeakerDetailDialog'
 import { SectionCarousel, SectionCarouselItem } from '../SectionCarousel'
@@ -29,11 +29,20 @@ function getSpeakersSectionCtaLabel(
 }
 
 export function ConferenceSpeakers() {
-  const { speakers, sections } = useConferenceContent()
+  const conference = useConferenceContent()
+  const { speakers, sections } = conference
   const copy = sections.speakers
   const publishableSpeakers = useMemo(() => getPublishableSpeakers(speakers), [speakers])
-  const featuredSpeakers = useMemo(() => getFeaturedSpeakers(speakers), [speakers])
+  const featuredSpeakers = useMemo(
+    () =>
+      getHomepageSpeakers(speakers, {
+        homepageSpeakerIds: conference.homepageSpeakerIds,
+        maxFeatured: conference.maxFeaturedSpeakers,
+      }),
+    [speakers, conference.homepageSpeakerIds, conference.maxFeaturedSpeakers],
+  )
   const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null)
+  const featuredBadgeLabel = copy?.featuredBadgeLabel?.trim() || 'Featured'
 
   const lede =
     copy?.lede?.trim() ||
@@ -43,13 +52,16 @@ export function ConferenceSpeakers() {
 
   const catalogCta =
     publishableSpeakers.length > 0 ? (
-      <Link to="/speakers" className="conference-section__cta-btn group">
+      <SectionCtaLink
+        href={resolveCtaHref(copy?.ctaHref, '/speakers')}
+        className="conference-section__cta-btn group"
+      >
         {getSpeakersSectionCtaLabel(copy, publishableSpeakers.length)}
         <ArrowUpRight
           className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
           aria-hidden
         />
-      </Link>
+      </SectionCtaLink>
     ) : null
 
   return (
@@ -72,11 +84,31 @@ export function ConferenceSpeakers() {
         />
 
         {featuredSpeakers.length === 0 ? (
-          <p className="conference-speakers-empty">
-            {publishableSpeakers.length > 0
-              ? 'No speakers are featured on the homepage yet. In the admin, open Summit → Lists → Speakers and check “Featured on summit homepage”.'
-              : 'Speaker lineup coming soon.'}
-          </p>
+          <div className="conference-speakers-empty">
+            <p className="conference-speakers-empty__title">
+              {copy?.emptyStateTitle?.trim() ||
+                (publishableSpeakers.length > 0
+                  ? 'No speakers featured on the homepage yet'
+                  : 'Speaker lineup coming soon')}
+            </p>
+            {(copy?.emptyStateBody?.trim() ||
+              (publishableSpeakers.length > 0
+                ? 'Mark speakers as featured in Summit → Lists → Speakers.'
+                : '')) && (
+              <p className="conference-speakers-empty__copy">
+                {copy?.emptyStateBody?.trim() ||
+                  'Mark speakers as featured in Summit → Lists → Speakers.'}
+              </p>
+            )}
+            {copy?.emptyStateCtaLabel?.trim() ? (
+              <SectionCtaLink
+                href={resolveCtaHref(copy?.emptyStateCtaHref, '/speakers')}
+                className="conference-section__cta-btn group"
+              >
+                {copy.emptyStateCtaLabel}
+              </SectionCtaLink>
+            ) : null}
+          </div>
         ) : (
           <SectionCarousel
             ariaLabel="Featured speakers"
@@ -94,6 +126,7 @@ export function ConferenceSpeakers() {
                   priority={idx < 2}
                   interactive
                   showFeaturedBadge
+                  featuredBadgeLabel={featuredBadgeLabel}
                   showTalkChip
                   onSelect={setSelectedSpeaker}
                 />

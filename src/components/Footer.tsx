@@ -94,8 +94,14 @@ export function Footer() {
   const tagline = footer.tagline ?? 'Orchestrating the future of automated business systems.'
   const copyright = footer.copyright ?? `© ${year} Superhumanly AI Playbook.`
   const registryLabel = footer.registryStatusLabel ?? 'Registry open'
+  const registryCtaLabel = footer.registryCtaLabel?.trim() || primaryCta.label || 'Join the registry'
+  const registryHref = footer.registryCtaHref?.trim() || primaryCta.href || '/register'
+  const navColumnTitle = footer.navColumnTitle?.trim() || 'Section Index'
+  const socialColumnTitle = footer.socialColumnTitle?.trim() || 'Connection'
   const privacyUrl = footer.privacyUrl ?? '#'
   const termsUrl = footer.termsUrl ?? '#'
+  const privacyLabel = footer.privacyLabel?.trim() || 'Privacy Policy'
+  const termsLabel = footer.termsLabel?.trim() || 'Terms of Service'
 
   useEffect(() => {
     const el = footerRef.current
@@ -147,16 +153,33 @@ export function Footer() {
 
             <p className="site-footer__tagline">{tagline}</p>
 
-            <Link to={primaryCta.href} className="site-footer__registry">
-              <span className="site-footer__registry-label">Join the registry</span>
-              <ArrowRight className="site-footer__registry-icon" aria-hidden />
-            </Link>
+            {registryHref.startsWith("http") || registryHref.startsWith("mailto:") ? (
+              <a
+                href={registryHref}
+                className="site-footer__registry"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="site-footer__registry-label">{registryCtaLabel}</span>
+                <ArrowRight className="site-footer__registry-icon" aria-hidden />
+              </a>
+            ) : registryHref.startsWith("#") ? (
+              <a href={registryHref} className="site-footer__registry">
+                <span className="site-footer__registry-label">{registryCtaLabel}</span>
+                <ArrowRight className="site-footer__registry-icon" aria-hidden />
+              </a>
+            ) : (
+              <Link to={registryHref} className="site-footer__registry">
+                <span className="site-footer__registry-label">{registryCtaLabel}</span>
+                <ArrowRight className="site-footer__registry-icon" aria-hidden />
+              </Link>
+            )}
           </div>
 
           <nav className="site-footer__nav" aria-label="Footer">
             <div className="site-footer__column-head">
               <span className="site-footer__head-rule" aria-hidden />
-              <h3 className="site-footer__column-title">Section Index</h3>
+              <h3 className="site-footer__column-title">{navColumnTitle}</h3>
             </div>
             <ul className="site-footer__links">
               {footerLinks.map((link, index) => (
@@ -172,7 +195,7 @@ export function Footer() {
           <div className="site-footer__social">
             <div className="site-footer__column-head site-footer__column-head--end">
               <span className="site-footer__head-rule" aria-hidden />
-              <h3 className="site-footer__column-title">Connection</h3>
+              <h3 className="site-footer__column-title">{socialColumnTitle}</h3>
             </div>
             <ul className="site-footer__social-list">
               {socials.map((social) => {
@@ -203,10 +226,10 @@ export function Footer() {
           <p className="site-footer__copyright">{copyright}</p>
           <nav className="site-footer__legal" aria-label="Legal">
             <a href={privacyUrl} className="site-footer__legal-link">
-              Privacy Policy
+              {privacyLabel}
             </a>
             <a href={termsUrl} className="site-footer__legal-link">
-              Terms of Service
+              {termsLabel}
             </a>
           </nav>
         </div>

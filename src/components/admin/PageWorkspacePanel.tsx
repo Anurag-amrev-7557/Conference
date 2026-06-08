@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { Globe, Newspaper, Calendar, Users } from 'lucide-react'
-import type { CatalogHeroContent, RouteSeoOverride } from '../../lib/websiteData'
+import type { CatalogPageSettings, RouteSeoOverride } from '../../lib/websiteData'
 import { useWebsiteData } from '../WebsiteDataProvider'
-import { CatalogHeroFields, RouteSeoFields } from './admin-workspace-fields'
+import { CatalogHeroFields, CatalogPageSettingsFields, RouteSeoFields } from './admin-workspace-fields'
 import { AdminEditorFields, AdminEditorSection } from './admin-editor-ui'
 import {
   useRegisterWorkspaceSave,
@@ -66,15 +66,15 @@ export function BlogPageWorkspacePanel({ mode, onSaveReady }: PanelProps) {
       description="Shown above the article grid on /blog."
     >
       <AdminEditorFields>
-        <CatalogHeroFields value={catalog} onChange={setCatalog} />
+        <CatalogPageSettingsFields value={catalog} onChange={setCatalog} />
       </AdminEditorFields>
     </AdminEditorSection>
   )
 }
 
 type SpeakersCatalogFieldsProps = {
-  catalog: CatalogHeroContent
-  onCatalogChange: (next: CatalogHeroContent) => void
+  catalog: CatalogPageSettings
+  onCatalogChange: (next: CatalogPageSettings) => void
   routeSeo: RouteSeoOverride
   onRouteSeoChange: (next: RouteSeoOverride) => void
 }
@@ -94,7 +94,7 @@ export function SpeakersCatalogPageFields({
         description="Shown above the speaker grid on /speakers. Speaker profiles are managed under Summit → Lists."
       >
         <AdminEditorFields>
-          <CatalogHeroFields value={catalog} onChange={onCatalogChange} />
+          <CatalogPageSettingsFields value={catalog} onChange={onCatalogChange} />
         </AdminEditorFields>
       </AdminEditorSection>
       <AdminEditorSection
@@ -224,7 +224,7 @@ export function EventsPageWorkspacePanel({ mode, onSaveReady }: PanelProps) {
       description="Shown above the calendar on /events."
     >
       <AdminEditorFields>
-        <CatalogHeroFields value={catalog} onChange={setCatalog} />
+        <CatalogPageSettingsFields value={catalog} onChange={setCatalog} />
       </AdminEditorFields>
     </AdminEditorSection>
   )

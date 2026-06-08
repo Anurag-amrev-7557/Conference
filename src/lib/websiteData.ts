@@ -115,24 +115,48 @@ export interface CatalogHeroContent {
   lede?: string;
 }
 
-export interface SectionBlockContent {
-  eyebrow?: string;
-  title?: string;
-  titleAccent?: string;
-  lede?: string;
+export interface CatalogPageSettings extends CatalogHeroContent {
+  searchPlaceholder?: string;
+  pageSize?: number;
+  filters?: { id: string; label: string }[];
+  emptyStateTitle?: string;
+  emptyStateBody?: string;
+  emptyStateCtaLabel?: string;
+  emptyStateCtaHref?: string;
+  layout?: 'grid' | 'list' | 'grid-list-toggle';
+}
+
+export interface SectionCtaBundle {
   ctaLabel?: string;
   ctaHref?: string;
   secondaryCtaLabel?: string;
   secondaryCtaHref?: string;
+  emptyStateTitle?: string;
+  emptyStateBody?: string;
+  emptyStateCtaLabel?: string;
+  emptyStateCtaHref?: string;
+}
+
+export interface SectionBlockContent extends SectionCtaBundle {
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  lede?: string;
   founderCountLabel?: string;
   /** Shown when a preview section has no published items (blog/events). */
   emptyState?: string;
+  previewCount?: number;
+  featuredArticleIds?: string[];
+  featuredEventIds?: string[];
+  cardCtaUpcoming?: string;
+  cardCtaPast?: string;
+  sectionAnchor?: string;
 }
 
 export interface FinalCtaContent extends SectionBlockContent {
   trustItems?: string[];
-  secondaryCtaLabel?: string;
-  secondaryCtaHref?: string;
+  displayMode?: 'summit-buttons' | 'waitlist' | 'auto';
+  hideTrustRow?: boolean;
   formNote?: string;
   waitlistSubmitLabel?: string;
   waitlistPlaceholder?: string;
@@ -162,19 +186,28 @@ export interface ConferenceHeroContent {
   dateLabel: string;
   locationLabel: string;
   primaryCtaLabel: string;
+  primaryCtaHref?: string;
   secondaryCtaLabel: string;
+  secondaryCtaHref?: string;
+  showMetrics?: boolean;
   videoUrl?: string;
   posterUrl?: string;
   metrics: ConferenceMetric[];
 }
 
-export interface ConferenceSectionCopy {
+export interface ConferenceSectionCopy extends SectionCtaBundle {
   eyebrow?: string;
   title?: string;
   titleAccent?: string;
   lede?: string;
-  ctaLabel?: string;
   caption?: string;
+  playButtonLabel?: string;
+  errorMessage?: string;
+  trackFilterLabel?: string;
+  registerCtaLabel?: string;
+  registerCtaHref?: string;
+  downloadCtaLabel?: string;
+  featuredBadgeLabel?: string;
   /** Optional stat chips — used by the featured video section. */
   metrics?: ConferenceMetric[];
 }
@@ -288,11 +321,32 @@ export interface ConferenceSectionVisibility {
   faq?: boolean;
 }
 
+export type ConferenceSectionId =
+  | 'countdown'
+  | 'speakers'
+  | 'video'
+  | 'agenda'
+  | 'sponsors'
+  | 'partners'
+  | 'testimonials'
+  | 'venue'
+  | 'tickets'
+  | 'faq';
+
+export type EmbeddedBlockId = 'showcase' | 'blog' | 'events' | 'finalCta';
+
 export interface ConferenceContent {
   published?: boolean;
   eventStartAt?: string;
   eventTimezone?: string;
   countdownEnabled?: boolean;
+  /** Render order for summit flow sections (excludes hero). */
+  sectionOrder?: ConferenceSectionId[];
+  /** Render order for embedded blocks after summit sections. */
+  embeddedBlockOrder?: EmbeddedBlockId[];
+  /** Optional manual ordering/limit for homepage featured speakers. */
+  homepageSpeakerIds?: string[];
+  maxFeaturedSpeakers?: number;
   /** Per-block toggles for summit homepage sections at /. */
   sectionVisibility?: ConferenceSectionVisibility;
   venue?: ConferenceVenueContent;
@@ -342,8 +396,16 @@ export interface FooterSettings {
   tagline?: string;
   copyright?: string;
   registryStatusLabel?: string;
+  /** Footer registry row — defaults to header primary CTA label when empty. */
+  registryCtaLabel?: string;
+  /** Override registry button URL — defaults to header primary CTA href. */
+  registryCtaHref?: string;
+  navColumnTitle?: string;
+  socialColumnTitle?: string;
   privacyUrl?: string;
   termsUrl?: string;
+  privacyLabel?: string;
+  termsLabel?: string;
 }
 
 export interface CookieBannerSettings {
@@ -369,6 +431,27 @@ export interface BlogCtaSettings {
   buttonLabel?: string;
 }
 
+export interface LeadCaptureModalSettings {
+  title?: string;
+  lede?: string;
+  submitLabel?: string;
+  successTitle?: string;
+  successMessage?: string;
+  emailPlaceholder?: string;
+}
+
+export interface BlogCategoryOption {
+  id: string;
+  label: string;
+}
+
+export interface RouteVisibilitySettings {
+  blog?: boolean;
+  events?: boolean;
+  speakers?: boolean;
+  register?: boolean;
+}
+
 export interface SiteSettings {
   homepage?: HomepageContent;
   seo: {
@@ -381,10 +464,13 @@ export interface SiteSettings {
     twitterSite?: string;
   };
   catalogPages?: {
-    blog?: CatalogHeroContent;
-    events?: CatalogHeroContent;
-    speakers?: CatalogHeroContent;
+    blog?: CatalogPageSettings;
+    events?: CatalogPageSettings;
+    speakers?: CatalogPageSettings;
   };
+  blogCategories?: BlogCategoryOption[];
+  leadCaptureModal?: LeadCaptureModalSettings;
+  routeVisibility?: RouteVisibilitySettings;
   sections?: {
     finalCta?: FinalCtaContent;
     whoWeAre?: SectionBlockContent;
@@ -416,6 +502,8 @@ export interface SiteSettings {
     socials: SocialLink[];
     footerLinks: NavLink[];
     primaryCta: { label: string; href: string };
+    navbarVisible?: boolean;
+    brandLogoAlt?: string;
   };
   visibility: {
     showcase: boolean;
@@ -501,6 +589,18 @@ export const initialData: WebsiteData = {
       ],
       primaryCta: { label: 'Join Now', href: '/#final-cta' },
     },
+    footer: {
+      tagline: 'Orchestrating the future of automated business systems.',
+      copyright: '© Superhumanly AI Playbook.',
+      registryStatusLabel: 'Registry open',
+      registryCtaLabel: 'Join the registry',
+      navColumnTitle: 'Section Index',
+      socialColumnTitle: 'Connection',
+      privacyUrl: '#',
+      termsUrl: '#',
+      privacyLabel: 'Privacy Policy',
+      termsLabel: 'Terms of Service',
+    },
     visibility: {
       showcase: true,
       blog: true,
@@ -512,12 +612,61 @@ export const initialData: WebsiteData = {
       enabled: true,
     },
     catalogPages: {
+      blog: {
+        eyebrow: 'Blog',
+        title: 'Where builders',
+        titleAccent: 'learn to ship',
+        lede: 'Architecture, automation, and intelligence for builders shipping agentic systems.',
+        searchPlaceholder: 'Search for articles',
+        pageSize: 9,
+        emptyStateTitle: 'Playbooks are on the way',
+        emptyStateBody: 'New guides and research drop here as we publish.',
+        emptyStateCtaLabel: 'Back to homepage',
+        emptyStateCtaHref: '/',
+      },
+      events: {
+        eyebrow: 'Events',
+        title: 'Where AI leaders',
+        titleAccent: 'come together',
+        lede: 'Explore upcoming masterclasses, networking sessions, and venture workshops.',
+        searchPlaceholder: 'Search for events',
+        pageSize: 9,
+        emptyStateTitle: 'No events scheduled yet',
+        emptyStateBody: 'Check back soon for live training and summit sessions.',
+      },
       speakers: {
         eyebrow: 'Speakers',
         title: 'The minds shaping',
         titleAccent: 'agentic AI',
         lede: 'Browse summit speakers from across industry, research, and venture—each bringing hard-won insight to the stage.',
+        searchPlaceholder: 'Search by name, company, or talk',
+        pageSize: 12,
+        layout: 'grid-list-toggle',
+        emptyStateTitle: 'Speaker lineup coming soon',
+        emptyStateBody: 'We are finalizing the summit roster.',
+        emptyStateCtaLabel: 'Register for updates',
+        emptyStateCtaHref: '/register',
       },
+    },
+    blogCategories: [
+      { id: 'RESEARCH', label: 'Research' },
+      { id: 'STRATEGY', label: 'Strategy' },
+      { id: 'PLAYBOOK', label: 'Playbook' },
+      { id: 'GUIDE', label: 'Guide' },
+    ],
+    routeVisibility: {
+      blog: true,
+      events: true,
+      speakers: true,
+      register: true,
+    },
+    leadCaptureModal: {
+      title: 'Get the playbook',
+      lede: 'Join the registry for exclusive guides and summit updates.',
+      submitLabel: 'Subscribe',
+      successTitle: "You're on the list",
+      successMessage: 'Check your inbox for the playbook.',
+      emailPlaceholder: 'you@company.com',
     },
     customCss: "",
     scripts: {

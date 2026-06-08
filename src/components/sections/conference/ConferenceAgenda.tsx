@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarDays, Download } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { defaultConferenceContent } from '../../../lib/conferenceDefaults'
-import { Link } from 'react-router-dom'
 import { cn } from '../../../lib/utils'
 import {
   downloadAgendaIcs,
@@ -15,6 +14,7 @@ import { SpeakerDetailDialog } from '../../speakers/SpeakerDetailDialog'
 import { AgendaSessionCard } from './AgendaSessionCard'
 import { ConferenceSectionHeader } from './ConferenceSectionHeader'
 import { ConferenceSectionShell } from './ConferenceSectionShell'
+import { resolveCtaHref, resolveCtaLabel, SectionCtaLink } from '../../../lib/sectionCta'
 
 const panelVariants = {
   initial: { opacity: 0, y: 10 },
@@ -138,14 +138,19 @@ export function ConferenceAgenda() {
             <div className="conference-agenda-empty-state__icon-wrap" aria-hidden>
               <CalendarDays className="conference-agenda-empty-state__icon" />
             </div>
-            <h3 className="conference-agenda-empty-state__title">Agenda coming soon</h3>
+            <h3 className="conference-agenda-empty-state__title">
+              {copy?.emptyStateTitle?.trim() || 'Agenda coming soon'}
+            </h3>
             <p className="conference-agenda-empty-state__body">
-              We are finalizing the session lineup. Register now to get notified the moment the
-              full program drops.
+              {copy?.emptyStateBody?.trim() ||
+                'We are finalizing the session lineup. Register now to get notified the moment the full program drops.'}
             </p>
-            <Link to="/register" className="conference-section__cta-btn">
-              Get early access
-            </Link>
+            <SectionCtaLink
+              href={resolveCtaHref(copy?.emptyStateCtaHref, '/register')}
+              className="conference-section__cta-btn"
+            >
+              {resolveCtaLabel(copy?.emptyStateCtaLabel, 'Get early access')}
+            </SectionCtaLink>
           </div>
         ) : (
           <>
@@ -201,7 +206,7 @@ export function ConferenceAgenda() {
                       )}
                       onClick={() => setTrackFilter('all')}
                     >
-                      All tracks
+                      {copy?.trackFilterLabel?.trim() || 'All tracks'}
                     </button>
                     {tracks.map((track) => (
                       <button
@@ -269,16 +274,19 @@ export function ConferenceAgenda() {
             </AnimatePresence>
 
             <div className="conference-agenda-section__footer">
-              <Link to="/register" className="conference-section__cta-btn">
-                Secure your spot
-              </Link>
+              <SectionCtaLink
+                href={resolveCtaHref(copy?.registerCtaHref, '/register')}
+                className="conference-section__cta-btn"
+              >
+                {resolveCtaLabel(copy?.registerCtaLabel, 'Secure your spot')}
+              </SectionCtaLink>
               <button
                 type="button"
                 className="conference-agenda__download-btn"
                 onClick={() => downloadAgendaIcs(agenda, summitStartAt, eventTitle)}
               >
                 <Download className="h-4 w-4" aria-hidden />
-                {copy?.ctaLabel?.trim() || 'Download full agenda'}
+                {resolveCtaLabel(copy?.downloadCtaLabel ?? copy?.ctaLabel, 'Download full agenda')}
               </button>
             </div>
           </>

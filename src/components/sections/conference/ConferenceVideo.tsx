@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, Play, RotateCcw } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
 import {
   resolveConferenceVideoMedia,
@@ -10,6 +9,7 @@ import {
 import { resolveAssetUrl, resolveMediaUrl } from '../../../lib/assetUrl'
 import { ConferenceSectionHeader } from './ConferenceSectionHeader'
 import { ConferenceSectionShell } from './ConferenceSectionShell'
+import { resolveCtaHref, resolveCtaLabel, SectionCtaLink } from '../../../lib/sectionCta'
 
 function formatVideoDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return ''
@@ -92,20 +92,32 @@ export function ConferenceVideo() {
 
   const headerActions = (
     <div className="conference-video-actions">
-      <Link to="/register" className="conference-section__cta-btn conference-section__cta-btn--primary group">
+      <SectionCtaLink
+        href={resolveCtaHref(copy?.ctaHref, '/register')}
+        className="conference-section__cta-btn conference-section__cta-btn--primary group"
+      >
         {registerLabel}
         <ArrowUpRight
           className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
           aria-hidden
         />
-      </Link>
-      <a href="#conference-agenda" className="conference-section__cta-btn group">
-        {hero.secondaryCtaLabel?.trim() || 'See full agenda'}
+      </SectionCtaLink>
+      <SectionCtaLink
+        href={resolveCtaHref(
+          copy?.secondaryCtaHref,
+          resolveCtaHref(hero.secondaryCtaHref, '#conference-agenda'),
+        )}
+        className="conference-section__cta-btn group"
+      >
+        {resolveCtaLabel(
+          copy?.secondaryCtaLabel,
+          hero.secondaryCtaLabel?.trim() || 'See full agenda',
+        )}
         <ArrowUpRight
           className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
           aria-hidden
         />
-      </a>
+      </SectionCtaLink>
     </div>
   )
 

@@ -116,6 +116,12 @@ function formatEventStartLabel(value?: string | null): string | null {
 
 export const ConferenceManager: React.FC = () => {
   const { sourceData, updateSettings, setPreview, isPreviewVisible } = useWebsiteData();
+  const articleOptions = sourceData.articles
+    .filter((a) => a.isPublished)
+    .map((a) => ({ id: a.id, label: a.title }))
+  const eventOptions = sourceData.events
+    .filter((e) => e.isPublished)
+    .map((e) => ({ id: e.id, label: e.title }))
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('hero');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -467,6 +473,21 @@ export const ConferenceManager: React.FC = () => {
                     value={normalizeRegisterCtaLabel(form.hero.primaryCtaLabel)}
                     onChange={(v) => patchHero('primaryCtaLabel', v)}
                   />
+                  <Field
+                    label="Register button URL"
+                    value={form.hero.primaryCtaHref ?? '/register'}
+                    onChange={(v) => patchHero('primaryCtaHref', v)}
+                  />
+                  <Field
+                    label="Secondary CTA label"
+                    value={form.hero.secondaryCtaLabel ?? ''}
+                    onChange={(v) => patchHero('secondaryCtaLabel', v)}
+                  />
+                  <Field
+                    label="Secondary CTA URL"
+                    value={form.hero.secondaryCtaHref ?? ''}
+                    onChange={(v) => patchHero('secondaryCtaHref', v)}
+                  />
                 </AdminEditorSubsection>
               </AdminEditorSection>
 
@@ -638,6 +659,21 @@ export const ConferenceManager: React.FC = () => {
                     onChange={(v) => patchSection('video', 'ctaLabel', v)}
                   />
                   <Field
+                    label="Register CTA URL"
+                    value={form.sections.video?.ctaHref ?? ''}
+                    onChange={(v) => patchSection('video', 'ctaHref', v)}
+                  />
+                  <Field
+                    label="Agenda CTA label"
+                    value={form.sections.video?.secondaryCtaLabel ?? ''}
+                    onChange={(v) => patchSection('video', 'secondaryCtaLabel', v)}
+                  />
+                  <Field
+                    label="Agenda CTA URL"
+                    value={form.sections.video?.secondaryCtaHref ?? ''}
+                    onChange={(v) => patchSection('video', 'secondaryCtaHref', v)}
+                  />
+                  <Field
                     label="Video caption"
                     value={form.sections.video?.caption ?? ''}
                     onChange={(v) => patchSection('video', 'caption', v)}
@@ -796,12 +832,89 @@ export const ConferenceManager: React.FC = () => {
                       multiline
                     />
                     {(key === 'speakers' || key === 'sponsors' || key === 'agenda') && (
-                      <Field
-                        label="CTA label"
-                        value={form.sections[key]?.ctaLabel ?? ''}
-                        onChange={(v) => patchSection(key, 'ctaLabel', v)}
-                      />
+                      <>
+                        <Field
+                          label="CTA label"
+                          value={form.sections[key]?.ctaLabel ?? ''}
+                          onChange={(v) => patchSection(key, 'ctaLabel', v)}
+                        />
+                        <Field
+                          label="CTA URL"
+                          value={form.sections[key]?.ctaHref ?? ''}
+                          onChange={(v) => patchSection(key, 'ctaHref', v)}
+                        />
+                      </>
                     )}
+                    {key === 'agenda' ? (
+                      <>
+                        <Field
+                          label="Track filter label"
+                          value={form.sections.agenda?.trackFilterLabel ?? ''}
+                          onChange={(v) => patchSection('agenda', 'trackFilterLabel', v)}
+                        />
+                        <Field
+                          label="Register footer CTA label"
+                          value={form.sections.agenda?.registerCtaLabel ?? ''}
+                          onChange={(v) => patchSection('agenda', 'registerCtaLabel', v)}
+                        />
+                        <Field
+                          label="Register footer CTA URL"
+                          value={form.sections.agenda?.registerCtaHref ?? ''}
+                          onChange={(v) => patchSection('agenda', 'registerCtaHref', v)}
+                        />
+                        <Field
+                          label="Download CTA label"
+                          value={form.sections.agenda?.downloadCtaLabel ?? ''}
+                          onChange={(v) => patchSection('agenda', 'downloadCtaLabel', v)}
+                        />
+                        <Field
+                          label="Empty state title"
+                          value={form.sections.agenda?.emptyStateTitle ?? ''}
+                          onChange={(v) => patchSection('agenda', 'emptyStateTitle', v)}
+                        />
+                        <Field
+                          label="Empty state body"
+                          value={form.sections.agenda?.emptyStateBody ?? ''}
+                          onChange={(v) => patchSection('agenda', 'emptyStateBody', v)}
+                          multiline
+                        />
+                      </>
+                    ) : null}
+                    {key === 'speakers' ? (
+                      <>
+                        <Field
+                          label="Featured badge label"
+                          value={form.sections.speakers?.featuredBadgeLabel ?? ''}
+                          onChange={(v) => patchSection('speakers', 'featuredBadgeLabel', v)}
+                        />
+                        <Field
+                          label="Empty state title"
+                          value={form.sections.speakers?.emptyStateTitle ?? ''}
+                          onChange={(v) => patchSection('speakers', 'emptyStateTitle', v)}
+                        />
+                        <Field
+                          label="Empty state body"
+                          value={form.sections.speakers?.emptyStateBody ?? ''}
+                          onChange={(v) => patchSection('speakers', 'emptyStateBody', v)}
+                          multiline
+                        />
+                      </>
+                    ) : null}
+                    {key === 'sponsors' ? (
+                      <>
+                        <Field
+                          label="Empty state title"
+                          value={form.sections.sponsors?.emptyStateTitle ?? ''}
+                          onChange={(v) => patchSection('sponsors', 'emptyStateTitle', v)}
+                        />
+                        <Field
+                          label="Empty state body"
+                          value={form.sections.sponsors?.emptyStateBody ?? ''}
+                          onChange={(v) => patchSection('sponsors', 'emptyStateBody', v)}
+                          multiline
+                        />
+                      </>
+                    ) : null}
                   </AdminEditorSubsection>
                 </AdminEditorSection>
               ))}
@@ -1490,6 +1603,16 @@ export const ConferenceManager: React.FC = () => {
               onCustomCssChange={setCustomCss}
               scripts={scriptsForm}
               onScriptsChange={setScriptsForm}
+              sectionOrder={form.sectionOrder}
+              embeddedBlockOrder={form.embeddedBlockOrder}
+              onSectionOrderChange={(next) =>
+                setForm((prev) => ({ ...prev, sectionOrder: next }))
+              }
+              onEmbeddedBlockOrderChange={(next) =>
+                setForm((prev) => ({ ...prev, embeddedBlockOrder: next }))
+              }
+              articleOptions={articleOptions}
+              eventOptions={eventOptions}
             />
           )}
 

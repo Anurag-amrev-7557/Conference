@@ -22,6 +22,34 @@ export function getFeaturedSpeakers(speakers: ConferenceSpeaker[]): ConferenceSp
   return getPublishableSpeakers(speakers).filter((speaker) => speaker.featured === true)
 }
 
+/** Homepage carousel — curated IDs, featured flag, optional max cap. */
+export function getHomepageSpeakers(
+  speakers: ConferenceSpeaker[],
+  options?: { homepageSpeakerIds?: string[]; maxFeatured?: number },
+): ConferenceSpeaker[] {
+  const publishable = getPublishableSpeakers(speakers)
+  const ids = options?.homepageSpeakerIds?.filter(Boolean) ?? []
+
+  let list: ConferenceSpeaker[]
+  if (ids.length > 0) {
+    const byId = new Map(publishable.map((speaker) => [speaker.id, speaker]))
+    list = ids.map((id) => byId.get(id)).filter((speaker): speaker is ConferenceSpeaker => Boolean(speaker))
+  } else {
+    list = getFeaturedSpeakers(speakers)
+  }
+
+  const max = options?.maxFeatured
+  if (typeof max === 'number' && max > 0) {
+    return list.slice(0, max)
+  }
+  return list
+}
+
+export function getCatalogPageSize(settingsPageSize: number | undefined, fallback: number): number {
+  const size = settingsPageSize ?? fallback
+  return size > 0 ? size : fallback
+}
+
 export function countFeaturedSpeakers(speakers: ConferenceSpeaker[]): number {
   return getPublishableSpeakers(speakers).filter((speaker) => speaker.featured).length
 }

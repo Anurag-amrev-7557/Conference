@@ -30,7 +30,7 @@ function normalizeNavHref(href: string): string {
 export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean }) {
   const { data } = useWebsiteData()
   const { appearance, settings } = data
-  const { links, primaryCta } = settings.navigation
+  const { links, primaryCta, navbarVisible } = settings.navigation
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { pathname } = useLocation()
   const [isOverHero, setIsOverHero] = useState(
@@ -44,30 +44,19 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
 
   const ctaLabel = primaryCta.label
   const ctaHref = normalizeNavHref(primaryCta.href)
-  const matchLink = (candidates: string[]) =>
-    links.find((link) => {
-      const normalized = `${link.name} ${link.href}`.toLowerCase()
-      return candidates.some((candidate) => normalized.includes(candidate))
-    })
 
-  const orderedCoreLinks = [
-    matchLink(["blog", "playbook"]),
-    matchLink(["event"]),
-    matchLink(["about", "who-we-are", "strategy"]),
-  ]
-    .filter(Boolean)
-    .map((link) => ({
-      ...(link as NavLink),
-      href: normalizeNavHref((link as NavLink).href),
-    })) as NavLink[]
+  const navLinks = links
+    .filter((link) => link.name?.trim() && link.href?.trim())
+    .map((link, index) => ({
+      ...link,
+      id: link.id || `nav-${index}`,
+      href: normalizeNavHref(link.href),
+    }))
 
-  const desktopNavLinks = orderedCoreLinks.map((link, index) => ({
+  const desktopNavLinks = navLinks
+  const mobileNavLinks = navLinks.map((link, index) => ({
     ...link,
-    id: `${link.id || "nav"}-${index}`,
-  }))
-  const mobileNavLinks = orderedCoreLinks.map((link, index) => ({
-    ...link,
-    id: `${link.id || "mobile-nav"}-mobile-${index}`,
+    id: `${link.id}-mobile-${index}`,
   }))
 
   useEffect(() => {
@@ -234,6 +223,8 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
       </Link>
     )
   }
+
+  if (navbarVisible === false) return null
 
   return (
     <header

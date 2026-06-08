@@ -12,6 +12,7 @@ type SpeakerCardProps = {
   variant?: 'default' | 'compact'
   showTalkChip?: boolean
   showFeaturedBadge?: boolean
+  featuredBadgeLabel?: string
 }
 
 function getInitials(name: string): string {
@@ -31,6 +32,7 @@ export function SpeakerCard({
   variant = 'default',
   showTalkChip = true,
   showFeaturedBadge = false,
+  featuredBadgeLabel = 'Featured',
 }: SpeakerCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   const imageSrc = resolveAssetUrl(speaker.image)?.trim()
@@ -76,7 +78,7 @@ export function SpeakerCard({
             </div>
           )}
           {showFeaturedBadge && speaker.featured ? (
-            <span className="speaker-card__featured-badge">Featured</span>
+            <span className="speaker-card__featured-badge">{featuredBadgeLabel}</span>
           ) : null}
           <div className="speaker-card__media-shade" aria-hidden />
         </div>

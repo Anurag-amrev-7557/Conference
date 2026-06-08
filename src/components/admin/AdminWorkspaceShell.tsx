@@ -1,6 +1,8 @@
 import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useWebsiteData } from '../WebsiteDataProvider'
 import { LivePreview } from './LivePreview'
 import { AdminPanelTabIntro, AdminSubnav } from './admin-ui'
 import {
@@ -35,7 +37,7 @@ type AdminWorkspaceShellProps = {
   panelFlush?: boolean
   headerAction?: React.ReactNode
   editorHeaderAside?: React.ReactNode
-  previewVariant?: 'conference' | 'events' | 'register' | 'speakers'
+  previewVariant?: 'conference' | 'events' | 'register' | 'speakers' | 'blog' | 'settings'
   children: React.ReactNode
 }
 
@@ -56,6 +58,7 @@ export function AdminWorkspaceShell({
   previewVariant = 'conference',
   children,
 }: AdminWorkspaceShellProps) {
+  const { togglePreviewVisible } = useWebsiteData()
   const hideEditorOnMobilePreview = isPreviewVisible && isSidebarCollapsed
 
   useAdminWorkspaceNavRegistry(
@@ -92,7 +95,18 @@ export function AdminWorkspaceShell({
             )}
           >
             {toolbar ? <div className="admin-toolbar__content">{toolbar}</div> : null}
-            {headerAction ? <div className="admin-toolbar__actions">{headerAction}</div> : null}
+            <div className="admin-toolbar__actions flex items-center gap-2">
+              <button
+                type="button"
+                onClick={togglePreviewVisible}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ds-border)] px-3 py-1.5 text-sm font-medium transition-all duration-150 active:scale-95"
+                aria-pressed={isPreviewVisible}
+              >
+                {isPreviewVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {isPreviewVisible ? 'Hide preview' : 'Show preview'}
+              </button>
+              {headerAction}
+            </div>
           </div>
         ) : null}
 

@@ -95,6 +95,52 @@ async function main() {
         },
       },
       routeSeo: {},
+      catalogPages: {
+        blog: {
+          eyebrow: "Blog",
+          title: "Where builders",
+          titleAccent: "learn to ship",
+          lede: "Architecture, automation, and intelligence for builders shipping agentic systems.",
+          searchPlaceholder: "Search for articles",
+          pageSize: 9,
+        },
+        events: {
+          eyebrow: "Events",
+          title: "Where AI leaders",
+          titleAccent: "come together",
+          lede: "Explore upcoming masterclasses, networking sessions, and venture workshops.",
+          searchPlaceholder: "Search for events",
+          pageSize: 9,
+        },
+        speakers: {
+          eyebrow: "Speakers",
+          title: "The minds shaping",
+          titleAccent: "agentic AI",
+          lede: "Browse summit speakers from across industry, research, and venture.",
+          searchPlaceholder: "Search by name, company, or talk",
+          pageSize: 12,
+        },
+      },
+      blogCategories: [
+        { id: "RESEARCH", label: "Research" },
+        { id: "STRATEGY", label: "Strategy" },
+        { id: "PLAYBOOK", label: "Playbook" },
+        { id: "GUIDE", label: "Guide" },
+      ],
+      routeVisibility: {
+        blog: true,
+        events: true,
+        speakers: true,
+        register: true,
+      },
+      leadCaptureModal: {
+        title: "Get the playbook",
+        lede: "Join the registry for exclusive guides and summit updates.",
+        submitLabel: "Subscribe",
+        successTitle: "You're on the list",
+        successMessage: "Check your inbox for the playbook.",
+        emailPlaceholder: "you@company.com",
+      },
       conference: defaultConferenceContent,
       conferenceRegistration: defaultConferenceRegistrationForm,
       book: {
@@ -110,7 +156,15 @@ async function main() {
         links: [
           { id: "1", name: "The Playbook", href: "/blog" },
           { id: "3", name: "Strategy", href: "#who-we-are" },
-          { id: "4", name: "Live Training", href: "/events" }
+          { id: "4", name: "Live Training", href: "/events" },
+          { id: "5", name: "Speakers", href: "/speakers" },
+        ],
+        footerLinks: [
+          { id: "f1", name: "The Playbook", href: "/blog" },
+          { id: "f3", name: "Strategy", href: "/#who-we-are" },
+          { id: "f4", name: "Live Training", href: "/events" },
+          { id: "f5", name: "Speakers", href: "/speakers" },
+          { id: "f6", name: "Join Registry", href: "/#final-cta" },
         ],
         socials: [
           { id: "1", platform: "LinkedIn", href: "https://linkedin.com/company/superhumanly" },
@@ -119,6 +173,18 @@ async function main() {
           { id: "4", platform: "X", href: "https://x.com/superhumanly" }
         ],
         primaryCta: { label: "Join Now", href: "/register" },
+      },
+      footer: {
+        tagline: "Orchestrating the future of automated business systems.",
+        copyright: "© Superhumanly AI Playbook.",
+        registryStatusLabel: "Registry open",
+        registryCtaLabel: "Join the registry",
+        navColumnTitle: "Section Index",
+        socialColumnTitle: "Connection",
+        privacyUrl: "#",
+        termsUrl: "#",
+        privacyLabel: "Privacy Policy",
+        termsLabel: "Terms of Service",
       },
       visibility: {
         hero: true,

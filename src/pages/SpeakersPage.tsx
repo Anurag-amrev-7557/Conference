@@ -10,8 +10,8 @@ import { SpeakerListRow } from '../components/speakers/SpeakerListRow'
 import { SpeakersCatalogToolbar } from '../components/speakers/SpeakersCatalogToolbar'
 import { useConferenceContent } from '../hooks/useConferenceContent'
 import {
-  SPEAKERS_CATALOG_PAGE_SIZE,
   countFeaturedSpeakers,
+  getCatalogPageSize,
   filterSpeakers,
   getSpeakerCompanies,
   sortSpeakers,
@@ -59,9 +59,11 @@ export function SpeakersPage() {
     return sortSpeakers(filtered, sort)
   }, [speakers, searchQuery, activeFilter, activeCompany, sort])
 
+  const catalog = data.settings.catalogPages?.speakers
+  const pageSize = getCatalogPageSize(catalog?.pageSize, 12)
   const { page, setPage, totalPages, paginatedItems, showPagination } = usePagination(
     filteredSpeakers,
-    SPEAKERS_CATALOG_PAGE_SIZE,
+    pageSize,
   )
 
   const resetFilters = () => {
@@ -70,8 +72,6 @@ export function SpeakersPage() {
     setSearchQuery('')
     setSort('featured-first')
   }
-
-  const catalog = data.settings.catalogPages?.speakers
   const speakerCountLabel =
     speakers.length === 1 ? '1 speaker' : `${speakers.length} speakers`
 

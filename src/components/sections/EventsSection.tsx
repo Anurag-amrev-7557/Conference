@@ -21,9 +21,11 @@ const DEFAULT_LEDE =
 type EventPreviewCardProps = {
   event: AppEvent
   index: number
+  cardCtaUpcoming?: string
+  cardCtaPast?: string
 }
 
-function EventPreviewCard({ event, index }: EventPreviewCardProps) {
+function EventPreviewCard({ event, index, cardCtaUpcoming, cardCtaPast }: EventPreviewCardProps) {
   const { day, weekday } = formatEventCardDate(event)
   const timeOnly = formatEventCardTimeOnly(event)
   const { name: hostName, subtitle: hostSubtitle, initials } = formatEventHost(
@@ -123,7 +125,9 @@ function EventPreviewCard({ event, index }: EventPreviewCardProps) {
               </div>
 
               <span className="events-carousel-card__cta">
-                {event.status === "Past" ? "View recap" : "Reserve your spot"}
+                {event.status === "Past"
+                  ? cardCtaPast?.trim() || "View recap"
+                  : cardCtaUpcoming?.trim() || "Reserve your spot"}
                 <ArrowRight className="events-carousel-card__cta-icon" aria-hidden />
               </span>
             </div>
@@ -137,7 +141,12 @@ function EventPreviewCard({ event, index }: EventPreviewCardProps) {
 export function EventsSection() {
   const { data } = useWebsiteData()
   const preview = data.settings.sections?.eventsPreview
-  const previewEvents = useMemo(() => getPreviewEvents(data.events, 4), [data.events])
+  const previewCount =
+    preview?.previewCount && preview.previewCount > 0 ? preview.previewCount : 4
+  const previewEvents = useMemo(
+    () => getPreviewEvents(data.events, previewCount, preview?.featuredEventIds),
+    [data.events, previewCount, preview?.featuredEventIds],
+  )
   const sectionRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -193,7 +202,12 @@ export function EventsSection() {
           >
             {previewEvents.map((event, idx) => (
               <SectionCarouselItem key={event.id}>
-                <EventPreviewCard event={event} index={idx} />
+                <EventPreviewCard
+                  event={event}
+                  index={idx}
+                  cardCtaUpcoming={preview?.cardCtaUpcoming}
+                  cardCtaPast={preview?.cardCtaPast}
+                />
               </SectionCarouselItem>
             ))}
           </SectionCarousel>
@@ -208,7 +222,7 @@ export function EventsSection() {
               to={preview?.ctaHref?.trim() || "/events"}
               className="events-section__empty-cta"
             >
-              Browse full calendar
+              {preview?.emptyStateCtaLabel?.trim() || "Browse full calendar"}
               <ArrowRight className="w-3.5 h-3.5" aria-hidden />
             </Link>
           </div>

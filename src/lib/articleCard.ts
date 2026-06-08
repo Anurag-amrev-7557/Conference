@@ -83,8 +83,22 @@ function articleTimestamp(article: Article): number {
  * Pick up to `limit` published articles for homepage preview.
  * Dedupes by title (keeps newest) so CMS duplicates do not appear side by side.
  */
-export function selectPreviewArticles(articles: Article[], limit = 3): Article[] {
+export function selectPreviewArticles(
+  articles: Article[],
+  limit = 3,
+  featuredIds?: string[],
+): Article[] {
   const published = articles.filter((article) => article.isPublished)
+  const curatedIds = featuredIds?.filter(Boolean) ?? []
+
+  if (curatedIds.length > 0) {
+    const byId = new Map(published.map((article) => [article.id, article]))
+    return curatedIds
+      .map((id) => byId.get(id))
+      .filter((article): article is Article => Boolean(article))
+      .slice(0, limit)
+  }
+
   const byTitle = new Map<string, Article>()
 
   for (const article of published) {

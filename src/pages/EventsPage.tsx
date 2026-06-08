@@ -51,8 +51,10 @@ export function EventsPage() {
     return list
   }, [data.events, activeFilter, q])
 
+  const catalog = data.settings.catalogPages?.events
+  const pageSize = catalog?.pageSize && catalog.pageSize > 0 ? catalog.pageSize : 9
   const { page, setPage, totalPages, paginatedItems, showPagination } =
-    usePagination(filteredEvents)
+    usePagination(filteredEvents, pageSize)
 
   const resetFilters = () => {
     setActiveFilter("All")

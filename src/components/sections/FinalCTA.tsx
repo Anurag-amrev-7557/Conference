@@ -69,9 +69,15 @@ export function FinalCTA({
   const copy = data.settings.sections?.finalCta
   const sectionRef = useRef<HTMLElement>(null)
 
+  const displayMode = copy?.displayMode ?? (useSummitRegister ? 'summit-buttons' : 'waitlist')
+  const showSummitButtons =
+    displayMode === 'summit-buttons' || (displayMode === 'auto' && useSummitRegister)
+
   const trustItems =
-    copy?.trustItems?.map((item) => item.trim()).filter(Boolean) ??
-    [...DEFAULT_TRUST_ITEMS]
+    copy?.hideTrustRow === true
+      ? []
+      : copy?.trustItems?.map((item) => item.trim()).filter(Boolean) ??
+        [...DEFAULT_TRUST_ITEMS]
 
   const primaryLabel = copy?.ctaLabel?.trim() || DEFAULT_PRIMARY.label
   const primaryHref = copy?.ctaHref?.trim() || DEFAULT_PRIMARY.href
@@ -153,7 +159,7 @@ export function FinalCTA({
           </div>
 
           <div className="final-cta-section__action">
-            {useSummitRegister ? (
+            {showSummitButtons ? (
               <div className="final-cta-section__buttons">
                 <FinalCtaLink
                   href={primaryHref}

@@ -65,6 +65,17 @@ export interface ConferenceRegistrationFormSettings {
   /** When false, public registration form is closed. */
   registrationOpen?: boolean;
   registrationClosedMessage?: string;
+  registrationClosedTitle?: string;
+  submitLoadingLabel?: string;
+  genericErrorMessage?: string;
+  showSiteFooter?: boolean;
+  validationMessages?: {
+    nameRequired?: string;
+    emailRequired?: string;
+    emailInvalid?: string;
+    phoneRequired?: string;
+    designationRequired?: string;
+  };
 }
 
 export interface ConferenceRegistrationRecord {
