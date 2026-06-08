@@ -9,7 +9,7 @@
     "build:render": "npm run build && prisma generate && prisma migrate deploy",
     "start": "node dist/start.js",
     "prisma:generate": "prisma generate",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && node scripts/render-prepare-db.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "tsx src/seed.ts",
