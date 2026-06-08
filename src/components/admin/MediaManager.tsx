@@ -302,9 +302,6 @@ export const MediaManager: React.FC = () => {
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
       contentEditor
-      isPreviewVisible={false}
-      isSidebarCollapsed={false}
-      onToggleSidebar={() => {}}
       toolbar={<AdminPageIntro compact className="mb-0" lede="Upload and manage site images." />}
       editorHeader={MEDIA_TAB_INTROS}
       saveStatus={uploading || deleting ? 'saving' : 'idle'}

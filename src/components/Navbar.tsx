@@ -27,7 +27,7 @@ function normalizeNavHref(href: string): string {
   return href
 }
 
-export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean }) {
+export function Navbar() {
   const { data } = useWebsiteData()
   const { appearance, settings } = data
   const { links, primaryCta, navbarVisible } = settings.navigation
@@ -230,7 +230,7 @@ export function Navbar({ isInsidePreview = false }: { isInsidePreview?: boolean 
     <header
       className={cn(
         "top-0 z-[100] w-full flex justify-center pt-4 sm:pt-5 px-4 sm:px-6 pointer-events-none",
-        isInsidePreview ? "absolute" : "fixed",
+        "fixed",
       )}
     >
       <div

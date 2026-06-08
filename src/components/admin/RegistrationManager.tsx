@@ -315,10 +315,9 @@ function RegistrationSidePanel({
 }
 
 export function RegistrationManager() {
-  const { sourceData, updateSettings, setPreview, isPreviewVisible } = useWebsiteData()
+  const { sourceData, updateSettings } = useWebsiteData()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<TabId>('submissions')
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const skipDirtyRef = useRef(true)
   const [formCopy, setFormCopy] = useState<ConferenceRegistrationFormSettings>(() => ({
@@ -411,25 +410,6 @@ export function RegistrationManager() {
     }
     setIsDirty(true)
   }, [formCopy, routeSeo, activeTab])
-
-  useEffect(() => {
-    if (!EDITOR_TABS.includes(activeTab)) {
-      setPreview(null)
-      return
-    }
-    if (!isPreviewVisible) {
-      setPreview(null)
-      return
-    }
-    setPreview({
-      settings: {
-        ...sourceData.settings,
-        conferenceRegistration: formCopy,
-        routeSeo: { ...sourceData.settings.routeSeo, '/register': routeSeo },
-      },
-    })
-    return () => setPreview(null)
-  }, [activeTab, formCopy, routeSeo, isPreviewVisible, sourceData.settings, setPreview])
 
   useApplyPendingAdminSection('/admin/registrations', (id) => {
     if (id === 'form' || id === 'operations' || id === 'seo' || id === 'submissions') {
@@ -733,10 +713,6 @@ export function RegistrationManager() {
   return (
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
-      isPreviewVisible={isPreviewVisible && EDITOR_TABS.includes(activeTab)}
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
-      previewVariant="register"
       contentEditor={EDITOR_TABS.includes(activeTab)}
       panelFlush={activeTab === 'submissions'}
       toolbar={

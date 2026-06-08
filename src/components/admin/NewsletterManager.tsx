@@ -148,9 +148,6 @@ export const NewsletterManager: React.FC = () => {
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
       panelFlush
-      isPreviewVisible={false}
-      isSidebarCollapsed={false}
-      onToggleSidebar={() => {}}
       toolbar={<AdminPageIntro compact className="mb-0" lede="Waitlist emails captured across the site." />}
       editorHeader={NEWSLETTER_TAB_INTROS}
       editorHeaderAside={

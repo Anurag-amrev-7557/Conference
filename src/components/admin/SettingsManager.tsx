@@ -62,13 +62,12 @@ const SETTINGS_SUBNAV_GROUPS = [
 const TAB_INTROS = SETTINGS_TAB_INTROS;
 
 export const SettingsManager: React.FC = () => {
-  const { sourceData, updateSettings, setPreview, isPreviewVisible, refresh } = useWebsiteData();
+  const { sourceData, updateSettings, refresh } = useWebsiteData();
   const [activeTab, setActiveTab] = useState<'seo' | 'navigation' | 'pages' | 'advanced'>('seo');
   const formHistory = useFormHistory(sourceData.settings);
   const form = formHistory.value;
   const setForm = formHistory.setValue;
   const [isSaving, setIsSaving] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { registerSaveHandler, markUnsaved, setStatus } = useAutosave();
   const { toast } = useToast();
   const isDirty = JSON.stringify(form) !== JSON.stringify(sourceData.settings);
@@ -85,15 +84,6 @@ export const SettingsManager: React.FC = () => {
     canUndo: formHistory.canUndo,
     canRedo: formHistory.canRedo,
   });
-
-  useEffect(() => {
-    if (!isPreviewVisible) {
-      setPreview(null);
-      return;
-    }
-    setPreview({ settings: form });
-    return () => setPreview(null);
-  }, [form, isPreviewVisible, setPreview]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -150,18 +140,11 @@ export const SettingsManager: React.FC = () => {
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
       contentEditor
-      isPreviewVisible={isPreviewVisible}
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
       toolbar={
         <AdminPageIntro
           compact
           className="mb-0"
-          lede={
-            isPreviewVisible
-              ? 'Global SEO, navigation, and scripts — preview updates live.'
-              : 'Global SEO, navigation, site pages, and custom scripts.'
-          }
+          lede="Global SEO, navigation, site pages, and custom scripts."
         />
       }
       editorHeaderAside={undefined}

@@ -281,9 +281,6 @@ export const AdminUsersManager: React.FC = () => {
         editorClassName="admin-book-page"
         contentEditor={activeTab === 'permissions'}
         panelFlush={activeTab === 'team'}
-        isPreviewVisible={false}
-        isSidebarCollapsed={false}
-        onToggleSidebar={() => {}}
         toolbar={
           <AdminPageIntro
             compact

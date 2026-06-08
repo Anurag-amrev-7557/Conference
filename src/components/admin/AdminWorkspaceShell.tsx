@@ -1,9 +1,6 @@
 import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import { useWebsiteData } from '../WebsiteDataProvider'
-import { LivePreview } from './LivePreview'
 import { AdminPanelTabIntro, AdminSubnav } from './admin-ui'
 import {
   AdminEditorPageHeader,
@@ -16,9 +13,6 @@ import type { AdminPageId } from '../../lib/adminPermissions'
 type SubnavItem = { id: string; label: string; icon: React.ElementType }
 
 type AdminWorkspaceShellProps = {
-  isPreviewVisible: boolean
-  isSidebarCollapsed: boolean
-  onToggleSidebar: () => void
   toolbar?: React.ReactNode
   editorClassName?: string
   subnav?: {
@@ -37,14 +31,10 @@ type AdminWorkspaceShellProps = {
   panelFlush?: boolean
   headerAction?: React.ReactNode
   editorHeaderAside?: React.ReactNode
-  previewVariant?: 'conference' | 'events' | 'register' | 'speakers' | 'blog' | 'settings'
   children: React.ReactNode
 }
 
 export function AdminWorkspaceShell({
-  isPreviewVisible,
-  isSidebarCollapsed,
-  onToggleSidebar,
   toolbar,
   editorClassName,
   subnav,
@@ -55,12 +45,8 @@ export function AdminWorkspaceShell({
   panelFlush = false,
   headerAction,
   editorHeaderAside,
-  previewVariant = 'conference',
   children,
 }: AdminWorkspaceShellProps) {
-  const { togglePreviewVisible } = useWebsiteData()
-  const hideEditorOnMobilePreview = isPreviewVisible && isSidebarCollapsed
-
   useAdminWorkspaceNavRegistry(
     subnav
       ? {
@@ -72,41 +58,19 @@ export function AdminWorkspaceShell({
   )
 
   return (
-    <div
-      className={cn(
-        'admin-workspace flex h-full w-full overflow-hidden min-h-0',
-        isPreviewVisible && 'admin-workspace--preview',
-      )}
-    >
+    <div className="admin-workspace flex h-full w-full overflow-hidden min-h-0">
       <div
         className={cn(
-          'admin-workspace__editor-pane flex flex-col min-h-0 overflow-hidden',
-          isPreviewVisible && 'admin-workspace__editor-pane--split',
-          !isPreviewVisible && 'flex-1 w-full min-w-0 admin-page-workspace',
-          hideEditorOnMobilePreview && 'max-lg:hidden',
+          'admin-workspace__editor-pane flex flex-col min-h-0 overflow-hidden flex-1 w-full min-w-0 admin-page-workspace',
           editorClassName,
         )}
       >
         {toolbar || headerAction ? (
-          <div
-            className={cn(
-              'admin-toolbar shrink-0',
-              isPreviewVisible && 'admin-toolbar--compact',
-            )}
-          >
+          <div className="admin-toolbar shrink-0">
             {toolbar ? <div className="admin-toolbar__content">{toolbar}</div> : null}
-            <div className="admin-toolbar__actions flex items-center gap-2">
-              <button
-                type="button"
-                onClick={togglePreviewVisible}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ds-border)] px-3 py-1.5 text-sm font-medium transition-all duration-150 active:scale-95"
-                aria-pressed={isPreviewVisible}
-              >
-                {isPreviewVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {isPreviewVisible ? 'Hide preview' : 'Show preview'}
-              </button>
-              {headerAction}
-            </div>
+            {headerAction ? (
+              <div className="admin-toolbar__actions flex items-center gap-2">{headerAction}</div>
+            ) : null}
           </div>
         ) : null}
 
@@ -160,24 +124,6 @@ export function AdminWorkspaceShell({
           </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {isPreviewVisible && (
-          <motion.div
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 12 }}
-            transition={{ duration: 0.3, ease: [0, 0, 0.2, 1] }}
-            className="admin-workspace__preview-pane flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col"
-          >
-            <LivePreview
-              onToggleSidebar={onToggleSidebar}
-              isSidebarCollapsed={isSidebarCollapsed}
-              variant={previewVariant}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

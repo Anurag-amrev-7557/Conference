@@ -60,7 +60,7 @@ const HEADING_FONTS = [
 ];
 
 export const DesignSystemManager: React.FC = () => {
-  const { sourceData, updateAppearance, setPreview, isPreviewVisible } = useWebsiteData();
+  const { sourceData, updateAppearance } = useWebsiteData();
   const [activePanel, setActivePanel] = useState<'colors' | 'typography' | 'tokens' | 'branding'>(
     'colors',
   );
@@ -68,7 +68,6 @@ export const DesignSystemManager: React.FC = () => {
   const form = formHistory.value;
   const setForm = formHistory.setValue;
   const [isSaving, setIsSaving] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { registerSaveHandler, markUnsaved, setStatus } = useAutosave();
   const { toast } = useToast();
   const isDirty = JSON.stringify(form) !== JSON.stringify(sourceData.appearance);
@@ -85,15 +84,6 @@ export const DesignSystemManager: React.FC = () => {
     canUndo: formHistory.canUndo,
     canRedo: formHistory.canRedo,
   });
-
-  useEffect(() => {
-    if (!isPreviewVisible) {
-      setPreview(null);
-      return;
-    }
-    setPreview({ appearance: form });
-    return () => setPreview(null);
-  }, [form, isPreviewVisible, setPreview]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -131,18 +121,11 @@ export const DesignSystemManager: React.FC = () => {
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
       contentEditor
-      isPreviewVisible={isPreviewVisible}
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
       toolbar={
         <AdminPageIntro
           compact
           className="mb-0"
-          lede={
-            isPreviewVisible
-              ? 'Live preview updates as you edit.'
-              : 'Colors, typography, theme tokens, and brand identity.'
-          }
+          lede="Colors, typography, theme tokens, and brand identity."
         />
       }
       editorHeaderAside={undefined}

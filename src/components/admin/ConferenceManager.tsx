@@ -115,7 +115,7 @@ function formatEventStartLabel(value?: string | null): string | null {
 }
 
 export const ConferenceManager: React.FC = () => {
-  const { sourceData, updateSettings, setPreview, isPreviewVisible } = useWebsiteData();
+  const { sourceData, updateSettings } = useWebsiteData();
   const articleOptions = sourceData.articles
     .filter((a) => a.isPublished)
     .map((a) => ({ id: a.id, label: a.title }))
@@ -124,7 +124,6 @@ export const ConferenceManager: React.FC = () => {
     .map((e) => ({ id: e.id, label: e.title }))
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('hero');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [form, setForm] = useState<ConferenceContent>(() =>
     mergeConferenceContent(sourceData.settings.conference),
   );
@@ -187,47 +186,6 @@ export const ConferenceManager: React.FC = () => {
     scriptsForm,
     speakersCatalog,
     speakersRouteSeo,
-  ]);
-
-  useEffect(() => {
-    if (!isPreviewVisible) {
-      setPreview(null);
-      return;
-    }
-    setPreview({
-      settings: {
-        ...sourceData.settings,
-        conference: { ...form, published: form.published !== false },
-        routeSeo: {
-          ...sourceData.settings.routeSeo,
-          '/': routeSeo,
-          '/speakers': speakersRouteSeo,
-        },
-        catalogPages: {
-          ...sourceData.settings.catalogPages,
-          speakers: speakersCatalog,
-        },
-        visibility: sharedVisibility,
-        sections: sectionsForm,
-        book: bookForm,
-        customCss,
-        scripts: scriptsForm,
-      },
-    });
-    return () => setPreview(null);
-  }, [
-    form,
-    routeSeo,
-    speakersRouteSeo,
-    speakersCatalog,
-    sharedVisibility,
-    sectionsForm,
-    bookForm,
-    customCss,
-    scriptsForm,
-    isPreviewVisible,
-    sourceData.settings,
-    setPreview,
   ]);
 
   const handleSave = async () => {
@@ -351,17 +309,10 @@ export const ConferenceManager: React.FC = () => {
             ? 'Save publish settings'
             : 'Save homepage';
 
-  const previewVariant =
-    activeTab === 'speakers-page' ? 'speakers' : 'conference';
-
   return (
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
       contentEditor
-      isPreviewVisible={isPreviewVisible}
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleSidebar={() => setIsSidebarCollapsed((c) => !c)}
-      previewVariant={previewVariant}
       toolbar={
         <AdminPageIntro
           compact

@@ -68,15 +68,7 @@ const EVENT_FIELD_LIMITS = {
 } as const;
 
 export const EventManager: React.FC = () => {
-  const {
-    data,
-    sourceData,
-    updateEvent,
-    deleteEvent,
-    setPreview,
-    isPreviewVisible,
-    refresh,
-  } = useWebsiteData();
+  const { data, sourceData, updateEvent, deleteEvent, refresh } = useWebsiteData();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [workspaceTab, setWorkspaceTab] = useState<'events' | 'page' | 'seo'>('events');
@@ -86,7 +78,6 @@ export const EventManager: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const skipDirtyRef = useRef(true);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [eventView, setEventView] = useState<'active' | 'trash'>('active');
   const [trashEvents, setTrashEvents] = useState<AppEvent[]>([]);
   const [loadingTrash, setLoadingTrash] = useState(false);
@@ -127,25 +118,9 @@ export const EventManager: React.FC = () => {
     };
   }, [eventView, adminToken]);
 
-  const eventsRef = useRef(sourceData.events);
-  eventsRef.current = sourceData.events;
-
   const storedEvent = editingId
     ? sourceData.events.find((e) => e.id === editingId)
     : undefined;
-
-  useEffect(() => {
-    if (!editingId || !isPreviewVisible) {
-      setPreview(null);
-      return;
-    }
-    setPreview({
-      events: eventsRef.current.map((e) =>
-        e.id === editingId ? { ...e, ...editForm } : e,
-      ),
-    });
-    return () => setPreview(null);
-  }, [editingId, editForm, isPreviewVisible, setPreview]);
 
   const handleEdit = (event: AppEvent) => {
     skipDirtyRef.current = true;
@@ -379,10 +354,6 @@ export const EventManager: React.FC = () => {
   return (
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
-      isPreviewVisible={isPreviewVisible}
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      previewVariant="events"
       toolbar={
         editingId ? (
           <div className="flex items-center gap-4 min-w-0 w-full">

@@ -111,23 +111,12 @@ function withCacheBust(url: string, nonce: number): string {
 }
 
 export const BlogManager: React.FC = () => {
-  const {
-    data,
-    sourceData,
-    updateArticle,
-    deleteArticle,
-    setPreview,
-    isPreviewVisible,
-    refresh,
-  } = useWebsiteData();
-  const articlesRef = useRef(sourceData.articles);
-  articlesRef.current = sourceData.articles;
+  const { data, sourceData, updateArticle, deleteArticle, refresh } = useWebsiteData();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Article>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const skipDirtyRef = useRef(true);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [editorTab, setEditorTab] = useState<'content' | 'seo'>('content');
   const [workspaceTab, setWorkspaceTab] = useState<'articles' | 'page' | 'seo'>('articles');
   const [panelSave, setPanelSave] = useState<WorkspaceSaveConfig | null>(null);
@@ -176,19 +165,6 @@ export const BlogManager: React.FC = () => {
   const storedArticle = editingId
     ? sourceData.articles.find((a) => a.id === editingId)
     : undefined;
-
-  useEffect(() => {
-    if (!editingId || !isPreviewVisible) {
-      setPreview(null);
-      return;
-    }
-    setPreview({
-      articles: articlesRef.current.map((a) =>
-        a.id === editingId ? { ...a, ...editForm } : a,
-      ),
-    });
-    return () => setPreview(null);
-  }, [editingId, editForm, isPreviewVisible, setPreview]);
 
   const handleEdit = (article: Article) => {
     skipDirtyRef.current = true;
@@ -445,9 +421,6 @@ export const BlogManager: React.FC = () => {
   return (
     <AdminWorkspaceShell
       editorClassName="admin-book-page"
-      isPreviewVisible={isPreviewVisible}
-      isSidebarCollapsed={isSidebarCollapsed}
-      onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       toolbar={
         editingId ? (
           <div className="flex items-center gap-4 min-w-0 w-full">

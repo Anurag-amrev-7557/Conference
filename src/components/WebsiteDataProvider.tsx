@@ -1,19 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { WebsiteData } from '../lib/websiteData';
 import { initialData, pillarIcons, perkIcons } from '../lib/websiteData';
-import { mergeConferenceContent } from '../lib/conferenceDefaults';
 import { mergeRemoteWebsiteData } from '../lib/mergeRemoteWebsiteData';
-import { mergeRemoteSettings } from '../lib/mergeRemoteSettings';
 import { hydrateHomepage } from '../lib/homepageContent';
 import { api } from '../lib/api';
 import { setSiteOrigin } from '../seo/siteUrl';
 
-const PREVIEW_STORAGE_KEY = 'adminPreviewVisible';
-
 interface WebsiteDataContextType {
-  /** Merged view used by the live preview (includes preview overrides). */
   data: WebsiteData;
-  /** Persisted CMS data without preview overrides — use for editor form sync. */
+  /** Persisted CMS data — use for editor form sync. */
   sourceData: WebsiteData;
   /** True only during the first CMS load — blocks the public shell. */
   loading: boolean;
@@ -29,9 +24,6 @@ interface WebsiteDataContextType {
   updateEvents: (events: WebsiteData['events']) => Promise<void>;
   updateSettings: (settings: WebsiteData['settings']) => Promise<void>;
   updateAppearance: (appearance: WebsiteData['appearance']) => Promise<void>;
-  setPreview: (preview: Partial<WebsiteData> | null) => void;
-  isPreviewVisible: boolean;
-  togglePreviewVisible: () => void;
   resetData: () => void;
   refresh: () => Promise<void>;
   contentVersion: number;
@@ -46,17 +38,11 @@ type FetchOptions = {
 
 export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<WebsiteData>(initialData);
-  const [previewData, setPreviewData] = useState<WebsiteData | null>(null);
-  const [isPreviewVisible, setIsPreviewVisible] = useState(
-    () => typeof window !== 'undefined' && localStorage.getItem(PREVIEW_STORAGE_KEY) === 'true',
-  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [contentVersion, setContentVersion] = useState(1);
-  const dataRef = useRef(data);
   const hasLoadedRef = useRef(false);
   const fetchInFlightRef = useRef<Promise<void> | null>(null);
-  dataRef.current = data;
 
   const fetchContent = useCallback(async (options?: FetchOptions) => {
     const silent = options?.silent ?? hasLoadedRef.current;
@@ -240,62 +226,8 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const updateSettings = async (settings: WebsiteData['settings']) => updateGlobal({ settings });
   const updateAppearance = async (appearance: WebsiteData['appearance']) => updateGlobal({ appearance });
 
-  const setPreview = useCallback((preview: Partial<WebsiteData> | null) => {
-    if (!preview) {
-      setPreviewData(null);
-      return;
-    }
-    setPreviewData((prev) => {
-      const base = prev ?? dataRef.current;
-      const next: WebsiteData = {
-        ...base,
-        ...preview,
-        ...(preview.settings != null && {
-          settings: mergeRemoteSettings({
-            ...base.settings,
-            ...preview.settings,
-            conference: preview.settings.conference
-              ? mergeConferenceContent({
-                  ...base.settings.conference,
-                  ...preview.settings.conference,
-                })
-              : base.settings.conference,
-          }),
-        }),
-        ...(preview.appearance != null && {
-          appearance: {
-            ...base.appearance,
-            ...preview.appearance,
-            typography: {
-              ...base.appearance.typography,
-              ...preview.appearance.typography,
-            },
-            theme: {
-              ...base.appearance.theme,
-              ...preview.appearance.theme,
-            },
-          },
-        }),
-      };
-      if (prev && JSON.stringify(prev) === JSON.stringify(next)) {
-        return prev;
-      }
-      return hydrateHomepage(next);
-    });
-  }, []);
-
-  const togglePreviewVisible = useCallback(() => {
-    setIsPreviewVisible((visible) => {
-      const next = !visible;
-      localStorage.setItem(PREVIEW_STORAGE_KEY, String(next));
-      if (!next) setPreviewData(null);
-      return next;
-    });
-  }, []);
-
   const resetData = () => {
     setData(initialData);
-    setPreviewData(null);
     localStorage.removeItem('adminToken');
     hasLoadedRef.current = false;
   };
@@ -305,7 +237,7 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   return (
     <WebsiteDataContext.Provider
       value={{
-        data: previewData || data,
+        data,
         sourceData: data,
         loading,
         refreshing,
@@ -319,9 +251,6 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         updateEvents,
         updateSettings,
         updateAppearance,
-        setPreview,
-        isPreviewVisible,
-        togglePreviewVisible,
         resetData,
         refresh,
         contentVersion,
