@@ -1073,8 +1073,9 @@ export const ConferenceManager: React.FC = () => {
                       Featured on summit homepage
                     </label>
                     <p className="text-xs text-[var(--admin-text-muted)]">
-                      Only checked speakers appear on the homepage carousel (max four). Unchecked
-                      speakers remain on the full /speakers catalog only.
+                      Only checked speakers appear on the homepage carousel. Extra cards scroll
+                      horizontally when they do not fit on screen. Unchecked speakers stay on
+                      /speakers only.
                     </p>
                     <MediaUrlField
                       label="Photo"

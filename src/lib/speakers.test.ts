@@ -32,7 +32,7 @@ describe('getFeaturedSpeakers', () => {
     expect(getFeaturedSpeakers(roster)).toEqual([])
   })
 
-  it('caps at four featured speakers while preserving CMS order', () => {
+  it('returns all featured speakers in CMS order for the carousel', () => {
     const roster = [
       speaker('s1', true),
       speaker('s2', true),
@@ -42,6 +42,13 @@ describe('getFeaturedSpeakers', () => {
       speaker('s6', true),
     ]
 
-    expect(getFeaturedSpeakers(roster).map((s) => s.id)).toEqual(['s1', 's2', 's3', 's4'])
+    expect(getFeaturedSpeakers(roster).map((s) => s.id)).toEqual([
+      's1',
+      's2',
+      's3',
+      's4',
+      's5',
+      's6',
+    ])
   })
 })

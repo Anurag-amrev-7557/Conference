@@ -96,7 +96,7 @@ Controls the main conference landing page at **`/`**.
 **New summit fields (2026)**
 
 - **Video section** (Section copy → Video): register CTA label, video caption, and up to three highlight metrics below the player.
-- **Speakers** (Lists): check **Featured on summit homepage** for speakers that should appear on the homepage carousel (max four). Unchecked speakers only appear on `/speakers`.
+- **Speakers** (Lists): check **Featured on summit homepage** for every speaker that should appear on the homepage carousel (scroll arrows appear when they do not all fit on screen). Unchecked speakers only appear on `/speakers`.
 - **Agenda sessions** (Lists → Agenda): link a session to a speaker profile, plus duration, room, and description. Use the **Linked speaker** dropdown instead of typing IDs manually.
 - **Section CTAs** (Section copy): speakers, sponsors, and agenda blocks each have a **CTA label** (e.g. “Meet all speakers”, “Become a sponsor”, “Download full agenda”).
 - **Speakers catalog** (`/speakers`): edit listing hero and route SEO under **Speakers page**. Add a `/speakers` link under **Site settings → Navigation** if visitors should see it in the header.

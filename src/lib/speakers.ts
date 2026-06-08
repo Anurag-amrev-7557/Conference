@@ -1,7 +1,5 @@
 import type { ConferenceSpeaker } from './websiteData'
 
-/** Max featured speakers on the summit homepage carousel. */
-export const HOMEPAGE_FEATURED_SPEAKER_LIMIT = 4
 export const SPEAKERS_CATALOG_PAGE_SIZE = 12
 
 export type SpeakerCatalogFilter = 'all' | 'featured'
@@ -21,9 +19,7 @@ export function getPublishableSpeakers(speakers: ConferenceSpeaker[]): Conferenc
  * Only explicitly featured speakers appear — no fallback to the full roster.
  */
 export function getFeaturedSpeakers(speakers: ConferenceSpeaker[]): ConferenceSpeaker[] {
-  return getPublishableSpeakers(speakers)
-    .filter((speaker) => speaker.featured === true)
-    .slice(0, HOMEPAGE_FEATURED_SPEAKER_LIMIT)
+  return getPublishableSpeakers(speakers).filter((speaker) => speaker.featured === true)
 }
 
 export function countFeaturedSpeakers(speakers: ConferenceSpeaker[]): number {
