@@ -33,6 +33,12 @@ process.on('unhandledRejection', (reason) => {
 export const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Render (and similar platforms) terminate TLS and set X-Forwarded-For.
+// Required for express-rate-limit to identify clients correctly.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 const isDev = process.env.NODE_ENV !== 'production';
 const connectSrc = ["'self'"];
 const imgSrc = ["'self'", 'data:', 'https:'];
