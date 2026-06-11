@@ -6,9 +6,12 @@ import '@fontsource/instrument-serif/400.css';
 import '@fontsource/instrument-serif/400-italic.css';
 import { startLiveBootstrapPrefetch } from './lib/prefetchCmsBootstrap';
 import { reportWebVitals } from './lib/reportWebVitals';
+import { setupDeployRecovery } from './lib/setupDeployRecovery';
 import { WebsiteDataProvider } from './components/WebsiteDataProvider';
 import './index.css';
 import App from './App.tsx';
+
+setupDeployRecovery();
 
 // Non-blocking: use baked HTML bootstrap for first paint; refresh when API responds.
 startLiveBootstrapPrefetch();

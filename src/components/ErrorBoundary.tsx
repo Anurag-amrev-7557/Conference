@@ -1,4 +1,5 @@
 import React from 'react';
+import { isChunkLoadFailure } from '../lib/setupDeployRecovery';
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
@@ -40,9 +41,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg border border-border bg-off px-4 py-2 text-sm font-medium text-text transition-colors duration-150 hover:bg-bg active:scale-[0.97]"
-              onClick={this.handleReset}
+              onClick={() => {
+                if (isChunkLoadFailure(this.state.error)) {
+                  window.location.reload();
+                  return;
+                }
+                this.handleReset();
+              }}
             >
-              Try again
+              {isChunkLoadFailure(this.state.error) ? 'Reload page' : 'Try again'}
             </button>
           </div>
         </div>
