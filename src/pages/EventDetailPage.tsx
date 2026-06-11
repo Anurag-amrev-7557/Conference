@@ -1,41 +1,33 @@
-import { useEffect } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Calendar,
-  Clock,
-  MapPin,
-  Share2,
-  User,
-} from "lucide-react"
-import { useWebsiteData } from "../components/WebsiteDataProvider"
-import type { AppEvent } from "../lib/websiteData"
-import { BlogCtaSection } from "../components/blog/BlogCtaSection"
-import { Footer } from "../components/Footer"
-import { formatEventDayLabel } from "../lib/eventDates"
-import { isEffectivelyPublished } from "../lib/publishSchedule"
-import { SeoHead } from "../seo/SeoHead"
-import { JsonLd } from "../seo/JsonLd"
-import { usePageSeo } from "../seo/usePageSeo"
-import { usePageJsonLd } from "../seo/usePageJsonLd"
+import { useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, ArrowUpRight, Calendar, Clock, MapPin, Share2, User } from 'lucide-react';
+import { useWebsiteData } from '../components/WebsiteDataProvider';
+import type { AppEvent } from '../lib/websiteData';
+import { BlogCtaSection } from '../components/blog/BlogCtaSection';
+import { Footer } from '../components/Footer';
+import { formatEventDayLabel } from '../lib/eventDates';
+import { isEffectivelyPublished } from '../lib/publishSchedule';
+import { SeoHead } from '../seo/SeoHead';
+import { JsonLd } from '../seo/JsonLd';
+import { usePageSeo } from '../seo/usePageSeo';
+import { usePageJsonLd } from '../seo/usePageJsonLd';
 
 function EventRegistrationCard({
   event,
   isPast,
   onShare,
 }: {
-  event: AppEvent
-  isPast: boolean
-  onShare: () => void
+  event: AppEvent;
+  isPast: boolean;
+  onShare: () => void;
 }) {
-  const registrationClosed = event.registrationOpen === false
-  const registrationUrl = event.registrationUrl?.trim()
+  const registrationClosed = event.registrationOpen === false;
+  const registrationUrl = event.registrationUrl?.trim();
 
   return (
     <div className="event-detail__ticket">
       <p className="event-detail__ticket-label">Registration</p>
-      <p className="event-detail__ticket-price">{event.price || "Free"}</p>
+      <p className="event-detail__ticket-price">{event.price || 'Free'}</p>
       {!isPast && !registrationClosed ? (
         <>
           {registrationUrl ? (
@@ -71,51 +63,54 @@ function EventRegistrationCard({
         Share event
       </button>
     </div>
-  )
+  );
 }
 
 export function EventDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const { data, loading } = useWebsiteData()
-  const event = data.events.find((e) => e.id === id && isEffectivelyPublished(e))
-  const seo = usePageSeo(event ? { event } : undefined)
-  const jsonLd = usePageJsonLd()
-  const { day, weekday } = event ? formatEventDayLabel(event) : { day: "", weekday: "" }
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data, loading } = useWebsiteData();
+  const event = data.events.find((e) => e.id === id && isEffectivelyPublished(e));
+  const seo = usePageSeo(event ? { event } : undefined);
+  const jsonLd = usePageJsonLd();
+  const { day, weekday } = event ? formatEventDayLabel(event) : { day: '', weekday: '' };
 
   useEffect(() => {
     if (!loading && !event) {
-      navigate("/events", { replace: true })
+      navigate('/events', { replace: true });
     }
-    window.scrollTo(0, 0)
-  }, [event, loading, navigate])
+    window.scrollTo(0, 0);
+  }, [event, loading, navigate]);
 
   const handleShare = async () => {
-    const url = window.location.href
+    const url = window.location.href;
     if (navigator.share) {
-      await navigator.share({ title: event?.title, url })
-      return
+      await navigator.share({ title: event?.title, url });
+      return;
     }
-    await navigator.clipboard.writeText(url)
-  }
+    await navigator.clipboard.writeText(url);
+  };
 
   if (!event) {
     return (
       <>
         <SeoHead seo={seo} />
-        <main className="catalog-main max-w-[1200px] mx-auto px-5 py-32 text-center text-text3" aria-busy="true">
+        <div
+          className="catalog-main max-w-[1200px] mx-auto px-5 py-32 text-center text-text3"
+          aria-busy="true"
+        >
           <p className="sr-only">Loading event…</p>
-        </main>
+        </div>
         <Footer />
       </>
-    )
+    );
   }
 
-  const isPast = event.status === "Past"
+  const isPast = event.status === 'Past';
   const mapsUrl =
     event.lat != null && event.lng != null
       ? `https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
 
   return (
     <>
@@ -128,7 +123,7 @@ export function EventDetailPage() {
       />
       <JsonLd graph={jsonLd} />
       <div className="event-detail-page overflow-x-hidden public-page-shell public-inner-page">
-        <main className="event-detail">
+        <div className="event-detail">
           <div className="event-detail__shell mx-auto px-5 sm:px-8 lg:px-8 pt-28 sm:pt-32">
             <Link to="/events" className="event-detail__back">
               <ArrowLeft className="w-4 h-4" aria-hidden />
@@ -138,8 +133,8 @@ export function EventDetailPage() {
             <section className="event-detail__hero" aria-label="Event overview">
               <img
                 src={event.thumbnail}
-                alt=""
-                className={`event-detail__hero-img${isPast ? " event-detail__hero-img--past" : ""}`}
+                alt={event.title}
+                className={`event-detail__hero-img${isPast ? ' event-detail__hero-img--past' : ''}`}
               />
               <div className="event-detail__hero-scrim" aria-hidden />
 
@@ -157,11 +152,7 @@ export function EventDetailPage() {
                 </div>
 
                 <aside className="event-detail__hero-aside" aria-label="Registration">
-                  <EventRegistrationCard
-                    event={event}
-                    isPast={isPast}
-                    onShare={handleShare}
-                  />
+                  <EventRegistrationCard event={event} isPast={isPast} onShare={handleShare} />
                 </aside>
               </div>
             </section>
@@ -259,10 +250,10 @@ export function EventDetailPage() {
 
             <BlogCtaSection />
           </div>
-        </main>
+        </div>
 
         <Footer />
       </div>
     </>
-  )
+  );
 }

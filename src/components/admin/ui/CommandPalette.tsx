@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   FileText,
@@ -16,170 +16,213 @@ import {
   Clock,
   Pin,
   PinOff,
-} from 'lucide-react'
-import { cn } from '../../../lib/utils'
+} from 'lucide-react';
+import { cn } from '../../../lib/utils';
 
 type CommandItem = {
-  id: string
-  label: string
-  path?: string
-  action?: () => void
-  icon: React.ElementType
-  keywords?: string[]
-  group: string
-}
+  id: string;
+  label: string;
+  path?: string;
+  action?: () => void;
+  icon: React.ElementType;
+  keywords?: string[];
+  group: string;
+};
 
 const NAV_ITEMS: CommandItem[] = [
-  { id: 'dashboard', label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, group: 'Pages' },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    path: '/admin/dashboard',
+    icon: LayoutDashboard,
+    group: 'Pages',
+  },
   { id: 'design', label: 'Brand & theme', path: '/admin/design', icon: Paintbrush, group: 'Site' },
-  { id: 'settings', label: 'Site settings', path: '/admin/settings', icon: Settings, group: 'Site' },
+  {
+    id: 'settings',
+    label: 'Site settings',
+    path: '/admin/settings',
+    icon: Settings,
+    group: 'Site',
+  },
   { id: 'media', label: 'Media library', path: '/admin/media', icon: ImageIcon, group: 'Site' },
   { id: 'blogs', label: 'Blog workspace', path: '/admin/blogs', icon: FileText, group: 'Pages' },
-  { id: 'events', label: 'Events workspace', path: '/admin/events', icon: Calendar, group: 'Pages' },
-  { id: 'conference', label: 'Summit homepage', path: '/admin/conference', icon: Mic2, group: 'Pages' },
-  { id: 'registrations', label: 'Registrations', path: '/admin/registrations', icon: ClipboardList, group: 'Pages' },
-  { id: 'newsletter', label: 'Newsletter signups', path: '/admin/newsletter', icon: Mail, group: 'Overview' },
+  {
+    id: 'events',
+    label: 'Events workspace',
+    path: '/admin/events',
+    icon: Calendar,
+    group: 'Pages',
+  },
+  {
+    id: 'conference',
+    label: 'Summit homepage',
+    path: '/admin/conference',
+    icon: Mic2,
+    group: 'Pages',
+  },
+  {
+    id: 'registrations',
+    label: 'Registrations',
+    path: '/admin/registrations',
+    icon: ClipboardList,
+    group: 'Pages',
+  },
+  {
+    id: 'newsletter',
+    label: 'Newsletter signups',
+    path: '/admin/newsletter',
+    icon: Mail,
+    group: 'Overview',
+  },
   { id: 'users', label: 'Team & access', path: '/admin/users', icon: Users, group: 'Overview' },
-]
+];
 
-const RECENT_KEY = 'admin_recent_pages'
-const PINNED_KEY = 'admin_pinned_pages'
+const RECENT_KEY = 'admin_recent_pages';
+const PINNED_KEY = 'admin_pinned_pages';
 
 function getRecentPages(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as string[]
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as string[];
   } catch {
-    return []
+    return [];
   }
 }
 
 export function getPinnedPages(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(PINNED_KEY) ?? '[]') as string[]
+    return JSON.parse(localStorage.getItem(PINNED_KEY) ?? '[]') as string[];
   } catch {
-    return []
+    return [];
   }
 }
 
 export function togglePinnedPage(path: string): string[] {
-  const pinned = getPinnedPages()
-  const next = pinned.includes(path) ? pinned.filter((p) => p !== path) : [...pinned, path]
-  localStorage.setItem(PINNED_KEY, JSON.stringify(next))
-  return next
+  const pinned = getPinnedPages();
+  const next = pinned.includes(path) ? pinned.filter((p) => p !== path) : [...pinned, path];
+  localStorage.setItem(PINNED_KEY, JSON.stringify(next));
+  return next;
 }
 
 export function trackRecentPage(path: string) {
-  const recent = getRecentPages().filter((p) => p !== path)
-  recent.unshift(path)
-  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 5)))
+  const recent = getRecentPages().filter((p) => p !== path);
+  recent.unshift(path);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 5)));
 }
 
 function fuzzyMatch(query: string, item: CommandItem): boolean {
-  const q = query.toLowerCase()
-  if (item.label.toLowerCase().includes(q)) return true
-  if (item.keywords?.some((k) => k.includes(q))) return true
-  if (item.group.toLowerCase().includes(q)) return true
-  return false
+  const q = query.toLowerCase();
+  if (item.label.toLowerCase().includes(q)) return true;
+  if (item.keywords?.some((k) => k.includes(q))) return true;
+  if (item.group.toLowerCase().includes(q)) return true;
+  return false;
 }
 
 function itemsFromPaths(paths: string[]): CommandItem[] {
   return paths
     .map((path) => NAV_ITEMS.find((i) => i.path === path))
-    .filter(Boolean) as CommandItem[]
+    .filter(Boolean) as CommandItem[];
 }
 
 export function CommandPalette({
   open,
   onOpenChange,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [pinnedPaths, setPinnedPaths] = useState<string[]>(() => getPinnedPages())
-  const [prevOpen, setPrevOpen] = useState(open)
+  const navigate = useNavigate();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [pinnedPaths, setPinnedPaths] = useState<string[]>(() => getPinnedPages());
+  const [prevOpen, setPrevOpen] = useState(open);
 
   if (open !== prevOpen) {
-    setPrevOpen(open)
+    setPrevOpen(open);
     if (open) {
-      setPinnedPaths(getPinnedPages())
+      setPinnedPaths(getPinnedPages());
     } else {
-      setQuery('')
-      setSelectedIndex(0)
+      setQuery('');
+      setSelectedIndex(0);
     }
   }
 
-  const recentPaths = useMemo(() => (open ? getRecentPages() : []), [open])
+  const recentPaths = useMemo(() => (open ? getRecentPages() : []), [open]);
+
+  useEffect(() => {
+    if (open) {
+      searchInputRef.current?.focus();
+    }
+  }, [open]);
 
   const filtered = useMemo(() => {
     if (query.trim()) {
-      return NAV_ITEMS.filter((item) => fuzzyMatch(query, item))
+      return NAV_ITEMS.filter((item) => fuzzyMatch(query, item));
     }
-    const pinned = itemsFromPaths(pinnedPaths)
-    const recent = itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p)))
+    const pinned = itemsFromPaths(pinnedPaths);
+    const recent = itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p)));
     const rest = NAV_ITEMS.filter(
       (item) => item.path && !pinnedPaths.includes(item.path) && !recentPaths.includes(item.path),
-    )
-    return [...pinned, ...recent, ...rest]
-  }, [query, recentPaths, pinnedPaths])
+    );
+    return [...pinned, ...recent, ...rest];
+  }, [query, recentPaths, pinnedPaths]);
 
-  const pinnedCount = query.trim() ? 0 : pinnedPaths.length
+  const pinnedCount = query.trim() ? 0 : pinnedPaths.length;
   const recentCount = query.trim()
     ? 0
-    : itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p))).length
+    : itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p))).length;
 
   const selectItem = useCallback(
     (item: CommandItem) => {
       if (item.path) {
-        trackRecentPage(item.path)
-        navigate(item.path)
+        trackRecentPage(item.path);
+        navigate(item.path);
       } else if (item.action) {
-        item.action()
+        item.action();
       }
-      onOpenChange(false)
-      setQuery('')
+      onOpenChange(false);
+      setQuery('');
     },
     [navigate, onOpenChange],
-  )
+  );
 
   const handleTogglePin = (e: React.MouseEvent, path: string) => {
-    e.stopPropagation()
-    setPinnedPaths(togglePinnedPage(path))
-  }
+    e.stopPropagation();
+    setPinnedPaths(togglePinnedPage(path));
+  };
 
-  const filterKey = `${query}\0${pinnedPaths.join(',')}`
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  const filterKey = `${query}\0${pinnedPaths.join(',')}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
-    setPrevFilterKey(filterKey)
-    if (selectedIndex !== 0) setSelectedIndex(0)
+    setPrevFilterKey(filterKey);
+    if (selectedIndex !== 0) setSelectedIndex(0);
   }
 
-  const activeIndex = Math.min(selectedIndex, Math.max(0, filtered.length - 1))
+  const activeIndex = Math.min(selectedIndex, Math.max(0, filtered.length - 1));
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1))
+        e.preventDefault();
+        setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelectedIndex((i) => Math.max(i - 1, 0))
+        e.preventDefault();
+        setSelectedIndex((i) => Math.max(i - 1, 0));
       } else if (e.key === 'Enter' && filtered[activeIndex]) {
-        e.preventDefault()
-        selectItem(filtered[activeIndex])
+        e.preventDefault();
+        selectItem(filtered[activeIndex]);
       } else if (e.key === 'Escape') {
-        onOpenChange(false)
+        onOpenChange(false);
       }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [open, filtered, activeIndex, selectItem, onOpenChange])
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, filtered, activeIndex, selectItem, onOpenChange]);
 
   const renderItem = (item: CommandItem, index: number, section?: 'pinned' | 'recent') => {
-    const isPinned = item.path ? pinnedPaths.includes(item.path) : false
+    const isPinned = item.path ? pinnedPaths.includes(item.path) : false;
 
     return (
       <div key={`${section ?? 'all'}-${item.id}`} className="relative group">
@@ -198,7 +241,9 @@ export function CommandPalette({
           {section === 'pinned' ? (
             <Pin className="w-3 h-3 text-[var(--ds-primary-600)] shrink-0" aria-hidden />
           ) : null}
-          <span className="text-[var(--ds-text-xs)] text-[var(--ds-text-subtle)]">{item.group}</span>
+          <span className="text-[var(--ds-text-xs)] text-[var(--ds-text-subtle)]">
+            {item.group}
+          </span>
         </button>
         {item.path ? (
           <button
@@ -216,8 +261,8 @@ export function CommandPalette({
           </button>
         ) : null}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -240,7 +285,8 @@ export function CommandPalette({
             <div className="flex items-center gap-3 px-4 border-b border-[var(--ds-border)]">
               <Search className="w-4 h-4 text-[var(--ds-text-muted)] shrink-0" />
               <input
-                autoFocus
+                ref={searchInputRef}
+                aria-label="Search pages and actions"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search pages and actions..."
@@ -264,7 +310,9 @@ export function CommandPalette({
                       <p className="px-2 py-1 text-[var(--ds-text-xs)] font-[var(--ds-font-medium)] text-[var(--ds-text-subtle)] uppercase tracking-[var(--ds-tracking-wide)] flex items-center gap-1">
                         <Pin className="w-3 h-3" /> Pinned
                       </p>
-                      {itemsFromPaths(pinnedPaths).map((item, index) => renderItem(item, index, 'pinned'))}
+                      {itemsFromPaths(pinnedPaths).map((item, index) =>
+                        renderItem(item, index, 'pinned'),
+                      )}
                     </>
                   )}
                   {recentCount > 0 && (
@@ -272,8 +320,8 @@ export function CommandPalette({
                       <p className="px-2 py-1 mt-1 text-[var(--ds-text-xs)] font-[var(--ds-font-medium)] text-[var(--ds-text-subtle)] uppercase tracking-[var(--ds-tracking-wide)] flex items-center gap-1">
                         <Clock className="w-3 h-3" /> Recent
                       </p>
-                      {itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p))).map((item, index) =>
-                        renderItem(item, index + pinnedCount, 'recent'),
+                      {itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p))).map(
+                        (item, index) => renderItem(item, index + pinnedCount, 'recent'),
                       )}
                     </>
                   )}
@@ -295,22 +343,22 @@ export function CommandPalette({
         </>
       )}
     </AnimatePresence>
-  )
+  );
 }
 
 export function useCommandPalette() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setOpen((o) => !o)
+        e.preventDefault();
+        setOpen((o) => !o);
       }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
-  return { open, setOpen }
+  return { open, setOpen };
 }

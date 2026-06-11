@@ -2,7 +2,17 @@
  * skeleton-only — offline defaults before the API loads.
  * Authoritative demo and production content lives in server/src/seed.ts (BACK-06).
  */
-import { BookOpen, Cpu, TrendingUp, MessageSquare, Zap, Shield, Database, Bot, Send } from "lucide-react";
+import {
+  BookOpen,
+  Cpu,
+  TrendingUp,
+  MessageSquare,
+  Zap,
+  Shield,
+  Database,
+  Bot,
+  Send,
+} from 'lucide-react';
 import type { ConferenceRegistrationFormSettings } from './registrationTypes';
 
 export interface Article {
@@ -301,6 +311,7 @@ export interface ConferenceTicketTier {
 export interface ConferenceTicketsContent {
   eyebrow?: string;
   title?: string;
+  titleAccent?: string;
   lede?: string;
   tiers: ConferenceTicketTier[];
 }
@@ -308,6 +319,7 @@ export interface ConferenceTicketsContent {
 export interface ConferenceVenueContent {
   eyebrow?: string;
   title?: string;
+  titleAccent?: string;
   lede?: string;
   address?: string;
   mapEmbedUrl?: string;
@@ -570,7 +582,7 @@ export const pillarIcons = {
   TrendingUp,
   Database,
   Bot,
-  Send
+  Send,
 };
 
 export const perkIcons = {

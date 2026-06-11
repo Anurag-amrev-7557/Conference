@@ -1,94 +1,121 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Play, RotateCcw } from 'lucide-react'
-import { useConferenceContent } from '../../../hooks/useConferenceContent'
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { ArrowUpRight, Play, RotateCcw } from 'lucide-react';
+import { useConferenceContent } from '../../../hooks/useConferenceContent';
 import {
   resolveConferenceVideoMedia,
   CONFERENCE_HERO_VIDEO_PUBLIC,
   normalizeRegisterCtaLabel,
-} from '../../../lib/conferenceDefaults'
-import { resolveAssetUrl, resolveMediaUrl } from '../../../lib/assetUrl'
-import { ConferenceSectionHeader } from './ConferenceSectionHeader'
-import { ConferenceSectionShell } from './ConferenceSectionShell'
-import { resolveCtaHref, resolveCtaLabel, SectionCtaLink } from '../../../lib/sectionCta'
+} from '../../../lib/conferenceDefaults';
+import { resolveAssetUrl, resolveMediaUrl } from '../../../lib/assetUrl';
+import {
+  getYouTubeEmbedUrl,
+  getYouTubeThumbnail,
+  parseYouTubeStartSeconds,
+  parseYouTubeVideoId,
+} from '../../../lib/youtube';
+import { ConferenceSectionHeader } from './ConferenceSectionHeader';
+import { ConferenceSectionShell } from './ConferenceSectionShell';
+import { resolveCtaHref, resolveCtaLabel, SectionCtaLink } from '../../../lib/sectionCta';
 
 function formatVideoDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return ''
-  const minutes = Math.floor(seconds / 60)
-  const remainder = Math.floor(seconds % 60)
-  return `${minutes}:${remainder.toString().padStart(2, '0')}`
+  if (!Number.isFinite(seconds) || seconds <= 0) return '';
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.floor(seconds % 60);
+  return `${minutes}:${remainder.toString().padStart(2, '0')}`;
+}
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
 }
 
 export function ConferenceVideo() {
-  const { video, sections, hero } = useConferenceContent()
-  const copy = sections.video
-  const block = video ?? {}
-  const { videoSrc: rawVideoSrc, posterSrc } = resolveConferenceVideoMedia(block)
-  const videoSrc = resolveMediaUrl(rawVideoSrc, CONFERENCE_HERO_VIDEO_PUBLIC)
-  const poster = resolveAssetUrl(posterSrc) || posterSrc
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [useVideo, setUseVideo] = useState(
-    () => typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  )
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [videoError, setVideoError] = useState(false)
-  const [durationLabel, setDurationLabel] = useState('')
+  const { video, sections, hero } = useConferenceContent();
+  const copy = sections.video;
+  const block = video ?? {};
+  const { videoSrc: rawVideoSrc, posterSrc } = resolveConferenceVideoMedia(block);
+  const youtubeId = parseYouTubeVideoId(rawVideoSrc);
+  const youtubeStartSeconds = parseYouTubeStartSeconds(rawVideoSrc);
+  const isYouTube = Boolean(youtubeId);
+  const videoSrc = isYouTube ? '' : resolveMediaUrl(rawVideoSrc, CONFERENCE_HERO_VIDEO_PUBLIC);
+  const poster =
+    resolveAssetUrl(posterSrc) || posterSrc || (youtubeId ? getYouTubeThumbnail(youtubeId) : '');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [useVideo, setUseVideo] = useState(() => !prefersReducedMotion());
+  const [embedActive, setEmbedActive] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [durationLabel, setDurationLabel] = useState('');
 
   const caption =
     copy?.caption?.trim() ||
-    'Official summit highlight — keynotes, workshops, and the conversations that shape what ships next.'
+    'Official summit highlight — keynotes, workshops, and the conversations that shape what ships next.';
   const registerLabel = normalizeRegisterCtaLabel(
     copy?.ctaLabel?.trim() || hero.primaryCtaLabel || 'Register for the summit',
-  )
-  const metricSource = copy?.metrics?.length ? copy.metrics : hero.metrics
+  );
+  const metricSource = copy?.metrics?.length ? copy.metrics : hero.metrics;
   const metrics = metricSource
     .filter((metric) => metric.value?.trim() && metric.label?.trim())
-    .slice(0, 3)
+    .slice(0, 3);
 
   useEffect(() => {
-    const el = videoRef.current
-    if (!el) return
+    if (isYouTube) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.pause()
-      return
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (prefersReducedMotion()) {
+      el.pause();
+      return;
     }
 
-    const onPlay = () => setIsPlaying(true)
-    const onPause = () => setIsPlaying(false)
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
     const onLoadedMetadata = () => {
-      setDurationLabel(formatVideoDuration(el.duration))
-    }
+      setDurationLabel(formatVideoDuration(el.duration));
+    };
 
-    el.addEventListener('play', onPlay)
-    el.addEventListener('pause', onPause)
-    el.addEventListener('loadedmetadata', onLoadedMetadata)
+    el.addEventListener('play', onPlay);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('loadedmetadata', onLoadedMetadata);
 
     if (el.readyState >= 1) {
-      onLoadedMetadata()
+      onLoadedMetadata();
     }
 
     return () => {
-      el.removeEventListener('play', onPlay)
-      el.removeEventListener('pause', onPause)
-      el.removeEventListener('loadedmetadata', onLoadedMetadata)
-    }
-  }, [videoSrc])
+      el.removeEventListener('play', onPlay);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('loadedmetadata', onLoadedMetadata);
+    };
+  }, [isYouTube, videoSrc]);
 
   const startPlayback = () => {
-    const el = videoRef.current
-    if (!el) return
-    setVideoError(false)
+    if (isYouTube && youtubeId) {
+      setVideoError(false);
+      setEmbedActive(true);
+      setIsPlaying(true);
+      return;
+    }
+
+    const el = videoRef.current;
+    if (!el) return;
+    setVideoError(false);
     void el.play().catch(() => {
-      setVideoError(true)
-      setUseVideo(false)
-    })
-  }
+      setVideoError(true);
+      setUseVideo(false);
+    });
+  };
 
   const retryVideo = () => {
-    setVideoError(false)
-    setUseVideo(true)
-    setIsPlaying(false)
-  }
+    setVideoError(false);
+    setUseVideo(true);
+    setEmbedActive(false);
+    setIsPlaying(false);
+  };
+
+  const showPlayButton = !videoError && !isPlaying && (isYouTube ? !embedActive : useVideo);
 
   const headerActions = (
     <div className="conference-video-actions">
@@ -119,7 +146,7 @@ export function ConferenceVideo() {
         />
       </SectionCtaLink>
     </div>
-  )
+  );
 
   return (
     <ConferenceSectionShell
@@ -143,7 +170,16 @@ export function ConferenceVideo() {
         <div className="conference-video-frame">
           <div className="conference-video-frame__glow" aria-hidden />
 
-          {useVideo ? (
+          {isYouTube && embedActive && youtubeId ? (
+            <iframe
+              className="conference-video-frame__embed"
+              src={getYouTubeEmbedUrl(youtubeId, true, youtubeStartSeconds)}
+              title="Summit highlight video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          ) : useVideo && !isYouTube ? (
             <video
               ref={videoRef}
               className="conference-video-frame__player"
@@ -152,8 +188,8 @@ export function ConferenceVideo() {
               preload="metadata"
               poster={poster}
               onError={() => {
-                setVideoError(true)
-                setUseVideo(false)
+                setVideoError(true);
+                setUseVideo(false);
               }}
             >
               <source src={videoSrc} type="video/mp4" />
@@ -169,7 +205,7 @@ export function ConferenceVideo() {
 
           <div className="conference-video-frame__vignette" aria-hidden />
 
-          {useVideo && !isPlaying ? (
+          {showPlayButton ? (
             <button
               type="button"
               className="conference-video-frame__play"
@@ -205,8 +241,12 @@ export function ConferenceVideo() {
 
         {metrics.length > 0 ? (
           <div className="conference-video-metrics" aria-label="Summit highlights">
-            {metrics.map((metric) => (
-              <div key={metric.id} className="conference-video-metric">
+            {metrics.map((metric, index) => (
+              <div
+                key={metric.id}
+                className="conference-video-metric"
+                style={{ '--video-metric-i': index } as CSSProperties}
+              >
                 <span className="conference-video-metric__value">{metric.value}</span>
                 <span className="conference-video-metric__label">{metric.label}</span>
               </div>
@@ -215,5 +255,5 @@ export function ConferenceVideo() {
         ) : null}
       </div>
     </ConferenceSectionShell>
-  )
+  );
 }

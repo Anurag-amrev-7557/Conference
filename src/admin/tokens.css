@@ -64,14 +64,14 @@
   --ds-border-strong: var(--ds-neutral-300);
 
   /* ── Typography scale ── */
-  --ds-text-xs: 0.6875rem;   /* 11px */
-  --ds-text-sm: 0.8125rem;   /* 13px */
-  --ds-text-base: 0.875rem;  /* 14px */
-  --ds-text-md: 1rem;        /* 16px */
-  --ds-text-lg: 1.25rem;     /* 20px */
-  --ds-text-xl: 1.5rem;      /* 24px */
-  --ds-text-2xl: 1.875rem;   /* 30px */
-  --ds-text-3xl: 2.25rem;    /* 36px */
+  --ds-text-xs: 0.6875rem; /* 11px */
+  --ds-text-sm: 0.8125rem; /* 13px */
+  --ds-text-base: 0.875rem; /* 14px */
+  --ds-text-md: 1rem; /* 16px */
+  --ds-text-lg: 1.25rem; /* 20px */
+  --ds-text-xl: 1.5rem; /* 24px */
+  --ds-text-2xl: 1.875rem; /* 30px */
+  --ds-text-3xl: 2.25rem; /* 36px */
 
   --ds-font-regular: 400;
   --ds-font-medium: 500;
@@ -168,7 +168,7 @@
 }
 
 /* Dark mode — explicit */
-.admin-shell[data-theme="dark"] {
+.admin-shell[data-theme='dark'] {
   --ds-primary-50: #172554;
   --ds-primary-100: #1e3a8a;
   --ds-primary-200: #1e40af;
@@ -211,8 +211,8 @@
 
   --ds-text-primary: var(--ds-neutral-900);
   --ds-text-secondary: var(--ds-neutral-700);
-  --ds-text-muted: var(--ds-neutral-500);
-  --ds-text-subtle: var(--ds-neutral-400);
+  --ds-text-muted: var(--ds-neutral-600);
+  --ds-text-subtle: var(--ds-neutral-500);
   --ds-border: var(--ds-neutral-200);
   --ds-border-strong: var(--ds-neutral-300);
   --ds-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);

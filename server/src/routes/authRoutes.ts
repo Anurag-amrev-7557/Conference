@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { getJwtSecret } from '../lib/jwtSecret';
+import { clearAdminAuthCookie, setAdminAuthCookie } from '../lib/adminAuthCookie';
 
 const router = Router();
 
@@ -20,9 +21,8 @@ const loginLimiter = rateLimit({
 // POST /api/v1/auth/login
 router.post('/login', loginLimiter, async (req, res) => {
   const { password, username: loginUsername } = req.body;
-  const username = typeof loginUsername === 'string' && loginUsername.trim()
-    ? loginUsername.trim()
-    : 'admin';
+  const username =
+    typeof loginUsername === 'string' && loginUsername.trim() ? loginUsername.trim() : 'admin';
 
   try {
     const admin = await prisma.admin.findUnique({ where: { username } });
@@ -41,10 +41,17 @@ router.post('/login', loginLimiter, async (req, res) => {
       getJwtSecret(),
       { expiresIn: '24h' },
     );
-    res.json({ token, success: true, role: admin.role, username: admin.username });
+    setAdminAuthCookie(res, token);
+    res.json({ success: true, token, role: admin.role, username: admin.username });
   } catch {
     res.status(500).json({ error: 'Authentication failed.' });
   }
+});
+
+// POST /api/v1/auth/logout
+router.post('/logout', (_req, res) => {
+  clearAdminAuthCookie(res);
+  res.json({ success: true });
 });
 
 export default router;

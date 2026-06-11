@@ -450,7 +450,9 @@
   border-radius: 0.625rem !important;
   box-shadow: none !important;
   color: #171717 !important;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .admin-auth-form .admin-auth-field input:not([type='checkbox']):hover {
@@ -499,7 +501,9 @@
   cursor: pointer;
   flex-shrink: 0;
   position: relative;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .admin-auth-form__remember input[type='checkbox']:checked {
@@ -562,7 +566,9 @@
   background: #171717 !important;
   border: 1px solid #171717 !important;
   box-shadow: none !important;
-  transition: background 120ms ease, opacity 120ms ease !important;
+  transition:
+    background 120ms ease,
+    opacity 120ms ease !important;
 }
 
 .admin-auth-form__submit svg {
@@ -600,7 +606,9 @@
   background: transparent;
   color: #737373;
   cursor: pointer;
-  transition: color 120ms ease, background 120ms ease;
+  transition:
+    color 120ms ease,
+    background 120ms ease;
 }
 
 .admin-auth-theme-btn:hover {
@@ -621,8 +629,9 @@
 
 .admin-auth-shell[data-theme='dark'] .admin-auth-form__subtitle,
 .admin-auth-shell[data-theme='dark'] .admin-auth-form__remember,
-.admin-auth-shell[data-theme='dark'] .admin-auth-form__utility-link {
-  color: #737373;
+.admin-auth-shell[data-theme='dark'] .admin-auth-form__utility-link,
+.admin-auth-shell[data-theme='dark'] .admin-auth-form__help {
+  color: #a3a3a3;
 }
 
 .admin-auth-shell[data-theme='dark'] .admin-auth-form__utility-link:hover {
@@ -633,24 +642,42 @@
   color: #a3a3a3 !important;
 }
 
-.admin-auth-shell[data-theme='dark'] .admin-auth-form .admin-auth-field input:not([type='checkbox']) {
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form
+  .admin-auth-field
+  input:not([type='checkbox']) {
   background: #0a0a0a !important;
   border-color: #262626 !important;
   color: #fafafa !important;
 }
 
-.admin-auth-shell[data-theme='dark'] .admin-auth-form .admin-auth-field input:not([type='checkbox']):hover {
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form
+  .admin-auth-field
+  input:not([type='checkbox']):hover {
   border-color: #404040 !important;
 }
 
-.admin-auth-shell[data-theme='dark'] .admin-auth-form .admin-auth-field input:not([type='checkbox']):focus {
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form
+  .admin-auth-field
+  input:not([type='checkbox']):focus {
   border-color: #fafafa !important;
   box-shadow: 0 0 0 1px #fafafa !important;
 }
 
-.admin-auth-shell[data-theme='dark'] .admin-auth-form .admin-auth-field input:not([type='checkbox']):-webkit-autofill,
-.admin-auth-shell[data-theme='dark'] .admin-auth-form .admin-auth-field input:not([type='checkbox']):-webkit-autofill:hover,
-.admin-auth-shell[data-theme='dark'] .admin-auth-form .admin-auth-field input:not([type='checkbox']):-webkit-autofill:focus {
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form
+  .admin-auth-field
+  input:not([type='checkbox']):-webkit-autofill,
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form
+  .admin-auth-field
+  input:not([type='checkbox']):-webkit-autofill:hover,
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form
+  .admin-auth-field
+  input:not([type='checkbox']):-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px #0a0a0a inset !important;
   -webkit-text-fill-color: #fafafa !important;
 }
@@ -665,7 +692,9 @@
   border-color: #fafafa;
 }
 
-.admin-auth-shell[data-theme='dark'] .admin-auth-form__remember input[type='checkbox']:checked::after {
+.admin-auth-shell[data-theme='dark']
+  .admin-auth-form__remember
+  input[type='checkbox']:checked::after {
   border-color: #171717;
 }
 
@@ -686,7 +715,7 @@
 }
 
 .admin-auth-shell[data-theme='dark'] .admin-auth-form-panel__footer-note {
-  color: #525252;
+  color: #a3a3a3;
 }
 
 @media (prefers-reduced-motion: reduce) {

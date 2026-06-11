@@ -10,6 +10,8 @@ jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      VITE_API_URL: https://ci-placeholder.example.com/api/v1
 
     steps:
       - name: Checkout
@@ -34,11 +36,25 @@ jobs:
       - name: Frontend lint
         run: npm run lint
 
+      - name: Frontend unit tests
+        run: npm test
+
       - name: Frontend build
-        run: PRERENDER_SKIP=1 npm run build:no-prerender
+        run: BOOTSTRAP_OPTIONAL=1 PRERENDER_SKIP=1 npm run build:no-prerender
 
       - name: Server build
         run: cd server && npm run build
+
+      - name: Server unit tests
+        run: cd server && npm test
+
+      - name: npm audit (frontend)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: npm audit (server)
+        run: cd server && npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Server health smoke check
         run: |
@@ -57,6 +73,3 @@ jobs:
 
           echo "Health check failed: /health did not respond in time"
           exit 1
-
-      - name: Phase 5 test expansion placeholder
-        run: echo "Phase 5 will add integration/e2e regression suites to CI."

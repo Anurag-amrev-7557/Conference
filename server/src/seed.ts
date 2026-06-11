@@ -13,8 +13,18 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  if (!adminPassword) {
+    console.error('[seed] ADMIN_PASSWORD environment variable is required.');
+    process.exit(1);
+  }
+  if (adminPassword.length < 12) {
+    console.error('[seed] ADMIN_PASSWORD must be at least 12 characters.');
+    process.exit(1);
+  }
+
   // 1. Create Admin
-  const hashedPassword = await bcrypt.hash('Welcome@1234', 10);
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
   await prisma.admin.upsert({
     where: { username: 'admin' },
     update: {},
@@ -22,110 +32,108 @@ async function main() {
       username: 'admin',
       password: hashedPassword,
       role: 'super_admin',
-    }
+    },
   });
 
   // 2. Initial Data from websiteData.ts
   const initialData = {
     hero: {
-      tagline: "The Future of Automation is Here.",
-      headline: "The Blueprint for Automating Business with",
-      headlineAccent: "Agentic AI",
-      subtitle: "Stop wasting hours on manual tasks. Get our exclusive playbook on how to build, deploy, and scale AI agent swarms for your business — starting today.",
-      videoUrl: "",
-      primaryCtaLabel: "Book a demo",
+      tagline: 'The Future of Automation is Here.',
+      headline: 'The Blueprint for Automating Business with',
+      headlineAccent: 'Agentic AI',
+      subtitle:
+        'Stop wasting hours on manual tasks. Get our exclusive playbook on how to build, deploy, and scale AI agent swarms for your business — starting today.',
+      videoUrl: '',
+      primaryCtaLabel: 'Book a demo',
     },
     settings: {
       seo: {
-        title: "Superhumanly Playbook — Master Agentic AI Automation",
-        description: "Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today.",
-        ogImage: "",
-        googleSiteVerification: "",
-        ogSiteName: "Superhumanly",
-        ogLocale: "en_US",
-        twitterSite: "@superhumanly",
+        title: 'Superhumanly Playbook — Master Agentic AI Automation',
+        description:
+          'Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today.',
+        ogImage: '',
+        googleSiteVerification: '',
+        ogSiteName: 'Superhumanly',
+        ogLocale: 'en_US',
+        twitterSite: '@superhumanly',
       },
       catalogPages: {
         blog: {
-          eyebrow: "Blog",
-          title: "Where builders",
-          titleAccent: "learn to ship",
-          lede: "Architecture, automation, and intelligence for builders shipping agentic systems—guides, playbooks, and research from the Superhumanly team.",
+          eyebrow: 'Blog',
+          title: 'Where builders',
+          titleAccent: 'learn to ship',
+          lede: 'Architecture, automation, and intelligence for builders shipping agentic systems—guides, playbooks, and research from the Superhumanly team.',
         },
         events: {
-          eyebrow: "Events",
-          title: "Where AI leaders",
-          titleAccent: "come together",
-          lede: "Explore upcoming masterclasses, networking sessions, and venture workshops—built for founders shaping the future of agentic AI.",
+          eyebrow: 'Events',
+          title: 'Where AI leaders',
+          titleAccent: 'come together',
+          lede: 'Explore upcoming masterclasses, networking sessions, and venture workshops—built for founders shaping the future of agentic AI.',
         },
         speakers: {
-          eyebrow: "Speakers",
-          title: "The minds shaping",
-          titleAccent: "agentic AI",
-          lede: "Browse summit speakers from across industry, research, and venture—each bringing hard-won insight to the stage.",
+          eyebrow: 'Speakers',
+          title: 'The minds shaping',
+          titleAccent: 'agentic AI',
+          lede: 'Browse summit speakers from across industry, research, and venture—each bringing hard-won insight to the stage.',
         },
       },
       sections: {
         finalCta: {
-          eyebrow: "Final Registry",
-          title: "Secure your",
-          titleAccent: "spot.",
-          lede: "The architectural blueprint for automating your business with agentic AI — written for founders who ship, not slide decks.",
-          trustItems: [
-            "2,500+ on the registry",
-            "Free agentic playbook",
-            "No spam, ever",
-          ],
-          ctaLabel: "Register for the summit",
-          ctaHref: "/register",
-          secondaryCtaLabel: "View the agenda",
-          secondaryCtaHref: "#conference-agenda",
-          formNote: "Join 2,500+ founders — playbook in your inbox in minutes.",
-          waitlistSubmitLabel: "Get the playbook",
-          waitlistPlaceholder: "you@company.com",
-          waitlistGuideLabel: "Exclusive guide · Building AI agents",
+          eyebrow: 'Final Registry',
+          title: 'Secure your',
+          titleAccent: 'spot.',
+          lede: 'The architectural blueprint for automating your business with agentic AI — written for founders who ship, not slide decks.',
+          trustItems: ['2,500+ on the registry', 'Free agentic playbook', 'No spam, ever'],
+          ctaLabel: 'Register for the summit',
+          ctaHref: '/register',
+          secondaryCtaLabel: 'View the agenda',
+          secondaryCtaHref: '#conference-agenda',
+          formNote: 'Join 2,500+ founders — playbook in your inbox in minutes.',
+          waitlistSubmitLabel: 'Get the playbook',
+          waitlistPlaceholder: 'you@company.com',
+          waitlistGuideLabel: 'Exclusive guide · Building AI agents',
           waitlistSuccessTitle: "You're on the list",
-          waitlistSuccessCopy: "Check your inbox — the playbook arrives in a few minutes.",
+          waitlistSuccessCopy: 'Check your inbox — the playbook arrives in a few minutes.',
         },
         whoWeAre: {
-          eyebrow: "Who We Are",
-          title: "Built by founders,",
-          titleAccent: "for founders",
-          lede: "The definitive playbook for small business owners who want to harness AI — without jargon, complexity, or hiring a developer.",
+          eyebrow: 'Who We Are',
+          title: 'Built by founders,',
+          titleAccent: 'for founders',
+          lede: 'The definitive playbook for small business owners who want to harness AI — without jargon, complexity, or hiring a developer.',
         },
       },
       routeSeo: {},
       catalogPages: {
         blog: {
-          eyebrow: "Blog",
-          title: "Where builders",
-          titleAccent: "learn to ship",
-          lede: "Architecture, automation, and intelligence for builders shipping agentic systems.",
-          searchPlaceholder: "Search for articles",
+          eyebrow: 'Blog',
+          title: 'Where builders',
+          titleAccent: 'learn to ship',
+          lede: 'Architecture, automation, and intelligence for builders shipping agentic systems.',
+          searchPlaceholder: 'Search for articles',
           pageSize: 9,
         },
         events: {
-          eyebrow: "Events",
-          title: "Where AI leaders",
-          titleAccent: "come together",
-          lede: "Explore upcoming masterclasses, networking sessions, and venture workshops.",
-          searchPlaceholder: "Search for events",
+          eyebrow: 'Events',
+          title: 'Where AI leaders',
+          titleAccent: 'come together',
+          lede: 'Explore upcoming masterclasses, networking sessions, and venture workshops.',
+          searchPlaceholder: 'Search for events',
           pageSize: 9,
         },
         speakers: {
-          eyebrow: "Speakers",
-          title: "The minds shaping",
-          titleAccent: "agentic AI",
-          lede: "Browse summit speakers from across industry, research, and venture.",
-          searchPlaceholder: "Search by name, company, or talk",
+          eyebrow: 'Speakers',
+          title: 'The minds shaping',
+          titleAccent: 'agentic AI',
+          lede: 'Browse summit speakers from across industry, research, and venture.',
+          searchPlaceholder: 'Search by name, company, or talk',
           pageSize: 12,
         },
       },
       blogCategories: [
-        { id: "RESEARCH", label: "Research" },
-        { id: "STRATEGY", label: "Strategy" },
-        { id: "PLAYBOOK", label: "Playbook" },
-        { id: "GUIDE", label: "Guide" },
+        { id: 'RESEARCH', label: 'Research' },
+        { id: 'STRATEGY', label: 'Strategy' },
+        { id: 'PLAYBOOK', label: 'Playbook' },
+        { id: 'GUIDE', label: 'Guide' },
       ],
       routeVisibility: {
         blog: true,
@@ -134,57 +142,57 @@ async function main() {
         register: true,
       },
       leadCaptureModal: {
-        title: "Get the playbook",
-        lede: "Join the registry for exclusive guides and summit updates.",
-        submitLabel: "Subscribe",
+        title: 'Get the playbook',
+        lede: 'Join the registry for exclusive guides and summit updates.',
+        submitLabel: 'Subscribe',
         successTitle: "You're on the list",
-        successMessage: "Check your inbox for the playbook.",
-        emailPlaceholder: "you@company.com",
+        successMessage: 'Check your inbox for the playbook.',
+        emailPlaceholder: 'you@company.com',
       },
       conference: defaultConferenceContent,
       conferenceRegistration: defaultConferenceRegistrationForm,
       book: {
-        title: "The Blueprint for Automating Business with Agentic AI",
-        tagline: "The definitive playbook for scaling with AI agent swarms.",
+        title: 'The Blueprint for Automating Business with Agentic AI',
+        tagline: 'The definitive playbook for scaling with AI agent swarms.',
         abstract:
           "Stop wasting hours on manual tasks. This book gives you a practical, step-by-step system to build, deploy, and scale agentic AI inside your business — without hiring a developer or drowning in jargon.\n\nInside you'll find frameworks for agent design, deployment checklists, and real-world workflows you can adapt this week — whether you run a solo consultancy or a growing team.",
-        authorName: "Superhumanly",
-        coverImageUrl: "",
-        publisherName: "Superhumanly Press",
+        authorName: 'Superhumanly',
+        coverImageUrl: '',
+        publisherName: 'Superhumanly Press',
       },
       navigation: {
         links: [
-          { id: "1", name: "The Playbook", href: "/blog" },
-          { id: "3", name: "Strategy", href: "#who-we-are" },
-          { id: "4", name: "Live Training", href: "/events" },
-          { id: "5", name: "Speakers", href: "/speakers" },
+          { id: '1', name: 'The Playbook', href: '/blog' },
+          { id: '3', name: 'Strategy', href: '#who-we-are' },
+          { id: '4', name: 'Live Training', href: '/events' },
+          { id: '5', name: 'Speakers', href: '/speakers' },
         ],
         footerLinks: [
-          { id: "f1", name: "The Playbook", href: "/blog" },
-          { id: "f3", name: "Strategy", href: "/#who-we-are" },
-          { id: "f4", name: "Live Training", href: "/events" },
-          { id: "f5", name: "Speakers", href: "/speakers" },
-          { id: "f6", name: "Join Registry", href: "/#final-cta" },
+          { id: 'f1', name: 'The Playbook', href: '/blog' },
+          { id: 'f3', name: 'Strategy', href: '/#who-we-are' },
+          { id: 'f4', name: 'Live Training', href: '/events' },
+          { id: 'f5', name: 'Speakers', href: '/speakers' },
+          { id: 'f6', name: 'Join Registry', href: '/#final-cta' },
         ],
         socials: [
-          { id: "1", platform: "LinkedIn", href: "https://linkedin.com/company/superhumanly" },
-          { id: "2", platform: "Youtube", href: "https://youtube.com/@superhumanly" },
-          { id: "3", platform: "Instagram", href: "https://instagram.com/superhumanly.ai" },
-          { id: "4", platform: "X", href: "https://x.com/superhumanly" }
+          { id: '1', platform: 'LinkedIn', href: 'https://linkedin.com/company/superhumanly' },
+          { id: '2', platform: 'Youtube', href: 'https://youtube.com/@superhumanly' },
+          { id: '3', platform: 'Instagram', href: 'https://instagram.com/superhumanly.ai' },
+          { id: '4', platform: 'X', href: 'https://x.com/superhumanly' },
         ],
-        primaryCta: { label: "Join Now", href: "/register" },
+        primaryCta: { label: 'Join Now', href: '/register' },
       },
       footer: {
-        tagline: "Orchestrating the future of automated business systems.",
-        copyright: "© Superhumanly AI Playbook.",
-        registryStatusLabel: "Registry open",
-        registryCtaLabel: "Join the registry",
-        navColumnTitle: "Section Index",
-        socialColumnTitle: "Connection",
-        privacyUrl: "#",
-        termsUrl: "#",
-        privacyLabel: "Privacy Policy",
-        termsLabel: "Terms of Service",
+        tagline: 'Orchestrating the future of automated business systems.',
+        copyright: '© Superhumanly AI Playbook.',
+        registryStatusLabel: 'Registry open',
+        registryCtaLabel: 'Join the registry',
+        navColumnTitle: 'Section Index',
+        socialColumnTitle: 'Connection',
+        privacyUrl: '#',
+        termsUrl: '#',
+        privacyLabel: 'Privacy Policy',
+        termsLabel: 'Terms of Service',
       },
       visibility: {
         hero: true,
@@ -197,71 +205,74 @@ async function main() {
         events: true,
         finalCta: true,
       },
-      customCss: "",
-      scripts: { header: "", footer: "" },
+      customCss: '',
+      scripts: { header: '', footer: '' },
     },
     appearance: {
-      primaryColor: "#0052cc",
-      brandName: "Superhumanly - Thoughts",
-      brandLogoText: "S",
+      primaryColor: '#0052cc',
+      brandName: 'Superhumanly - Thoughts',
+      brandLogoText: 'S',
       brandLogoUrl: '/media/superhumanly-logo.png',
     },
     stats: [
-      { id: "1", value: "2,500+", label: "Business Owners" },
-      { id: "2", value: "8", label: "AI Frameworks" },
-      { id: "3", value: "50+", label: "Templates" },
-      { id: "4", value: "24/7", label: "AI Uptime" }
+      { id: '1', value: '2,500+', label: 'Business Owners' },
+      { id: '2', value: '8', label: 'AI Frameworks' },
+      { id: '3', value: '50+', label: 'Templates' },
+      { id: '4', value: '24/7', label: 'AI Uptime' },
     ],
     pillars: [
       {
-        id: "1",
-        iconName: "BookOpen",
-        title: "No-Code Friendly",
-        description: "Every technique is designed for non-technical owners. Zero coding — just follow the steps."
+        id: '1',
+        iconName: 'BookOpen',
+        title: 'No-Code Friendly',
+        description:
+          'Every technique is designed for non-technical owners. Zero coding — just follow the steps.',
       },
       {
-        id: "2",
-        iconName: "Cpu",
-        title: "AI Agent Architecture",
-        description: "Design, deploy, and orchestrate intelligent agents that handle real business tasks."
+        id: '2',
+        iconName: 'Cpu',
+        title: 'AI Agent Architecture',
+        description:
+          'Design, deploy, and orchestrate intelligent agents that handle real business tasks.',
       },
       {
-        id: "3",
-        iconName: "TrendingUp",
-        title: "Growth Automation",
-        description: "Build systems that grow your brand on autopilot — social media, email, and beyond."
-      }
+        id: '3',
+        iconName: 'TrendingUp',
+        title: 'Growth Automation',
+        description:
+          'Build systems that grow your brand on autopilot — social media, email, and beyond.',
+      },
     ],
     perks: [
       {
-        id: "1",
-        iconName: "MessageSquare",
-        title: "Weekly Syncs",
-        label: "LIVE SESSIONS",
-        description: "Join weekly live sessions with Maria and fellow founders."
+        id: '1',
+        iconName: 'MessageSquare',
+        title: 'Weekly Syncs',
+        label: 'LIVE SESSIONS',
+        description: 'Join weekly live sessions with Maria and fellow founders.',
       },
       {
-        id: "2",
-        iconName: "BookOpen",
-        title: "Resource Library",
-        label: "VIP ACCESS",
-        description: "Access our exclusive vault of agentic playbooks and templates."
+        id: '2',
+        iconName: 'BookOpen',
+        title: 'Resource Library',
+        label: 'VIP ACCESS',
+        description: 'Access our exclusive vault of agentic playbooks and templates.',
       },
       {
-        id: "3",
-        iconName: "Zap",
-        title: "AI Support",
-        label: "AGENTIC HELP",
-        description: "Direct access to our custom agents for your business."
+        id: '3',
+        iconName: 'Zap',
+        title: 'AI Support',
+        label: 'AGENTIC HELP',
+        description: 'Direct access to our custom agents for your business.',
       },
       {
-        id: "4",
-        iconName: "Shield",
-        title: "Secure Network",
-        label: "VETTED ACCESS",
-        description: "Connect with a strictly vetted group of innovators."
-      }
-    ]
+        id: '4',
+        iconName: 'Shield',
+        title: 'Secure Network',
+        label: 'VETTED ACCESS',
+        description: 'Connect with a strictly vetted group of innovators.',
+      },
+    ],
   };
 
   (initialData.settings as { homepage?: unknown }).homepage = {
@@ -281,8 +292,8 @@ async function main() {
       appearance: JSON.stringify(initialData.appearance),
       stats: JSON.stringify(initialData.stats),
       pillars: JSON.stringify(initialData.pillars),
-      perks: JSON.stringify(initialData.perks)
-    }
+      perks: JSON.stringify(initialData.perks),
+    },
   });
 
   // 3. Articles (sample content for local UI: blog index, read page, TOC, related guides)
@@ -431,33 +442,34 @@ Once one lane is stable, add retrieval quality, evaluation suites, and role-base
   // 4. Events
   const events = [
     {
-      id: "1",
-      day: "9 Apr",
-      weekday: "Thursday",
-      time: "17:30",
-      full_time: "8 Apr, 17:30 GMT-7",
-      title: "Making a break into Venture Capital: Live Networking",
-      host: "Neville Fernandes",
-      location: "San Carlos, California",
+      id: '1',
+      day: '9 Apr',
+      weekday: 'Thursday',
+      time: '17:30',
+      full_time: '8 Apr, 17:30 GMT-7',
+      title: 'Making a break into Venture Capital: Live Networking',
+      host: 'Neville Fernandes',
+      location: 'San Carlos, California',
       tags: JSON.stringify([
-        { name: "AI", color: "bg-rose-50 text-rose-600 border-rose-100" },
-        { name: "Peninsula", color: "bg-pink-50 text-pink-600 border-pink-100" },
-        { name: "VC", color: "bg-indigo-50 text-indigo-600 border-indigo-100" },
+        { name: 'AI', color: 'bg-rose-50 text-rose-600 border-rose-100' },
+        { name: 'Peninsula', color: 'bg-pink-50 text-pink-600 border-pink-100' },
+        { name: 'VC', color: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
       ]),
-      price: "US$20",
-      thumbnail: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=2070&auto=format&fit=crop",
-      status: "Upcoming",
+      price: 'US$20',
+      thumbnail:
+        'https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=2070&auto=format&fit=crop',
+      status: 'Upcoming',
       isPublished: true,
       lat: 37.524,
-      lng: -122.261
-    }
+      lng: -122.261,
+    },
   ];
 
   for (const event of events) {
     await prisma.event.upsert({
       where: { id: event.id },
       update: {},
-      create: event
+      create: event,
     });
   }
 
@@ -479,7 +491,7 @@ Once one lane is stable, add retrieval quality, evaluation suites, and role-base
       id: 'cp-2',
       title: 'Outbound sequence agent — config + prompt pack',
       content:
-        'Shared the exact agent config from last week\'s sync. Includes CRM webhook setup and the 3-prompt chain for personalization.',
+        "Shared the exact agent config from last week's sync. Includes CRM webhook setup and the 3-prompt chain for personalization.",
       authorName: 'Maria Rodriguez',
       authorAvatar: 'MR',
       authorRole: 'Operator',

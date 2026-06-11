@@ -1,5 +1,14 @@
-import { useEffect, useState, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import { api } from '../../lib/api';
+import { getAdminToken } from '../../lib/adminAuth';
 import {
   mergeAdminPermissions,
   canAccessPage,
@@ -11,7 +20,24 @@ import {
 
 const PERMISSIONS_KEY = 'adminPermissions';
 
-export function useAdminSession() {
+type AdminSessionContextValue = {
+  role: string;
+  username: string;
+  ready: boolean;
+  permissions: AdminPermissionsConfig;
+  isSuperAdmin: boolean;
+  isViewer: boolean;
+  canEdit: boolean;
+  pageAccess: (pageId: AdminPageId) => boolean;
+  pageWrite: (pageId: AdminPageId) => boolean;
+  sectionAccess: (pageId: AdminPageId, sectionId: string) => boolean;
+  refreshSession: () => Promise<void>;
+  applyPermissions: (config: AdminPermissionsConfig) => void;
+};
+
+const AdminSessionContext = createContext<AdminSessionContextValue | null>(null);
+
+export function AdminSessionProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState(() => localStorage.getItem('adminRole') || 'super_admin');
   const [username, setUsername] = useState(() => localStorage.getItem('adminUsername') || 'admin');
   const [permissions, setPermissions] = useState<AdminPermissionsConfig>(() => {
@@ -31,7 +57,7 @@ export function useAdminSession() {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    const token = localStorage.getItem('adminToken');
+    const token = getAdminToken();
     if (!token) {
       setReady(true);
       return;
@@ -66,26 +92,61 @@ export function useAdminSession() {
 
   const isSuperAdmin = role === 'super_admin' || role === 'admin';
   const isViewer = role === 'viewer';
-  const pageAccess = (pageId: AdminPageId) => canAccessPage(role, pageId, permissions);
-  const pageWrite = (pageId: AdminPageId) => canWritePage(role, pageId, permissions);
-  const sectionAccess = (pageId: AdminPageId, sectionId: string) =>
-    canAccessSection(role, pageId, sectionId, permissions);
-  const canEdit = !isViewer && pageWrite('dashboard'); // refined per-page in editors
+  const pageAccess = useCallback(
+    (pageId: AdminPageId) => canAccessPage(role, pageId, permissions),
+    [role, permissions],
+  );
+  const pageWrite = useCallback(
+    (pageId: AdminPageId) => canWritePage(role, pageId, permissions),
+    [role, permissions],
+  );
+  const sectionAccess = useCallback(
+    (pageId: AdminPageId, sectionId: string) =>
+      canAccessSection(role, pageId, sectionId, permissions),
+    [role, permissions],
+  );
+  const canEdit = !isViewer && pageWrite('dashboard');
 
-  return {
-    role,
-    username,
-    ready,
-    permissions,
-    isSuperAdmin,
-    isViewer,
-    canEdit,
-    pageAccess,
-    pageWrite,
-    sectionAccess,
-    refreshSession,
-    applyPermissions,
-  };
+  const value = useMemo(
+    () => ({
+      role,
+      username,
+      ready,
+      permissions,
+      isSuperAdmin,
+      isViewer,
+      canEdit,
+      pageAccess,
+      pageWrite,
+      sectionAccess,
+      refreshSession,
+      applyPermissions,
+    }),
+    [
+      role,
+      username,
+      ready,
+      permissions,
+      isSuperAdmin,
+      isViewer,
+      canEdit,
+      pageAccess,
+      pageWrite,
+      sectionAccess,
+      refreshSession,
+      applyPermissions,
+    ],
+  );
+
+  return <AdminSessionContext.Provider value={value}>{children}</AdminSessionContext.Provider>;
+}
+
+export function useAdminSession() {
+  const ctx = useContext(AdminSessionContext);
+  if (!ctx) {
+    throw new Error('useAdminSession must be used within AdminSessionProvider');
+  }
+  return ctx;
 }
 
 export function setAdminSession(role: string, username: string) {

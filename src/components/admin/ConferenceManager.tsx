@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useWorkspaceTabParam } from '../../lib/useWorkspaceTabParam';
 import { useWebsiteData } from '../WebsiteDataProvider';
 import {
   Calendar,
@@ -57,12 +58,7 @@ import {
 import type { SiteSettings } from '../../lib/websiteData';
 import { SpeakersCatalogPageFields } from './PageWorkspacePanel';
 import { SummitHomepageSettings } from './summit/SummitHomepageSettings';
-import {
-  AdminButton,
-  AdminFieldGrid,
-  AdminHeaderSave,
-  AdminPageIntro,
-} from './admin-ui';
+import { AdminButton, AdminFieldGrid, AdminHeaderSave, AdminPageIntro } from './admin-ui';
 import { useApplyPendingAdminSection } from './admin-workspace-nav';
 import { SortableList } from './SortableList';
 import { AdminWorkspaceShell } from './AdminWorkspaceShell';
@@ -81,6 +77,18 @@ type TabId =
   | 'seo'
   | 'advanced'
   | 'publish';
+
+const CONFERENCE_TAB_IDS = [
+  'hero',
+  'sections',
+  'lists',
+  'speakers-page',
+  'embedded',
+  'visibility',
+  'seo',
+  'advanced',
+  'publish',
+] as const satisfies readonly TabId[];
 
 const CONFERENCE_SUBNAV_GROUPS = [
   {
@@ -164,12 +172,12 @@ export const ConferenceManager: React.FC = () => {
   const { sourceData, updateSettings } = useWebsiteData();
   const articleOptions = sourceData.articles
     .filter((a) => a.isPublished)
-    .map((a) => ({ id: a.id, label: a.title }))
+    .map((a) => ({ id: a.id, label: a.title }));
   const eventOptions = sourceData.events
     .filter((e) => e.isPublished)
-    .map((e) => ({ id: e.id, label: e.title }))
+    .map((e) => ({ id: e.id, label: e.title }));
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<TabId>('hero');
+  const [activeTab, setActiveTab] = useWorkspaceTabParam(CONFERENCE_TAB_IDS, 'hero');
   const [form, setForm] = useState<ConferenceContent>(() =>
     mergeConferenceContent(sourceData.settings.conference),
   );
@@ -273,11 +281,7 @@ export const ConferenceManager: React.FC = () => {
     setForm((prev) => ({ ...prev, hero: { ...prev.hero, [field]: value } }));
   };
 
-  const patchSection = (
-    key: keyof ConferenceContent['sections'],
-    field: string,
-    value: string,
-  ) => {
+  const patchSection = (key: keyof ConferenceContent['sections'], field: string, value: string) => {
     setForm((prev) => {
       const nextSections = {
         ...prev.sections,
@@ -292,6 +296,7 @@ export const ConferenceManager: React.FC = () => {
             tiers: prev.tickets?.tiers ?? [],
             eyebrow: field === 'eyebrow' ? value : prev.tickets?.eyebrow,
             title: field === 'title' ? value : prev.tickets?.title,
+            titleAccent: field === 'titleAccent' ? value : prev.tickets?.titleAccent,
             lede: field === 'lede' ? value : prev.tickets?.lede,
           },
         };
@@ -349,13 +354,13 @@ export const ConferenceManager: React.FC = () => {
       ? 'Save SEO'
       : activeTab === 'speakers-page'
         ? 'Save speakers page'
-      : activeTab === 'advanced'
-        ? 'Save advanced'
-        : activeTab === 'visibility' || activeTab === 'embedded'
-          ? 'Save page settings'
-          : activeTab === 'publish'
-            ? 'Save publish settings'
-            : 'Save homepage';
+        : activeTab === 'advanced'
+          ? 'Save advanced'
+          : activeTab === 'visibility' || activeTab === 'embedded'
+            ? 'Save page settings'
+            : activeTab === 'publish'
+              ? 'Save publish settings'
+              : 'Save homepage';
 
   return (
     <AdminWorkspaceShell
@@ -398,605 +403,648 @@ export const ConferenceManager: React.FC = () => {
         pageId: 'conference',
       }}
     >
-          {activeTab === 'hero' && (
-            <>
-              <AdminEditorSection
-                icon={Image}
-                title="Hero logo"
-                description="Shown above the main headline on the homepage."
+      {activeTab === 'hero' && (
+        <>
+          <AdminEditorSection
+            icon={Image}
+            title="Hero logo"
+            description="Shown above the main headline on the homepage."
+          >
+            <AdminEditorSubsection title="Logo image">
+              <MediaUrlField
+                editor
+                label="Logo image"
+                value={form.hero.badgeLogoUrl ?? ''}
+                onChange={(v) => patchHero('badgeLogoUrl', v)}
+                hint={`Default: ${CONFERENCE_HERO_LOGO}`}
+              />
+              <Field
+                label="Logo alt text"
+                value={form.hero.badge}
+                onChange={(v) => patchHero('badge', v)}
+              />
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+
+          <AdminEditorSection
+            icon={Type}
+            title="Headline"
+            description="Main title and subheading above the fold."
+          >
+            <AdminEditorSubsection title="Headline copy">
+              <Field
+                label="Title"
+                value={form.hero.title}
+                onChange={(v) => patchHero('title', v)}
+              />
+              <Field
+                label="Title accent"
+                value={form.hero.titleAccent}
+                onChange={(v) => patchHero('titleAccent', v)}
+              />
+              <Field
+                label="Subheading (lede)"
+                value={form.hero.lede}
+                onChange={(v) => patchHero('lede', v)}
+                multiline
+              />
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+
+          <AdminEditorSection
+            icon={Video}
+            title="Hero video background"
+            description="Background loop behind the hero."
+          >
+            <AdminEditorSubsection title="Video assets">
+              <MediaUrlField
+                editor
+                label="Poster image"
+                value={form.hero.posterUrl ?? ''}
+                onChange={(v) => patchHero('posterUrl', v)}
+                hint="Fallback image when video cannot play"
+              />
+              <AdminEditorField
+                label="Background video URL"
+                hint={`MP4, muted loop. Default: ${CONFERENCE_HERO_VIDEO}`}
               >
-                <AdminEditorSubsection title="Logo image">
-                  <MediaUrlField
-                    editor
-                    label="Logo image"
-                    value={form.hero.badgeLogoUrl ?? ''}
-                    onChange={(v) => patchHero('badgeLogoUrl', v)}
-                    hint={`Default: ${CONFERENCE_HERO_LOGO}`}
-                  />
-                  <Field
-                    label="Logo alt text"
-                    value={form.hero.badge}
-                    onChange={(v) => patchHero('badge', v)}
-                  />
-                </AdminEditorSubsection>
-              </AdminEditorSection>
+                <AdminEditorInput
+                  value={form.hero.videoUrl ?? ''}
+                  onChange={(e) => patchHero('videoUrl', e.target.value)}
+                  placeholder={CONFERENCE_HERO_VIDEO}
+                />
+              </AdminEditorField>
+            </AdminEditorSubsection>
+          </AdminEditorSection>
 
-              <AdminEditorSection icon={Type} title="Headline" description="Main title and subheading above the fold.">
-                <AdminEditorSubsection title="Headline copy">
-                  <Field label="Title" value={form.hero.title} onChange={(v) => patchHero('title', v)} />
-                  <Field
-                    label="Title accent"
-                    value={form.hero.titleAccent}
-                    onChange={(v) => patchHero('titleAccent', v)}
-                  />
-                  <Field
-                    label="Subheading (lede)"
-                    value={form.hero.lede}
-                    onChange={(v) => patchHero('lede', v)}
-                    multiline
-                  />
-                </AdminEditorSubsection>
-              </AdminEditorSection>
+          <AdminEditorSection
+            icon={Calendar}
+            title="Event details"
+            description="Date, location, and register CTA."
+          >
+            <AdminEditorSubsection title="Event labels">
+              <AdminFieldGrid columns={2}>
+                <Field
+                  label="Date"
+                  value={form.hero.dateLabel}
+                  onChange={(v) => patchHero('dateLabel', v)}
+                />
+                <Field
+                  label="Location"
+                  value={form.hero.locationLabel}
+                  onChange={(v) => patchHero('locationLabel', v)}
+                />
+              </AdminFieldGrid>
+              <Field
+                label="Register button"
+                value={normalizeRegisterCtaLabel(form.hero.primaryCtaLabel)}
+                onChange={(v) => patchHero('primaryCtaLabel', v)}
+              />
+              <Field
+                label="Register button URL"
+                value={form.hero.primaryCtaHref ?? '/register'}
+                onChange={(v) => patchHero('primaryCtaHref', v)}
+              />
+              <Field
+                label="Secondary CTA label"
+                value={form.hero.secondaryCtaLabel ?? ''}
+                onChange={(v) => patchHero('secondaryCtaLabel', v)}
+              />
+              <Field
+                label="Secondary CTA URL"
+                value={form.hero.secondaryCtaHref ?? ''}
+                onChange={(v) => patchHero('secondaryCtaHref', v)}
+              />
+            </AdminEditorSubsection>
+          </AdminEditorSection>
 
-              <AdminEditorSection icon={Video} title="Hero video background" description="Background loop behind the hero.">
-                <AdminEditorSubsection title="Video assets">
-                  <MediaUrlField
-                    editor
-                    label="Poster image"
-                    value={form.hero.posterUrl ?? ''}
-                    onChange={(v) => patchHero('posterUrl', v)}
-                    hint="Fallback image when video cannot play"
-                  />
-                  <AdminEditorField label="Background video URL" hint={`MP4, muted loop. Default: ${CONFERENCE_HERO_VIDEO}`}>
-                    <AdminEditorInput
-                      value={form.hero.videoUrl ?? ''}
-                      onChange={(e) => patchHero('videoUrl', e.target.value)}
-                      placeholder={CONFERENCE_HERO_VIDEO}
-                    />
-                  </AdminEditorField>
-                </AdminEditorSubsection>
-              </AdminEditorSection>
+          <AdminEditorSection
+            icon={Clock}
+            title="Countdown timer"
+            description="Optional countdown to event start."
+          >
+            <AdminEditorSubsection title="Countdown settings">
+              <Toggle
+                label="Show countdown on homepage"
+                checked={form.countdownEnabled !== false}
+                onChange={(checked) => setForm((prev) => ({ ...prev, countdownEnabled: checked }))}
+              />
+              <Field
+                label="Event start (ISO datetime)"
+                value={form.eventStartAt ?? ''}
+                onChange={(v) => setForm((prev) => ({ ...prev, eventStartAt: v }))}
+              />
+              <Field
+                label="Timezone (IANA)"
+                value={form.eventTimezone ?? ''}
+                onChange={(v) => setForm((prev) => ({ ...prev, eventTimezone: v }))}
+              />
+            </AdminEditorSubsection>
+          </AdminEditorSection>
 
-              <AdminEditorSection icon={Calendar} title="Event details" description="Date, location, and register CTA.">
-                <AdminEditorSubsection title="Event labels">
-                  <AdminFieldGrid columns={2}>
-                    <Field label="Date" value={form.hero.dateLabel} onChange={(v) => patchHero('dateLabel', v)} />
-                    <Field
-                      label="Location"
-                      value={form.hero.locationLabel}
-                      onChange={(v) => patchHero('locationLabel', v)}
-                    />
-                  </AdminFieldGrid>
-                  <Field
-                    label="Register button"
-                    value={normalizeRegisterCtaLabel(form.hero.primaryCtaLabel)}
-                    onChange={(v) => patchHero('primaryCtaLabel', v)}
-                  />
-                  <Field
-                    label="Register button URL"
-                    value={form.hero.primaryCtaHref ?? '/register'}
-                    onChange={(v) => patchHero('primaryCtaHref', v)}
-                  />
-                  <Field
-                    label="Secondary CTA label"
-                    value={form.hero.secondaryCtaLabel ?? ''}
-                    onChange={(v) => patchHero('secondaryCtaLabel', v)}
-                  />
-                  <Field
-                    label="Secondary CTA URL"
-                    value={form.hero.secondaryCtaHref ?? ''}
-                    onChange={(v) => patchHero('secondaryCtaHref', v)}
-                  />
-                </AdminEditorSubsection>
-              </AdminEditorSection>
+          <AdminEditorSection icon={MapPin} title="Venue" description="Venue block below the hero.">
+            <AdminEditorSubsection title="Venue copy">
+              <Field
+                label="Eyebrow"
+                value={form.venue?.eyebrow ?? ''}
+                onChange={(v) =>
+                  setForm((prev) => ({ ...prev, venue: { ...prev.venue, eyebrow: v } }))
+                }
+              />
+              <Field
+                label="Title"
+                value={form.venue?.title ?? ''}
+                onChange={(v) =>
+                  setForm((prev) => ({ ...prev, venue: { ...prev.venue, title: v } }))
+                }
+              />
+              <Field
+                label="Title accent"
+                value={form.venue?.titleAccent ?? ''}
+                onChange={(v) =>
+                  setForm((prev) => ({ ...prev, venue: { ...prev.venue, titleAccent: v } }))
+                }
+              />
+              <Field
+                label="Description"
+                value={form.venue?.lede ?? ''}
+                onChange={(v) =>
+                  setForm((prev) => ({ ...prev, venue: { ...prev.venue, lede: v } }))
+                }
+                multiline
+              />
+              <Field
+                label="Address"
+                value={form.venue?.address ?? ''}
+                onChange={(v) =>
+                  setForm((prev) => ({ ...prev, venue: { ...prev.venue, address: v } }))
+                }
+              />
+              <Field
+                label="Google Maps embed URL"
+                value={form.venue?.mapEmbedUrl ?? ''}
+                onChange={(v) =>
+                  setForm((prev) => ({ ...prev, venue: { ...prev.venue, mapEmbedUrl: v } }))
+                }
+              />
+            </AdminEditorSubsection>
+          </AdminEditorSection>
 
-              <AdminEditorSection icon={Clock} title="Countdown timer" description="Optional countdown to event start.">
-                <AdminEditorSubsection title="Countdown settings">
-                  <Toggle
-                    label="Show countdown on homepage"
-                    checked={form.countdownEnabled !== false}
-                    onChange={(checked) => setForm((prev) => ({ ...prev, countdownEnabled: checked }))}
-                  />
-                  <Field
-                    label="Event start (ISO datetime)"
-                    value={form.eventStartAt ?? ''}
-                    onChange={(v) => setForm((prev) => ({ ...prev, eventStartAt: v }))}
-                  />
-                  <Field
-                    label="Timezone (IANA)"
-                    value={form.eventTimezone ?? ''}
-                    onChange={(v) => setForm((prev) => ({ ...prev, eventTimezone: v }))}
-                  />
-                </AdminEditorSubsection>
-              </AdminEditorSection>
-
-              <AdminEditorSection icon={MapPin} title="Venue" description="Venue block below the hero.">
-                <AdminEditorSubsection title="Venue copy">
-                  <Field
-                    label="Eyebrow"
-                    value={form.venue?.eyebrow ?? ''}
-                    onChange={(v) =>
-                      setForm((prev) => ({ ...prev, venue: { ...prev.venue, eyebrow: v } }))
-                    }
-                  />
-                  <Field
-                    label="Title"
-                    value={form.venue?.title ?? ''}
-                    onChange={(v) =>
-                      setForm((prev) => ({ ...prev, venue: { ...prev.venue, title: v } }))
-                    }
-                  />
-                  <Field
-                    label="Description"
-                    value={form.venue?.lede ?? ''}
-                    onChange={(v) =>
-                      setForm((prev) => ({ ...prev, venue: { ...prev.venue, lede: v } }))
-                    }
-                    multiline
-                  />
-                  <Field
-                    label="Address"
-                    value={form.venue?.address ?? ''}
-                    onChange={(v) =>
-                      setForm((prev) => ({ ...prev, venue: { ...prev.venue, address: v } }))
-                    }
-                  />
-                  <Field
-                    label="Google Maps embed URL"
-                    value={form.venue?.mapEmbedUrl ?? ''}
-                    onChange={(v) =>
-                      setForm((prev) => ({ ...prev, venue: { ...prev.venue, mapEmbedUrl: v } }))
-                    }
-                  />
-                </AdminEditorSubsection>
-              </AdminEditorSection>
-
-              <AdminEditorSection icon={Hash} title="Hero metrics" description="Stat row under the hero CTA.">
-                <AdminEditorSubsection title="Metrics">
-                  {form.hero.metrics.map((m, i) => (
-                    <div key={m.id} className="admin-editor-item-group">
-                      <div className="admin-editor-item-group__header">
-                        <span className="admin-editor-item-group__title">Metric {i + 1}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              hero: {
-                                ...prev.hero,
-                                metrics: prev.hero.metrics.filter((x) => x.id !== m.id),
-                              },
-                            }))
-                          }
-                          className="admin-catalog-item__action admin-catalog-item__action--danger"
-                          aria-label="Remove metric"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <AdminFieldGrid columns={2}>
-                        <AdminEditorField label="Value">
-                          <AdminEditorInput
-                            aria-label={`Metric ${i + 1} value`}
-                            value={m.value}
-                            onChange={(e) => {
-                              const metrics = [...form.hero.metrics];
-                              metrics[i] = { ...m, value: e.target.value };
-                              setForm((prev) => ({ ...prev, hero: { ...prev.hero, metrics } }));
-                            }}
-                            placeholder="Value"
-                          />
-                        </AdminEditorField>
-                        <AdminEditorField label="Label">
-                          <AdminEditorInput
-                            aria-label={`Metric ${i + 1} label`}
-                            value={m.label}
-                            onChange={(e) => {
-                              const metrics = [...form.hero.metrics];
-                              metrics[i] = { ...m, label: e.target.value };
-                              setForm((prev) => ({ ...prev, hero: { ...prev.hero, metrics } }));
-                            }}
-                            placeholder="Label"
-                          />
-                        </AdminEditorField>
-                      </AdminFieldGrid>
-                    </div>
-                  ))}
-                  <AdminButton
-                    type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        hero: {
-                          ...prev.hero,
-                          metrics: [...prev.hero.metrics, { id: newId(), value: '', label: '' }],
-                        },
-                      }))
-                    }
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add metric
-                  </AdminButton>
-                </AdminEditorSubsection>
-              </AdminEditorSection>
-            </>
-          )}
-
-          {activeTab === 'sections' && (
-            <>
-              <AdminEditorSection
-                icon={Video}
-                title="Featured video"
-                description="Dedicated video block below speakers on the homepage."
-              >
-                <AdminEditorSubsection title="Section copy">
-                  <Field
-                    label="Eyebrow"
-                    value={form.sections.video?.eyebrow ?? ''}
-                    onChange={(v) => patchSection('video', 'eyebrow', v)}
-                  />
-                  <Field
-                    label="Title"
-                    value={form.sections.video?.title ?? ''}
-                    onChange={(v) => patchSection('video', 'title', v)}
-                  />
-                  <Field
-                    label="Title accent"
-                    value={form.sections.video?.titleAccent ?? ''}
-                    onChange={(v) => patchSection('video', 'titleAccent', v)}
-                  />
-                  <Field
-                    label="Lede"
-                    value={form.sections.video?.lede ?? ''}
-                    onChange={(v) => patchSection('video', 'lede', v)}
-                    multiline
-                  />
-                  <Field
-                    label="Register CTA"
-                    value={form.sections.video?.ctaLabel ?? ''}
-                    onChange={(v) => patchSection('video', 'ctaLabel', v)}
-                  />
-                  <Field
-                    label="Register CTA URL"
-                    value={form.sections.video?.ctaHref ?? ''}
-                    onChange={(v) => patchSection('video', 'ctaHref', v)}
-                  />
-                  <Field
-                    label="Agenda CTA label"
-                    value={form.sections.video?.secondaryCtaLabel ?? ''}
-                    onChange={(v) => patchSection('video', 'secondaryCtaLabel', v)}
-                  />
-                  <Field
-                    label="Agenda CTA URL"
-                    value={form.sections.video?.secondaryCtaHref ?? ''}
-                    onChange={(v) => patchSection('video', 'secondaryCtaHref', v)}
-                  />
-                  <Field
-                    label="Video caption"
-                    value={form.sections.video?.caption ?? ''}
-                    onChange={(v) => patchSection('video', 'caption', v)}
-                    multiline
-                  />
-                </AdminEditorSubsection>
-                <AdminEditorSubsection
-                  title="Highlight metrics"
-                  description="Up to three stat chips shown below the video. Leave empty to fall back to hero metrics."
-                >
-                  {(form.sections.video?.metrics ?? []).map((metric, index) => (
-                    <div key={metric.id} className="admin-editor-item-group">
-                      <div className="admin-editor-item-group__header">
-                        <span className="admin-editor-item-group__title">Metric {index + 1}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              sections: {
-                                ...prev.sections,
-                                video: {
-                                  ...prev.sections.video,
-                                  metrics: (prev.sections.video?.metrics ?? []).filter(
-                                    (item) => item.id !== metric.id,
-                                  ),
-                                },
-                              },
-                            }))
-                          }
-                          className="admin-catalog-item__action admin-catalog-item__action--danger"
-                          aria-label="Remove metric"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <AdminFieldGrid columns={2}>
-                        <AdminEditorField label="Value">
-                          <AdminEditorInput
-                            aria-label={`Video metric ${index + 1} value`}
-                            value={metric.value}
-                            onChange={(e) => {
-                              const metrics = [...(form.sections.video?.metrics ?? [])]
-                              metrics[index] = { ...metric, value: e.target.value }
-                              setForm((prev) => ({
-                                ...prev,
-                                sections: {
-                                  ...prev.sections,
-                                  video: { ...prev.sections.video, metrics },
-                                },
-                              }))
-                            }}
-                            placeholder="3,500+"
-                          />
-                        </AdminEditorField>
-                        <AdminEditorField label="Label">
-                          <AdminEditorInput
-                            aria-label={`Video metric ${index + 1} label`}
-                            value={metric.label}
-                            onChange={(e) => {
-                              const metrics = [...(form.sections.video?.metrics ?? [])]
-                              metrics[index] = { ...metric, label: e.target.value }
-                              setForm((prev) => ({
-                                ...prev,
-                                sections: {
-                                  ...prev.sections,
-                                  video: { ...prev.sections.video, metrics },
-                                },
-                              }))
-                            }}
-                            placeholder="Attendees"
-                          />
-                        </AdminEditorField>
-                      </AdminFieldGrid>
-                    </div>
-                  ))}
-                  <AdminButton
-                    type="button"
-                    variant="ghost"
-                    disabled={(form.sections.video?.metrics ?? []).length >= 3}
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        sections: {
-                          ...prev.sections,
-                          video: {
-                            ...prev.sections.video,
-                            metrics: [
-                              ...(prev.sections.video?.metrics ?? []),
-                              { id: newId(), value: '', label: '' },
-                            ],
+          <AdminEditorSection
+            icon={Hash}
+            title="Hero metrics"
+            description="Stat row under the hero CTA."
+          >
+            <AdminEditorSubsection title="Metrics">
+              {form.hero.metrics.map((m, i) => (
+                <div key={m.id} className="admin-editor-item-group">
+                  <div className="admin-editor-item-group__header">
+                    <span className="admin-editor-item-group__title">Metric {i + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          hero: {
+                            ...prev.hero,
+                            metrics: prev.hero.metrics.filter((x) => x.id !== m.id),
                           },
-                        },
-                      }))
-                    }
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add metric
-                  </AdminButton>
-                </AdminEditorSubsection>
-                <AdminEditorSubsection title="Video assets">
-                  <MediaUrlField
-                    editor
-                    label="Video poster"
-                    value={form.video?.posterUrl ?? ''}
-                    onChange={(v) => patchVideo('posterUrl', v)}
-                  />
-                  <AdminEditorField label="Video URL" hint="MP4 recommended. Shown with play controls.">
-                    <AdminEditorInput
-                      value={form.video?.videoUrl ?? ''}
-                      onChange={(e) => patchVideo('videoUrl', e.target.value)}
-                      placeholder="https://…"
-                    />
-                  </AdminEditorField>
-                </AdminEditorSubsection>
-              </AdminEditorSection>
-
-              {(
-                [
-                  ['sponsors', 'Sponsors', Building2],
-                  ['partners', 'Partners', Users],
-                  ['speakers', 'Speakers', Users],
-                  ['agenda', 'Agenda', Calendar],
-                  ['tickets', 'Ticket passes', Ticket],
-                  ['testimonials', 'Testimonials', MessageSquare],
-                  ['pastSpeakers', 'Past speakers', Users],
-                ] as const
-              ).map(([key, title, Icon]) => (
-                <AdminEditorSection
-                  key={key}
-                  icon={Icon}
-                  title={title}
-                  description={`Copy for the ${title.toLowerCase()} section header.`}
-                >
-                  <AdminEditorSubsection title="Section header">
-                    <Field
-                      label="Eyebrow"
-                      value={form.sections[key]?.eyebrow ?? ''}
-                      onChange={(v) => patchSection(key, 'eyebrow', v)}
-                    />
-                    <Field
-                      label="Title"
-                      value={form.sections[key]?.title ?? ''}
-                      onChange={(v) => patchSection(key, 'title', v)}
-                    />
-                    {(key === 'speakers' || key === 'sponsors' || key === 'partners' || key === 'testimonials' || key === 'pastSpeakers') && (
-                      <Field
-                        label="Title accent"
-                        value={form.sections[key]?.titleAccent ?? ''}
-                        onChange={(v) => patchSection(key, 'titleAccent', v)}
+                        }))
+                      }
+                      className="admin-catalog-item__action admin-catalog-item__action--danger"
+                      aria-label="Remove metric"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <AdminFieldGrid columns={2}>
+                    <AdminEditorField label="Value">
+                      <AdminEditorInput
+                        aria-label={`Metric ${i + 1} value`}
+                        value={m.value}
+                        onChange={(e) => {
+                          const metrics = [...form.hero.metrics];
+                          metrics[i] = { ...m, value: e.target.value };
+                          setForm((prev) => ({ ...prev, hero: { ...prev.hero, metrics } }));
+                        }}
+                        placeholder="Value"
                       />
-                    )}
+                    </AdminEditorField>
+                    <AdminEditorField label="Label">
+                      <AdminEditorInput
+                        aria-label={`Metric ${i + 1} label`}
+                        value={m.label}
+                        onChange={(e) => {
+                          const metrics = [...form.hero.metrics];
+                          metrics[i] = { ...m, label: e.target.value };
+                          setForm((prev) => ({ ...prev, hero: { ...prev.hero, metrics } }));
+                        }}
+                        placeholder="Label"
+                      />
+                    </AdminEditorField>
+                  </AdminFieldGrid>
+                </div>
+              ))}
+              <AdminButton
+                type="button"
+                variant="ghost"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    hero: {
+                      ...prev.hero,
+                      metrics: [...prev.hero.metrics, { id: newId(), value: '', label: '' }],
+                    },
+                  }))
+                }
+              >
+                <Plus className="w-4 h-4" />
+                Add metric
+              </AdminButton>
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+        </>
+      )}
+
+      {activeTab === 'sections' && (
+        <>
+          <AdminEditorSection
+            icon={Video}
+            title="Featured video"
+            description="Dedicated video block below speakers on the homepage."
+          >
+            <AdminEditorSubsection title="Section copy">
+              <Field
+                label="Eyebrow"
+                value={form.sections.video?.eyebrow ?? ''}
+                onChange={(v) => patchSection('video', 'eyebrow', v)}
+              />
+              <Field
+                label="Title"
+                value={form.sections.video?.title ?? ''}
+                onChange={(v) => patchSection('video', 'title', v)}
+              />
+              <Field
+                label="Title accent"
+                value={form.sections.video?.titleAccent ?? ''}
+                onChange={(v) => patchSection('video', 'titleAccent', v)}
+              />
+              <Field
+                label="Lede"
+                value={form.sections.video?.lede ?? ''}
+                onChange={(v) => patchSection('video', 'lede', v)}
+                multiline
+              />
+              <Field
+                label="Register CTA"
+                value={form.sections.video?.ctaLabel ?? ''}
+                onChange={(v) => patchSection('video', 'ctaLabel', v)}
+              />
+              <Field
+                label="Register CTA URL"
+                value={form.sections.video?.ctaHref ?? ''}
+                onChange={(v) => patchSection('video', 'ctaHref', v)}
+              />
+              <Field
+                label="Agenda CTA label"
+                value={form.sections.video?.secondaryCtaLabel ?? ''}
+                onChange={(v) => patchSection('video', 'secondaryCtaLabel', v)}
+              />
+              <Field
+                label="Agenda CTA URL"
+                value={form.sections.video?.secondaryCtaHref ?? ''}
+                onChange={(v) => patchSection('video', 'secondaryCtaHref', v)}
+              />
+              <Field
+                label="Video caption"
+                value={form.sections.video?.caption ?? ''}
+                onChange={(v) => patchSection('video', 'caption', v)}
+                multiline
+              />
+            </AdminEditorSubsection>
+            <AdminEditorSubsection
+              title="Highlight metrics"
+              description="Up to three stat chips shown below the video. Leave empty to fall back to hero metrics."
+            >
+              {(form.sections.video?.metrics ?? []).map((metric, index) => (
+                <div key={metric.id} className="admin-editor-item-group">
+                  <div className="admin-editor-item-group__header">
+                    <span className="admin-editor-item-group__title">Metric {index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          sections: {
+                            ...prev.sections,
+                            video: {
+                              ...prev.sections.video,
+                              metrics: (prev.sections.video?.metrics ?? []).filter(
+                                (item) => item.id !== metric.id,
+                              ),
+                            },
+                          },
+                        }))
+                      }
+                      className="admin-catalog-item__action admin-catalog-item__action--danger"
+                      aria-label="Remove metric"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <AdminFieldGrid columns={2}>
+                    <AdminEditorField label="Value">
+                      <AdminEditorInput
+                        aria-label={`Video metric ${index + 1} value`}
+                        value={metric.value}
+                        onChange={(e) => {
+                          const metrics = [...(form.sections.video?.metrics ?? [])];
+                          metrics[index] = { ...metric, value: e.target.value };
+                          setForm((prev) => ({
+                            ...prev,
+                            sections: {
+                              ...prev.sections,
+                              video: { ...prev.sections.video, metrics },
+                            },
+                          }));
+                        }}
+                        placeholder="3,500+"
+                      />
+                    </AdminEditorField>
+                    <AdminEditorField label="Label">
+                      <AdminEditorInput
+                        aria-label={`Video metric ${index + 1} label`}
+                        value={metric.label}
+                        onChange={(e) => {
+                          const metrics = [...(form.sections.video?.metrics ?? [])];
+                          metrics[index] = { ...metric, label: e.target.value };
+                          setForm((prev) => ({
+                            ...prev,
+                            sections: {
+                              ...prev.sections,
+                              video: { ...prev.sections.video, metrics },
+                            },
+                          }));
+                        }}
+                        placeholder="Attendees"
+                      />
+                    </AdminEditorField>
+                  </AdminFieldGrid>
+                </div>
+              ))}
+              <AdminButton
+                type="button"
+                variant="ghost"
+                disabled={(form.sections.video?.metrics ?? []).length >= 3}
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    sections: {
+                      ...prev.sections,
+                      video: {
+                        ...prev.sections.video,
+                        metrics: [
+                          ...(prev.sections.video?.metrics ?? []),
+                          { id: newId(), value: '', label: '' },
+                        ],
+                      },
+                    },
+                  }))
+                }
+              >
+                <Plus className="w-4 h-4" />
+                Add metric
+              </AdminButton>
+            </AdminEditorSubsection>
+            <AdminEditorSubsection title="Video assets">
+              <MediaUrlField
+                editor
+                label="Video poster"
+                value={form.video?.posterUrl ?? ''}
+                onChange={(v) => patchVideo('posterUrl', v)}
+              />
+              <AdminEditorField
+                label="Video URL"
+                hint="MP4 or YouTube URL (watch, youtu.be, or embed). Loads on play."
+              >
+                <AdminEditorInput
+                  value={form.video?.videoUrl ?? ''}
+                  onChange={(e) => patchVideo('videoUrl', e.target.value)}
+                  placeholder="https://…"
+                />
+              </AdminEditorField>
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+
+          {(
+            [
+              ['sponsors', 'Sponsors', Building2],
+              ['partners', 'Partners', Users],
+              ['speakers', 'Speakers', Users],
+              ['agenda', 'Agenda', Calendar],
+              ['faq', 'FAQ', HelpCircle],
+              ['tickets', 'Ticket passes', Ticket],
+              ['testimonials', 'Testimonials', MessageSquare],
+              ['pastSpeakers', 'Past speakers', Users],
+            ] as const
+          ).map(([key, title, Icon]) => (
+            <AdminEditorSection
+              key={key}
+              icon={Icon}
+              title={title}
+              description={`Copy for the ${title.toLowerCase()} section header.`}
+            >
+              <AdminEditorSubsection title="Section header">
+                <Field
+                  label="Eyebrow"
+                  value={form.sections[key]?.eyebrow ?? ''}
+                  onChange={(v) => patchSection(key, 'eyebrow', v)}
+                />
+                <Field
+                  label="Title"
+                  value={form.sections[key]?.title ?? ''}
+                  onChange={(v) => patchSection(key, 'title', v)}
+                />
+                <Field
+                  label="Title accent"
+                  value={form.sections[key]?.titleAccent ?? ''}
+                  onChange={(v) => patchSection(key, 'titleAccent', v)}
+                />
+                <Field
+                  label="Lede"
+                  value={form.sections[key]?.lede ?? ''}
+                  onChange={(v) => patchSection(key, 'lede', v)}
+                  multiline
+                />
+                {(key === 'speakers' ||
+                  key === 'sponsors' ||
+                  key === 'agenda' ||
+                  key === 'pastSpeakers') && (
+                  <>
                     <Field
-                      label="Lede"
-                      value={form.sections[key]?.lede ?? ''}
-                      onChange={(v) => patchSection(key, 'lede', v)}
+                      label="CTA label"
+                      value={form.sections[key]?.ctaLabel ?? ''}
+                      onChange={(v) => patchSection(key, 'ctaLabel', v)}
+                    />
+                    <Field
+                      label="CTA URL"
+                      value={form.sections[key]?.ctaHref ?? ''}
+                      onChange={(v) => patchSection(key, 'ctaHref', v)}
+                    />
+                  </>
+                )}
+                {key === 'agenda' ? (
+                  <>
+                    <Field
+                      label="Track filter label"
+                      value={form.sections.agenda?.trackFilterLabel ?? ''}
+                      onChange={(v) => patchSection('agenda', 'trackFilterLabel', v)}
+                    />
+                    <Field
+                      label="Register footer CTA label"
+                      value={form.sections.agenda?.registerCtaLabel ?? ''}
+                      onChange={(v) => patchSection('agenda', 'registerCtaLabel', v)}
+                    />
+                    <Field
+                      label="Register footer CTA URL"
+                      value={form.sections.agenda?.registerCtaHref ?? ''}
+                      onChange={(v) => patchSection('agenda', 'registerCtaHref', v)}
+                    />
+                    <Field
+                      label="Download CTA label"
+                      value={form.sections.agenda?.downloadCtaLabel ?? ''}
+                      onChange={(v) => patchSection('agenda', 'downloadCtaLabel', v)}
+                    />
+                    <Field
+                      label="Empty state title"
+                      value={form.sections.agenda?.emptyStateTitle ?? ''}
+                      onChange={(v) => patchSection('agenda', 'emptyStateTitle', v)}
+                    />
+                    <Field
+                      label="Empty state body"
+                      value={form.sections.agenda?.emptyStateBody ?? ''}
+                      onChange={(v) => patchSection('agenda', 'emptyStateBody', v)}
                       multiline
                     />
-                    {(key === 'speakers' || key === 'sponsors' || key === 'agenda' || key === 'pastSpeakers') && (
-                      <>
-                        <Field
-                          label="CTA label"
-                          value={form.sections[key]?.ctaLabel ?? ''}
-                          onChange={(v) => patchSection(key, 'ctaLabel', v)}
-                        />
-                        <Field
-                          label="CTA URL"
-                          value={form.sections[key]?.ctaHref ?? ''}
-                          onChange={(v) => patchSection(key, 'ctaHref', v)}
-                        />
-                      </>
-                    )}
-                    {key === 'agenda' ? (
-                      <>
-                        <Field
-                          label="Track filter label"
-                          value={form.sections.agenda?.trackFilterLabel ?? ''}
-                          onChange={(v) => patchSection('agenda', 'trackFilterLabel', v)}
-                        />
-                        <Field
-                          label="Register footer CTA label"
-                          value={form.sections.agenda?.registerCtaLabel ?? ''}
-                          onChange={(v) => patchSection('agenda', 'registerCtaLabel', v)}
-                        />
-                        <Field
-                          label="Register footer CTA URL"
-                          value={form.sections.agenda?.registerCtaHref ?? ''}
-                          onChange={(v) => patchSection('agenda', 'registerCtaHref', v)}
-                        />
-                        <Field
-                          label="Download CTA label"
-                          value={form.sections.agenda?.downloadCtaLabel ?? ''}
-                          onChange={(v) => patchSection('agenda', 'downloadCtaLabel', v)}
-                        />
-                        <Field
-                          label="Empty state title"
-                          value={form.sections.agenda?.emptyStateTitle ?? ''}
-                          onChange={(v) => patchSection('agenda', 'emptyStateTitle', v)}
-                        />
-                        <Field
-                          label="Empty state body"
-                          value={form.sections.agenda?.emptyStateBody ?? ''}
-                          onChange={(v) => patchSection('agenda', 'emptyStateBody', v)}
-                          multiline
-                        />
-                      </>
-                    ) : null}
-                    {key === 'speakers' ? (
-                      <>
-                        <Field
-                          label="Featured badge label"
-                          value={form.sections.speakers?.featuredBadgeLabel ?? ''}
-                          onChange={(v) => patchSection('speakers', 'featuredBadgeLabel', v)}
-                        />
-                        <Field
-                          label="Empty state title"
-                          value={form.sections.speakers?.emptyStateTitle ?? ''}
-                          onChange={(v) => patchSection('speakers', 'emptyStateTitle', v)}
-                        />
-                        <Field
-                          label="Empty state body"
-                          value={form.sections.speakers?.emptyStateBody ?? ''}
-                          onChange={(v) => patchSection('speakers', 'emptyStateBody', v)}
-                          multiline
-                        />
-                      </>
-                    ) : null}
-                    {key === 'pastSpeakers' ? (
-                      <AdminEditorSubsection title="Alumni stats (optional)">
-                        {(form.sections.pastSpeakers?.metrics ?? []).map((metric, mi) => (
-                          <AdminFieldGrid key={metric.id} columns={2}>
-                            <AdminEditorField label="Value">
-                              <AdminEditorInput
-                                value={metric.value}
-                                onChange={(e) => {
-                                  const metrics = [...(form.sections.pastSpeakers?.metrics ?? [])];
-                                  metrics[mi] = { ...metric, value: e.target.value };
-                                  setForm((prev) => ({
-                                    ...prev,
-                                    sections: {
-                                      ...prev.sections,
-                                      pastSpeakers: { ...prev.sections.pastSpeakers, metrics },
-                                    },
-                                  }));
-                                }}
-                              />
-                            </AdminEditorField>
-                            <AdminEditorField label="Label">
-                              <AdminEditorInput
-                                value={metric.label}
-                                onChange={(e) => {
-                                  const metrics = [...(form.sections.pastSpeakers?.metrics ?? [])];
-                                  metrics[mi] = { ...metric, label: e.target.value };
-                                  setForm((prev) => ({
-                                    ...prev,
-                                    sections: {
-                                      ...prev.sections,
-                                      pastSpeakers: { ...prev.sections.pastSpeakers, metrics },
-                                    },
-                                  }));
-                                }}
-                              />
-                            </AdminEditorField>
-                          </AdminFieldGrid>
-                        ))}
-                        <AdminButton
-                          type="button"
-                          variant="ghost"
-                          disabled={(form.sections.pastSpeakers?.metrics ?? []).length >= 3}
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              sections: {
-                                ...prev.sections,
-                                pastSpeakers: {
-                                  ...prev.sections.pastSpeakers,
-                                  metrics: [
-                                    ...(prev.sections.pastSpeakers?.metrics ?? []),
-                                    { id: newId(), value: '', label: '' },
-                                  ],
+                  </>
+                ) : null}
+                {key === 'speakers' ? (
+                  <>
+                    <Field
+                      label="Featured badge label"
+                      value={form.sections.speakers?.featuredBadgeLabel ?? ''}
+                      onChange={(v) => patchSection('speakers', 'featuredBadgeLabel', v)}
+                    />
+                    <Field
+                      label="Empty state title"
+                      value={form.sections.speakers?.emptyStateTitle ?? ''}
+                      onChange={(v) => patchSection('speakers', 'emptyStateTitle', v)}
+                    />
+                    <Field
+                      label="Empty state body"
+                      value={form.sections.speakers?.emptyStateBody ?? ''}
+                      onChange={(v) => patchSection('speakers', 'emptyStateBody', v)}
+                      multiline
+                    />
+                  </>
+                ) : null}
+                {key === 'pastSpeakers' ? (
+                  <AdminEditorSubsection title="Alumni stats (optional)">
+                    {(form.sections.pastSpeakers?.metrics ?? []).map((metric, mi) => (
+                      <AdminFieldGrid key={metric.id} columns={2}>
+                        <AdminEditorField label="Value">
+                          <AdminEditorInput
+                            value={metric.value}
+                            onChange={(e) => {
+                              const metrics = [...(form.sections.pastSpeakers?.metrics ?? [])];
+                              metrics[mi] = { ...metric, value: e.target.value };
+                              setForm((prev) => ({
+                                ...prev,
+                                sections: {
+                                  ...prev.sections,
+                                  pastSpeakers: { ...prev.sections.pastSpeakers, metrics },
                                 },
-                              },
-                            }))
-                          }
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add stat
-                        </AdminButton>
-                      </AdminEditorSubsection>
-                    ) : null}
-                    {key === 'sponsors' ? (
-                      <>
-                        <Field
-                          label="Empty state title"
-                          value={form.sections.sponsors?.emptyStateTitle ?? ''}
-                          onChange={(v) => patchSection('sponsors', 'emptyStateTitle', v)}
-                        />
-                        <Field
-                          label="Empty state body"
-                          value={form.sections.sponsors?.emptyStateBody ?? ''}
-                          onChange={(v) => patchSection('sponsors', 'emptyStateBody', v)}
-                          multiline
-                        />
-                      </>
-                    ) : null}
+                              }));
+                            }}
+                          />
+                        </AdminEditorField>
+                        <AdminEditorField label="Label">
+                          <AdminEditorInput
+                            value={metric.label}
+                            onChange={(e) => {
+                              const metrics = [...(form.sections.pastSpeakers?.metrics ?? [])];
+                              metrics[mi] = { ...metric, label: e.target.value };
+                              setForm((prev) => ({
+                                ...prev,
+                                sections: {
+                                  ...prev.sections,
+                                  pastSpeakers: { ...prev.sections.pastSpeakers, metrics },
+                                },
+                              }));
+                            }}
+                          />
+                        </AdminEditorField>
+                      </AdminFieldGrid>
+                    ))}
+                    <AdminButton
+                      type="button"
+                      variant="ghost"
+                      disabled={(form.sections.pastSpeakers?.metrics ?? []).length >= 3}
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          sections: {
+                            ...prev.sections,
+                            pastSpeakers: {
+                              ...prev.sections.pastSpeakers,
+                              metrics: [
+                                ...(prev.sections.pastSpeakers?.metrics ?? []),
+                                { id: newId(), value: '', label: '' },
+                              ],
+                            },
+                          },
+                        }))
+                      }
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add stat
+                    </AdminButton>
                   </AdminEditorSubsection>
-                </AdminEditorSection>
-              ))}
+                ) : null}
+                {key === 'sponsors' ? (
+                  <>
+                    <Field
+                      label="Empty state title"
+                      value={form.sections.sponsors?.emptyStateTitle ?? ''}
+                      onChange={(v) => patchSection('sponsors', 'emptyStateTitle', v)}
+                    />
+                    <Field
+                      label="Empty state body"
+                      value={form.sections.sponsors?.emptyStateBody ?? ''}
+                      onChange={(v) => patchSection('sponsors', 'emptyStateBody', v)}
+                      multiline
+                    />
+                  </>
+                ) : null}
+              </AdminEditorSubsection>
+            </AdminEditorSection>
+          ))}
 
-              <AdminEditorSection
-                icon={Ticket}
-                title="Ticket tiers"
-                description="Pricing cards shown in the ticket passes section."
-              >
-                <AdminEditorSubsection title="Pricing tiers">
-                <SortableList
-                  items={form.tickets?.tiers ?? []}
-                  onReorder={(tiers) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      tickets: { ...prev.tickets, tiers },
-                    }))
-                  }
-                  renderItem={(tier, ti) => (
+          <AdminEditorSection
+            icon={Ticket}
+            title="Ticket tiers"
+            description="Pricing cards shown in the ticket passes section."
+          >
+            <AdminEditorSubsection title="Pricing tiers">
+              <SortableList
+                items={form.tickets?.tiers ?? []}
+                onReorder={(tiers) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    tickets: { ...prev.tickets, tiers },
+                  }))
+                }
+                renderItem={(tier, ti) => (
                   <div className="admin-editor-item-group">
                     <Row
                       onRemove={() =>
@@ -1019,7 +1067,14 @@ export const ConferenceManager: React.FC = () => {
                           tiers[ti] = { ...tier, name: e.target.value };
                           setForm((prev) => ({
                             ...prev,
-                            tickets: { ...prev.tickets, tiers, eyebrow: prev.tickets?.eyebrow, title: prev.tickets?.title, lede: prev.tickets?.lede },
+                            tickets: {
+                              ...prev.tickets,
+                              tiers,
+                              eyebrow: prev.tickets?.eyebrow,
+                              title: prev.tickets?.title,
+                              titleAccent: prev.tickets?.titleAccent,
+                              lede: prev.tickets?.lede,
+                            },
                           }));
                         }}
                         placeholder="Tier name"
@@ -1060,7 +1115,10 @@ export const ConferenceManager: React.FC = () => {
                           const tiers = [...(form.tickets?.tiers ?? [])];
                           tiers[ti] = {
                             ...tier,
-                            features: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
+                            features: e.target.value
+                              .split('\n')
+                              .map((s) => s.trim())
+                              .filter(Boolean),
                           };
                           setForm((prev) => ({
                             ...prev,
@@ -1101,325 +1159,329 @@ export const ConferenceManager: React.FC = () => {
                       Highlight as recommended
                     </label>
                   </div>
-                  )}
+                )}
+              />
+              <AdminButton
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  const newTier: ConferenceTicketTier = {
+                    id: newId(),
+                    name: 'New tier',
+                    price: '$0',
+                    description: '',
+                    features: [],
+                    recommended: false,
+                    ctaLabel: 'Get Tickets',
+                  };
+                  setForm((prev) => ({
+                    ...prev,
+                    tickets: {
+                      ...prev.tickets,
+                      tiers: [...(prev.tickets?.tiers ?? []), newTier],
+                    },
+                  }));
+                }}
+              >
+                <Plus className="w-4 h-4" /> Add ticket tier
+              </AdminButton>
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+        </>
+      )}
+
+      {activeTab === 'lists' && (
+        <>
+          <ListBlock
+            icon={Building2}
+            title="Sponsors"
+            description="Logo strip and sponsor links."
+            onAdd={() =>
+              setForm((prev) => ({
+                ...prev,
+                logos: [...prev.logos, { id: newId(), name: '' }],
+              }))
+            }
+          >
+            <SortableList
+              items={form.logos}
+              onReorder={(logos) => setForm((prev) => ({ ...prev, logos }))}
+              renderItem={(logo, i) => (
+                <CollapsibleListItem
+                  title={logo.name?.trim() ? logo.name.trim() : `Sponsor ${i + 1}`}
+                  onRemove={() => removeAt(setForm, 'logos', i)}
+                  defaultOpen={i === 0}
+                >
+                  <input
+                    aria-label={`Sponsor ${i + 1} name`}
+                    value={logo.name}
+                    onChange={(e) =>
+                      updateAt(setForm, 'logos', i, { ...logo, name: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Company name"
+                  />
+                  <MediaUrlField
+                    label="Logo image"
+                    value={logo.logoUrl ?? ''}
+                    onChange={(url) => updateAt(setForm, 'logos', i, { ...logo, logoUrl: url })}
+                  />
+                  <input
+                    aria-label={`Sponsor ${i + 1} website`}
+                    value={logo.websiteUrl ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'logos', i, { ...logo, websiteUrl: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="https://sponsor.com"
+                  />
+                  <input
+                    aria-label={`Sponsor ${i + 1} tier`}
+                    value={logo.tier ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'logos', i, { ...logo, tier: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Tier (e.g. Gold)"
+                  />
+                </CollapsibleListItem>
+              )}
+            />
+          </ListBlock>
+
+          <ListBlock
+            icon={Users}
+            title="Speakers"
+            description="Speaker cards with bios and talk metadata."
+            onAdd={() =>
+              setForm((prev) => ({
+                ...prev,
+                speakers: [
+                  ...prev.speakers,
+                  { id: newId(), name: '', title: '', company: '', image: '', roster: 'current' },
+                ],
+              }))
+            }
+          >
+            <AdminEditorSubsection title="Import past speakers (JSON)">
+              <AdminEditorField
+                label="Bulk import"
+                hint='Paste a JSON array: [{ "name": "...", "title": "...", "company": "...", "image": "...", "edition": "2024" }]'
+              >
+                <AdminEditorTextarea
+                  value={pastSpeakersImportJson}
+                  onChange={(e) => {
+                    setPastSpeakersImportJson(e.target.value);
+                    setPastSpeakersImportError('');
+                  }}
+                  rows={6}
+                  placeholder='[{"name":"Jane Doe","title":"CTO","company":"Acme","edition":"2024","image":"/media/..."}]'
                 />
-                <AdminButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    const newTier: ConferenceTicketTier = {
-                      id: newId(),
-                      name: 'New tier',
-                      price: '$0',
-                      description: '',
-                      features: [],
-                      recommended: false,
-                      ctaLabel: 'Get Tickets',
-                    };
+              </AdminEditorField>
+              {pastSpeakersImportError ? (
+                <p className="text-sm text-red-600">{pastSpeakersImportError}</p>
+              ) : null}
+              <AdminButton
+                type="button"
+                variant="ghost"
+                disabled={!pastSpeakersImportJson.trim()}
+                onClick={() => {
+                  try {
+                    const imported = parsePastSpeakersImport(pastSpeakersImportJson);
                     setForm((prev) => ({
                       ...prev,
-                      tickets: {
-                        ...prev.tickets,
-                        tiers: [...(prev.tickets?.tiers ?? []), newTier],
-                      },
+                      speakers: [...prev.speakers, ...imported],
                     }));
-                  }}
+                    setPastSpeakersImportJson('');
+                    setPastSpeakersImportError('');
+                    toast({
+                      variant: 'success',
+                      title: 'Past speakers imported',
+                      description: `${imported.length} alumni speaker${imported.length === 1 ? '' : 's'} added.`,
+                    });
+                  } catch (error) {
+                    setPastSpeakersImportError(
+                      error instanceof Error ? error.message : 'Invalid JSON.',
+                    );
+                  }
+                }}
+              >
+                Import past speakers
+              </AdminButton>
+            </AdminEditorSubsection>
+            <SortableList
+              items={form.speakers}
+              onReorder={(speakers) => setForm((prev) => ({ ...prev, speakers }))}
+              renderItem={(sp, i) => (
+                <CollapsibleListItem
+                  title={
+                    sp.name?.trim()
+                      ? `${sp.name.trim()}${sp.roster === 'past' ? ' · Alumni' : ''}`
+                      : `Speaker ${i + 1}`
+                  }
+                  onRemove={() => removeAt(setForm, 'speakers', i)}
+                  defaultOpen={i === 0}
                 >
-                  <Plus className="w-4 h-4" /> Add ticket tier
-                </AdminButton>
-                </AdminEditorSubsection>
-              </AdminEditorSection>
-            </>
-          )}
-
-          {activeTab === 'lists' && (
-            <>
-              <ListBlock
-                icon={Building2}
-                title="Sponsors"
-                description="Logo strip and sponsor links."
-                onAdd={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    logos: [...prev.logos, { id: newId(), name: '' }],
-                  }))
-                }
-              >
-                <SortableList
-                  items={form.logos}
-                  onReorder={(logos) => setForm((prev) => ({ ...prev, logos }))}
-                  renderItem={(logo, i) => (
-                  <CollapsibleListItem
-                    title={logo.name?.trim() ? logo.name.trim() : `Sponsor ${i + 1}`}
-                    onRemove={() => removeAt(setForm, 'logos', i)}
-                    defaultOpen={i === 0}
-                  >
+                  <input
+                    aria-label="Speaker name"
+                    value={sp.name}
+                    onChange={(e) =>
+                      updateAt(setForm, 'speakers', i, { ...sp, name: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Name"
+                  />
+                  <input
+                    aria-label="Speaker title"
+                    value={sp.title}
+                    onChange={(e) =>
+                      updateAt(setForm, 'speakers', i, { ...sp, title: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Title"
+                  />
+                  <input
+                    aria-label="Speaker company"
+                    value={sp.company}
+                    onChange={(e) =>
+                      updateAt(setForm, 'speakers', i, { ...sp, company: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Company"
+                  />
+                  <AdminEditorField label="Roster">
+                    <div className="flex flex-wrap gap-2">
+                      {(['current', 'past'] as const).map((roster) => (
+                        <button
+                          key={roster}
+                          type="button"
+                          className={cn(
+                            'admin-editor-input px-3 py-1.5 text-sm capitalize',
+                            (sp.roster ?? 'current') === roster &&
+                              'ring-2 ring-[var(--admin-accent)]',
+                          )}
+                          onClick={() =>
+                            updateAt(setForm, 'speakers', i, {
+                              ...sp,
+                              roster,
+                              featured: roster === 'past' ? false : sp.featured,
+                            })
+                          }
+                        >
+                          {roster === 'past' ? 'Past (alumni)' : 'Current'}
+                        </button>
+                      ))}
+                    </div>
+                  </AdminEditorField>
+                  {(sp.roster ?? 'current') === 'past' ? (
+                    <AdminEditorField label="Edition" hint="e.g. 2024 or Summit 2025">
+                      <AdminEditorInput
+                        value={sp.edition ?? ''}
+                        onChange={(e) =>
+                          updateAt(setForm, 'speakers', i, { ...sp, edition: e.target.value })
+                        }
+                        placeholder="2024"
+                        list={`speaker-editions-${sp.id}`}
+                      />
+                      <datalist id={`speaker-editions-${sp.id}`}>
+                        {getSpeakerEditions(form.speakers, 'past').map((edition) => (
+                          <option key={edition} value={edition} />
+                        ))}
+                      </datalist>
+                    </AdminEditorField>
+                  ) : null}
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
-                      aria-label={`Sponsor ${i + 1} name`}
-                      value={logo.name}
-                      onChange={(e) => updateAt(setForm, 'logos', i, { ...logo, name: e.target.value })}
-                      className="admin-editor-input"
-                      placeholder="Company name"
-                    />
-                    <MediaUrlField
-                      label="Logo image"
-                      value={logo.logoUrl ?? ''}
-                      onChange={(url) => updateAt(setForm, 'logos', i, { ...logo, logoUrl: url })}
-                    />
-                    <input
-                      aria-label={`Sponsor ${i + 1} website`}
-                      value={logo.websiteUrl ?? ''}
+                      type="checkbox"
+                      checked={sp.featured === true}
+                      disabled={(sp.roster ?? 'current') === 'past'}
                       onChange={(e) =>
-                        updateAt(setForm, 'logos', i, { ...logo, websiteUrl: e.target.value })
+                        updateAt(setForm, 'speakers', i, { ...sp, featured: e.target.checked })
                       }
-                      className="admin-editor-input"
-                      placeholder="https://sponsor.com"
+                      className="w-4 h-4 accent-[var(--admin-accent)]"
                     />
-                    <input
-                      aria-label={`Sponsor ${i + 1} tier`}
-                      value={logo.tier ?? ''}
-                      onChange={(e) => updateAt(setForm, 'logos', i, { ...logo, tier: e.target.value })}
-                      className="admin-editor-input"
-                      placeholder="Tier (e.g. Gold)"
-                    />
-                  </CollapsibleListItem>
-                  )}
-                />
-              </ListBlock>
-
-              <ListBlock
-                icon={Users}
-                title="Speakers"
-                description="Speaker cards with bios and talk metadata."
-                onAdd={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    speakers: [
-                      ...prev.speakers,
-                      { id: newId(), name: '', title: '', company: '', image: '', roster: 'current' },
-                    ],
-                  }))
-                }
-              >
-                <AdminEditorSubsection title="Import past speakers (JSON)">
-                  <AdminEditorField
-                    label="Bulk import"
-                    hint='Paste a JSON array: [{ "name": "...", "title": "...", "company": "...", "image": "...", "edition": "2024" }]'
-                  >
+                    Featured on summit homepage
+                  </label>
+                  <p className="text-xs text-[var(--admin-text-muted)]">
+                    Only current-roster speakers can be featured on the homepage carousel. Alumni
+                    appear in the Past speakers section and /speakers Alumni filter.
+                  </p>
+                  <MediaUrlField
+                    label="Photo"
+                    value={sp.image}
+                    onChange={(url) => updateAt(setForm, 'speakers', i, { ...sp, image: url })}
+                  />
+                  <AdminEditorField label="Bio">
                     <AdminEditorTextarea
-                      value={pastSpeakersImportJson}
-                      onChange={(e) => {
-                        setPastSpeakersImportJson(e.target.value);
-                        setPastSpeakersImportError('');
-                      }}
-                      rows={6}
-                      placeholder='[{"name":"Jane Doe","title":"CTO","company":"Acme","edition":"2024","image":"/media/..."}]'
+                      value={sp.bio ?? ''}
+                      onChange={(e) =>
+                        updateAt(setForm, 'speakers', i, { ...sp, bio: e.target.value })
+                      }
+                      rows={3}
                     />
                   </AdminEditorField>
-                  {pastSpeakersImportError ? (
-                    <p className="text-sm text-red-600">{pastSpeakersImportError}</p>
-                  ) : null}
-                  <AdminButton
-                    type="button"
-                    variant="ghost"
-                    disabled={!pastSpeakersImportJson.trim()}
-                    onClick={() => {
-                      try {
-                        const imported = parsePastSpeakersImport(pastSpeakersImportJson);
-                        setForm((prev) => ({
-                          ...prev,
-                          speakers: [...prev.speakers, ...imported],
-                        }));
-                        setPastSpeakersImportJson('');
-                        setPastSpeakersImportError('');
-                        toast({
-                          variant: 'success',
-                          title: 'Past speakers imported',
-                          description: `${imported.length} alumni speaker${imported.length === 1 ? '' : 's'} added.`,
-                        });
-                      } catch (error) {
-                        setPastSpeakersImportError(
-                          error instanceof Error ? error.message : 'Invalid JSON.',
-                        );
-                      }
-                    }}
-                  >
-                    Import past speakers
-                  </AdminButton>
-                </AdminEditorSubsection>
-                <SortableList
-                  items={form.speakers}
-                  onReorder={(speakers) => setForm((prev) => ({ ...prev, speakers }))}
-                  renderItem={(sp, i) => (
-                  <CollapsibleListItem
-                    title={
-                      sp.name?.trim()
-                        ? `${sp.name.trim()}${sp.roster === 'past' ? ' · Alumni' : ''}`
-                        : `Speaker ${i + 1}`
+                  <input
+                    aria-label="Talk title"
+                    value={sp.talkTitle ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'speakers', i, { ...sp, talkTitle: e.target.value })
                     }
-                    onRemove={() => removeAt(setForm, 'speakers', i)}
-                    defaultOpen={i === 0}
-                  >
-                    <input
-                      aria-label="Speaker name"
-                      value={sp.name}
-                      onChange={(e) =>
-                        updateAt(setForm, 'speakers', i, { ...sp, name: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Name"
-                    />
-                    <input
-                      aria-label="Speaker title"
-                      value={sp.title}
-                      onChange={(e) =>
-                        updateAt(setForm, 'speakers', i, { ...sp, title: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Title"
-                    />
-                    <input
-                      aria-label="Speaker company"
-                      value={sp.company}
-                      onChange={(e) =>
-                        updateAt(setForm, 'speakers', i, { ...sp, company: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Company"
-                    />
-                    <AdminEditorField label="Roster">
-                      <div className="flex flex-wrap gap-2">
-                        {(['current', 'past'] as const).map((roster) => (
-                          <button
-                            key={roster}
-                            type="button"
-                            className={cn(
-                              'admin-editor-input px-3 py-1.5 text-sm capitalize',
-                              (sp.roster ?? 'current') === roster && 'ring-2 ring-[var(--admin-accent)]',
-                            )}
-                            onClick={() =>
-                              updateAt(setForm, 'speakers', i, {
-                                ...sp,
-                                roster,
-                                featured: roster === 'past' ? false : sp.featured,
-                              })
-                            }
-                          >
-                            {roster === 'past' ? 'Past (alumni)' : 'Current'}
-                          </button>
-                        ))}
-                      </div>
-                    </AdminEditorField>
-                    {(sp.roster ?? 'current') === 'past' ? (
-                      <AdminEditorField label="Edition" hint="e.g. 2024 or Summit 2025">
-                        <AdminEditorInput
-                          value={sp.edition ?? ''}
-                          onChange={(e) =>
-                            updateAt(setForm, 'speakers', i, { ...sp, edition: e.target.value })
-                          }
-                          placeholder="2024"
-                          list={`speaker-editions-${sp.id}`}
-                        />
-                        <datalist id={`speaker-editions-${sp.id}`}>
-                          {getSpeakerEditions(form.speakers, 'past').map((edition) => (
-                            <option key={edition} value={edition} />
-                          ))}
-                        </datalist>
-                      </AdminEditorField>
-                    ) : null}
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={sp.featured === true}
-                        disabled={(sp.roster ?? 'current') === 'past'}
-                        onChange={(e) =>
-                          updateAt(setForm, 'speakers', i, { ...sp, featured: e.target.checked })
-                        }
-                        className="w-4 h-4 accent-[var(--admin-accent)]"
-                      />
-                      Featured on summit homepage
-                    </label>
-                    <p className="text-xs text-[var(--admin-text-muted)]">
-                      Only current-roster speakers can be featured on the homepage carousel.
-                      Alumni appear in the Past speakers section and /speakers Alumni filter.
-                    </p>
-                    <MediaUrlField
-                      label="Photo"
-                      value={sp.image}
-                      onChange={(url) => updateAt(setForm, 'speakers', i, { ...sp, image: url })}
-                    />
-                    <AdminEditorField label="Bio">
-                      <AdminEditorTextarea
-                        value={sp.bio ?? ''}
-                        onChange={(e) => updateAt(setForm, 'speakers', i, { ...sp, bio: e.target.value })}
-                        rows={3}
-                      />
-                    </AdminEditorField>
-                    <input
-                      aria-label="Talk title"
-                      value={sp.talkTitle ?? ''}
-                      onChange={(e) =>
-                        updateAt(setForm, 'speakers', i, { ...sp, talkTitle: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Talk title"
-                    />
-                    <input
-                      aria-label="Time slot"
-                      value={sp.timeSlot ?? ''}
-                      onChange={(e) =>
-                        updateAt(setForm, 'speakers', i, { ...sp, timeSlot: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Time slot"
-                    />
-                    <input
-                      aria-label="LinkedIn URL"
-                      value={sp.linkedIn ?? ''}
-                      onChange={(e) =>
-                        updateAt(setForm, 'speakers', i, { ...sp, linkedIn: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="LinkedIn URL"
-                    />
-                  </CollapsibleListItem>
-                  )}
-                />
-              </ListBlock>
+                    className="admin-editor-input"
+                    placeholder="Talk title"
+                  />
+                  <input
+                    aria-label="Time slot"
+                    value={sp.timeSlot ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'speakers', i, { ...sp, timeSlot: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Time slot"
+                  />
+                  <input
+                    aria-label="LinkedIn URL"
+                    value={sp.linkedIn ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'speakers', i, { ...sp, linkedIn: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="LinkedIn URL"
+                  />
+                </CollapsibleListItem>
+              )}
+            />
+          </ListBlock>
 
-              <ListBlock
-                icon={Calendar}
-                title="Agenda days"
-                description="Multi-day schedule with sessions."
-                onAdd={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    agenda: [
-                      ...prev.agenda,
-                      { id: newId(), label: 'New day', sessions: [] },
-                    ],
-                  }))
-                }
-              >
-                <SortableList
-                  items={form.agenda}
-                  onReorder={(agenda) => setForm((prev) => ({ ...prev, agenda }))}
-                  renderItem={(day, di) => (
-                  <CollapsibleListItem
-                    title={day.label?.trim() || `Day ${di + 1}`}
-                    onRemove={() => removeAt(setForm, 'agenda', di)}
-                    defaultOpen={di === 0}
-                  >
-                    <div className="space-y-3">
-                      <input
-                        aria-label="Day label"
-                        value={day.label}
-                        onChange={(e) =>
-                          updateAt(setForm, 'agenda', di, { ...day, label: e.target.value })
-                        }
-                        className="admin-editor-input"
-                        placeholder="Day label"
-                      />
+          <ListBlock
+            icon={Calendar}
+            title="Agenda days"
+            description="Multi-day schedule with sessions."
+            onAdd={() =>
+              setForm((prev) => ({
+                ...prev,
+                agenda: [...prev.agenda, { id: newId(), label: 'New day', sessions: [] }],
+              }))
+            }
+          >
+            <SortableList
+              items={form.agenda}
+              onReorder={(agenda) => setForm((prev) => ({ ...prev, agenda }))}
+              renderItem={(day, di) => (
+                <CollapsibleListItem
+                  title={day.label?.trim() || `Day ${di + 1}`}
+                  onRemove={() => removeAt(setForm, 'agenda', di)}
+                  defaultOpen={di === 0}
+                >
+                  <div className="space-y-3">
+                    <input
+                      aria-label="Day label"
+                      value={day.label}
+                      onChange={(e) =>
+                        updateAt(setForm, 'agenda', di, { ...day, label: e.target.value })
+                      }
+                      className="admin-editor-input"
+                      placeholder="Day label"
+                    />
                     <SortableList
                       items={day.sessions}
                       onReorder={(sessions) => {
@@ -1441,18 +1503,24 @@ export const ConferenceManager: React.FC = () => {
                               });
                             }}
                           >
-                            <span className="text-xs font-medium uppercase tracking-wide text-[var(--admin-text-muted)]">Session</span>
+                            <span className="text-xs font-medium uppercase tracking-wide text-[var(--admin-text-muted)]">
+                              Session
+                            </span>
                           </Row>
                           <input
                             value={session.time}
-                            onChange={(e) => patchSession(setForm, di, si, { time: e.target.value })}
+                            onChange={(e) =>
+                              patchSession(setForm, di, si, { time: e.target.value })
+                            }
                             className="admin-editor-input"
                             placeholder="Time"
                             aria-label="Session time"
                           />
                           <input
                             value={session.title}
-                            onChange={(e) => patchSession(setForm, di, si, { title: e.target.value })}
+                            onChange={(e) =>
+                              patchSession(setForm, di, si, { title: e.target.value })
+                            }
                             className="admin-editor-input"
                             placeholder="Title"
                             aria-label="Session title"
@@ -1468,7 +1536,9 @@ export const ConferenceManager: React.FC = () => {
                           />
                           <input
                             value={session.track}
-                            onChange={(e) => patchSession(setForm, di, si, { track: e.target.value })}
+                            onChange={(e) =>
+                              patchSession(setForm, di, si, { track: e.target.value })
+                            }
                             className="admin-editor-input"
                             placeholder="Track"
                             aria-label="Session track"
@@ -1504,7 +1574,9 @@ export const ConferenceManager: React.FC = () => {
                           />
                           <input
                             value={session.room ?? ''}
-                            onChange={(e) => patchSession(setForm, di, si, { room: e.target.value })}
+                            onChange={(e) =>
+                              patchSession(setForm, di, si, { room: e.target.value })
+                            }
                             className="admin-editor-input"
                             placeholder="Room"
                             aria-label="Session room"
@@ -1544,303 +1616,307 @@ export const ConferenceManager: React.FC = () => {
                     >
                       + Add session
                     </button>
-                    </div>
-                  </CollapsibleListItem>
-                  )}
-                />
-              </ListBlock>
-
-              <ListBlock
-                icon={Building2}
-                title="Partners"
-                description="Partner logos and outbound links."
-                onAdd={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    partners: [...(prev.partners ?? []), { id: newId(), name: '' }],
-                  }))
-                }
-              >
-                <SortableList
-                  items={form.partners ?? []}
-                  onReorder={(partners) => setForm((prev) => ({ ...prev, partners }))}
-                  renderItem={(partner, i) => (
-                  <CollapsibleListItem
-                    title={partner.name?.trim() ? partner.name.trim() : `Partner ${i + 1}`}
-                    onRemove={() => removeAt(setForm, 'partners', i)}
-                    defaultOpen={i === 0}
-                  >
-                    <input
-                      aria-label={`Partner ${i + 1} name`}
-                      value={partner.name}
-                      onChange={(e) =>
-                        updateAt(setForm, 'partners', i, { ...partner, name: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Partner name"
-                    />
-                    <MediaUrlField
-                      label="Logo"
-                      value={partner.logoUrl ?? ''}
-                      onChange={(url) => updateAt(setForm, 'partners', i, { ...partner, logoUrl: url })}
-                    />
-                    <input
-                      aria-label={`Partner ${i + 1} website`}
-                      value={partner.websiteUrl ?? ''}
-                      onChange={(e) =>
-                        updateAt(setForm, 'partners', i, { ...partner, websiteUrl: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="https://partner.com"
-                    />
-                  </CollapsibleListItem>
-                  )}
-                />
-              </ListBlock>
-
-              <ListBlock
-                icon={HelpCircle}
-                title="FAQ"
-                description="Questions and answers on the summit page."
-                onAdd={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    faq: [...prev.faq, { id: newId(), question: '', answer: '' }],
-                  }))
-                }
-              >
-                <SortableList
-                  items={form.faq}
-                  onReorder={(faq) => setForm((prev) => ({ ...prev, faq }))}
-                  renderItem={(item, i) => (
-                  <CollapsibleListItem
-                    title={item.question?.trim() ? item.question.trim() : `FAQ ${i + 1}`}
-                    onRemove={() => removeAt(setForm, 'faq', i)}
-                    defaultOpen={i === 0}
-                  >
-                    <input
-                      value={item.question}
-                      onChange={(e) =>
-                        updateAt(setForm, 'faq', i, { ...item, question: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Question"
-                      aria-label="FAQ question"
-                    />
-                    <AdminEditorField label="Answer">
-                      <AdminEditorTextarea
-                        value={item.answer}
-                        onChange={(e) =>
-                          updateAt(setForm, 'faq', i, { ...item, answer: e.target.value })
-                        }
-                        rows={3}
-                        placeholder="Answer"
-                      />
-                    </AdminEditorField>
-                  </CollapsibleListItem>
-                  )}
-                />
-              </ListBlock>
-
-              <ListBlock
-                icon={MessageSquare}
-                title="Testimonials"
-                description="Attendee quotes and social proof."
-                onAdd={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    testimonials: [
-                      ...(prev.testimonials ?? []),
-                      { id: newId(), quote: '', name: '', role: '', company: '' },
-                    ],
-                  }))
-                }
-              >
-                <SortableList
-                  items={form.testimonials ?? []}
-                  onReorder={(testimonials) => setForm((prev) => ({ ...prev, testimonials }))}
-                  renderItem={(item, i) => (
-                  <CollapsibleListItem
-                    title={item.quote?.trim() ? item.quote.trim() : `Testimonial ${i + 1}`}
-                    onRemove={() => removeAt(setForm, 'testimonials', i)}
-                    defaultOpen={i === 0}
-                  >
-                    <AdminEditorField label="Quote">
-                      <AdminEditorTextarea
-                        value={item.quote}
-                        onChange={(e) =>
-                          updateAt(setForm, 'testimonials', i, { ...item, quote: e.target.value })
-                        }
-                        rows={3}
-                        placeholder="What they said about the summit"
-                      />
-                    </AdminEditorField>
-                    <input
-                      aria-label="Attendee name"
-                      value={item.name}
-                      onChange={(e) =>
-                        updateAt(setForm, 'testimonials', i, { ...item, name: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Name"
-                    />
-                    <input
-                      aria-label="Role"
-                      value={item.role}
-                      onChange={(e) =>
-                        updateAt(setForm, 'testimonials', i, { ...item, role: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Role / title"
-                    />
-                    <input
-                      aria-label="Company"
-                      value={item.company ?? ''}
-                      onChange={(e) =>
-                        updateAt(setForm, 'testimonials', i, { ...item, company: e.target.value })
-                      }
-                      className="admin-editor-input"
-                      placeholder="Company (optional)"
-                    />
-                    <MediaUrlField
-                      label="Avatar photo"
-                      value={item.avatarUrl ?? ''}
-                      onChange={(url) =>
-                        updateAt(setForm, 'testimonials', i, { ...item, avatarUrl: url })
-                      }
-                    />
-                  </CollapsibleListItem>
-                  )}
-                />
-              </ListBlock>
-            </>
-          )}
-
-          {activeTab === 'speakers-page' && (
-            <SpeakersCatalogPageFields
-              catalog={speakersCatalog}
-              onCatalogChange={setSpeakersCatalog}
-              routeSeo={speakersRouteSeo}
-              onRouteSeoChange={setSpeakersRouteSeo}
-            />
-          )}
-
-          {activeTab === 'seo' && (
-            <AdminEditorSection
-              icon={Globe}
-              title="Search & sharing"
-              description="Applied to the conference homepage (/)."
-            >
-              <AdminEditorFields>
-                <RouteSeoFields path="/" value={routeSeo} onChange={setRouteSeo} />
-              </AdminEditorFields>
-            </AdminEditorSection>
-          )}
-
-          {(activeTab === 'embedded' ||
-            activeTab === 'visibility' ||
-            activeTab === 'advanced') && (
-            <SummitHomepageSettings
-              activeTab={activeTab}
-              sections={sectionsForm}
-              onSectionsChange={setSectionsForm}
-              book={bookForm}
-              onBookChange={setBookForm}
-              visibility={sharedVisibility}
-              onVisibilityChange={setSharedVisibility}
-              sectionVisibility={form.sectionVisibility}
-              onSectionVisibilityChange={(next) =>
-                setForm((prev) => ({ ...prev, sectionVisibility: next }))
-              }
-              customCss={customCss}
-              onCustomCssChange={setCustomCss}
-              scripts={scriptsForm}
-              onScriptsChange={setScriptsForm}
-              sectionOrder={form.sectionOrder}
-              embeddedBlockOrder={form.embeddedBlockOrder}
-              onSectionOrderChange={(next) =>
-                setForm((prev) => ({ ...prev, sectionOrder: next }))
-              }
-              onEmbeddedBlockOrderChange={(next) =>
-                setForm((prev) => ({ ...prev, embeddedBlockOrder: next }))
-              }
-              articleOptions={articleOptions}
-              eventOptions={eventOptions}
-            />
-          )}
-
-          {activeTab === 'publish' && (
-            <>
-              <AdminEditorSection
-                icon={ExternalLink}
-                title="Public visibility"
-                description="Control whether the summit homepage is live at /."
-              >
-                <AdminEditorSubsection title="Homepage status">
-                  <p className="admin-page-metrics-inline">
-                    <span>{form.published !== false ? 'Live' : 'Draft'}</span>
-                    <span aria-hidden>·</span>
-                    <span>{form.published !== false ? 'Public at /' : 'Shows 404'}</span>
-                    <span aria-hidden>·</span>
-                    <span>
-                      Countdown {form.countdownEnabled !== false ? 'on' : 'off'}
-                      {(() => {
-                        const startLabel = formatEventStartLabel(form.eventStartAt);
-                        return startLabel ? ` · ${startLabel}` : '';
-                      })()}
-                    </span>
-                  </p>
-                  <div className="admin-editor-visibility-row">
-                    <div
-                      className={cn(
-                        'admin-editor-visibility-row__icon',
-                        form.published !== false && 'admin-editor-visibility-row__icon--on',
-                      )}
-                      aria-hidden
-                    >
-                      {form.published !== false ? (
-                        <Eye className="w-4 h-4" />
-                      ) : (
-                        <EyeOff className="w-4 h-4" />
-                      )}
-                    </div>
-                    <Toggle
-                      label="Homepage live"
-                      description="When off, the public homepage (/) shows a not-found state."
-                      checked={form.published !== false}
-                      onChange={(checked) => setForm((prev) => ({ ...prev, published: checked }))}
-                    />
                   </div>
-                </AdminEditorSubsection>
-              </AdminEditorSection>
+                </CollapsibleListItem>
+              )}
+            />
+          </ListBlock>
 
-              <AdminEditorSection
-                icon={ExternalLink}
-                title="Saving & deployment"
-                description="Where summit content is stored and how to back it up."
-              >
-                <AdminEditorSubsection title="Persistence notes">
-                  <p className="admin-editor-field__hint leading-relaxed">
-                    When you click <strong>Save homepage</strong>, content is stored in the API
-                    database and uploaded media on the server disk — not in the browser.
-                    Changes persist across redeploys with a persistent disk for the database and uploads.
-                  </p>
-                  <ul className="mt-3 admin-editor-field__hint space-y-2 list-disc pl-5">
-                    <li><strong>Render:</strong> attach a disk at <code>/var/data</code></li>
-                    <li><strong>Docker:</strong> use the named volume for <code>/app/prisma</code></li>
-                    <li>Re-running seed does not overwrite existing CMS content</li>
-                    <li><strong>Backups:</strong> POST <code>/api/v1/admin/backup</code> or use Dashboard</li>
-                  </ul>
-                </AdminEditorSubsection>
-              </AdminEditorSection>
-            </>
-          )}
+          <ListBlock
+            icon={Building2}
+            title="Partners"
+            description="Partner logos and outbound links."
+            onAdd={() =>
+              setForm((prev) => ({
+                ...prev,
+                partners: [...(prev.partners ?? []), { id: newId(), name: '' }],
+              }))
+            }
+          >
+            <SortableList
+              items={form.partners ?? []}
+              onReorder={(partners) => setForm((prev) => ({ ...prev, partners }))}
+              renderItem={(partner, i) => (
+                <CollapsibleListItem
+                  title={partner.name?.trim() ? partner.name.trim() : `Partner ${i + 1}`}
+                  onRemove={() => removeAt(setForm, 'partners', i)}
+                  defaultOpen={i === 0}
+                >
+                  <input
+                    aria-label={`Partner ${i + 1} name`}
+                    value={partner.name}
+                    onChange={(e) =>
+                      updateAt(setForm, 'partners', i, { ...partner, name: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Partner name"
+                  />
+                  <MediaUrlField
+                    label="Logo"
+                    value={partner.logoUrl ?? ''}
+                    onChange={(url) =>
+                      updateAt(setForm, 'partners', i, { ...partner, logoUrl: url })
+                    }
+                  />
+                  <input
+                    aria-label={`Partner ${i + 1} website`}
+                    value={partner.websiteUrl ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'partners', i, { ...partner, websiteUrl: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="https://partner.com"
+                  />
+                </CollapsibleListItem>
+              )}
+            />
+          </ListBlock>
 
-          {saveError && (
-            <p className="admin-error mt-4" role="alert">
-              {saveError}
-            </p>
-          )}
+          <ListBlock
+            icon={HelpCircle}
+            title="FAQ"
+            description="Questions and answers on the summit page."
+            onAdd={() =>
+              setForm((prev) => ({
+                ...prev,
+                faq: [...prev.faq, { id: newId(), question: '', answer: '' }],
+              }))
+            }
+          >
+            <SortableList
+              items={form.faq}
+              onReorder={(faq) => setForm((prev) => ({ ...prev, faq }))}
+              renderItem={(item, i) => (
+                <CollapsibleListItem
+                  title={item.question?.trim() ? item.question.trim() : `FAQ ${i + 1}`}
+                  onRemove={() => removeAt(setForm, 'faq', i)}
+                  defaultOpen={i === 0}
+                >
+                  <input
+                    value={item.question}
+                    onChange={(e) =>
+                      updateAt(setForm, 'faq', i, { ...item, question: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Question"
+                    aria-label="FAQ question"
+                  />
+                  <AdminEditorField label="Answer">
+                    <AdminEditorTextarea
+                      value={item.answer}
+                      onChange={(e) =>
+                        updateAt(setForm, 'faq', i, { ...item, answer: e.target.value })
+                      }
+                      rows={3}
+                      placeholder="Answer"
+                    />
+                  </AdminEditorField>
+                </CollapsibleListItem>
+              )}
+            />
+          </ListBlock>
+
+          <ListBlock
+            icon={MessageSquare}
+            title="Testimonials"
+            description="Attendee quotes and social proof."
+            onAdd={() =>
+              setForm((prev) => ({
+                ...prev,
+                testimonials: [
+                  ...(prev.testimonials ?? []),
+                  { id: newId(), quote: '', name: '', role: '', company: '' },
+                ],
+              }))
+            }
+          >
+            <SortableList
+              items={form.testimonials ?? []}
+              onReorder={(testimonials) => setForm((prev) => ({ ...prev, testimonials }))}
+              renderItem={(item, i) => (
+                <CollapsibleListItem
+                  title={item.quote?.trim() ? item.quote.trim() : `Testimonial ${i + 1}`}
+                  onRemove={() => removeAt(setForm, 'testimonials', i)}
+                  defaultOpen={i === 0}
+                >
+                  <AdminEditorField label="Quote">
+                    <AdminEditorTextarea
+                      value={item.quote}
+                      onChange={(e) =>
+                        updateAt(setForm, 'testimonials', i, { ...item, quote: e.target.value })
+                      }
+                      rows={3}
+                      placeholder="What they said about the summit"
+                    />
+                  </AdminEditorField>
+                  <input
+                    aria-label="Attendee name"
+                    value={item.name}
+                    onChange={(e) =>
+                      updateAt(setForm, 'testimonials', i, { ...item, name: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Name"
+                  />
+                  <input
+                    aria-label="Role"
+                    value={item.role}
+                    onChange={(e) =>
+                      updateAt(setForm, 'testimonials', i, { ...item, role: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Role / title"
+                  />
+                  <input
+                    aria-label="Company"
+                    value={item.company ?? ''}
+                    onChange={(e) =>
+                      updateAt(setForm, 'testimonials', i, { ...item, company: e.target.value })
+                    }
+                    className="admin-editor-input"
+                    placeholder="Company (optional)"
+                  />
+                  <MediaUrlField
+                    label="Avatar photo"
+                    value={item.avatarUrl ?? ''}
+                    onChange={(url) =>
+                      updateAt(setForm, 'testimonials', i, { ...item, avatarUrl: url })
+                    }
+                  />
+                </CollapsibleListItem>
+              )}
+            />
+          </ListBlock>
+        </>
+      )}
+
+      {activeTab === 'speakers-page' && (
+        <SpeakersCatalogPageFields
+          catalog={speakersCatalog}
+          onCatalogChange={setSpeakersCatalog}
+          routeSeo={speakersRouteSeo}
+          onRouteSeoChange={setSpeakersRouteSeo}
+        />
+      )}
+
+      {activeTab === 'seo' && (
+        <AdminEditorSection
+          icon={Globe}
+          title="Search & sharing"
+          description="Applied to the conference homepage (/)."
+        >
+          <AdminEditorFields>
+            <RouteSeoFields path="/" value={routeSeo} onChange={setRouteSeo} />
+          </AdminEditorFields>
+        </AdminEditorSection>
+      )}
+
+      {(activeTab === 'embedded' || activeTab === 'visibility' || activeTab === 'advanced') && (
+        <SummitHomepageSettings
+          activeTab={activeTab}
+          sections={sectionsForm}
+          onSectionsChange={setSectionsForm}
+          book={bookForm}
+          onBookChange={setBookForm}
+          visibility={sharedVisibility}
+          onVisibilityChange={setSharedVisibility}
+          sectionVisibility={form.sectionVisibility}
+          onSectionVisibilityChange={(next) =>
+            setForm((prev) => ({ ...prev, sectionVisibility: next }))
+          }
+          customCss={customCss}
+          onCustomCssChange={setCustomCss}
+          scripts={scriptsForm}
+          onScriptsChange={setScriptsForm}
+          sectionOrder={form.sectionOrder}
+          embeddedBlockOrder={form.embeddedBlockOrder}
+          onSectionOrderChange={(next) => setForm((prev) => ({ ...prev, sectionOrder: next }))}
+          onEmbeddedBlockOrderChange={(next) =>
+            setForm((prev) => ({ ...prev, embeddedBlockOrder: next }))
+          }
+          articleOptions={articleOptions}
+          eventOptions={eventOptions}
+        />
+      )}
+
+      {activeTab === 'publish' && (
+        <>
+          <AdminEditorSection
+            icon={ExternalLink}
+            title="Public visibility"
+            description="Control whether the summit homepage is live at /."
+          >
+            <AdminEditorSubsection title="Homepage status">
+              <p className="admin-page-metrics-inline">
+                <span>{form.published !== false ? 'Live' : 'Draft'}</span>
+                <span aria-hidden>·</span>
+                <span>{form.published !== false ? 'Public at /' : 'Shows 404'}</span>
+                <span aria-hidden>·</span>
+                <span>
+                  Countdown {form.countdownEnabled !== false ? 'on' : 'off'}
+                  {(() => {
+                    const startLabel = formatEventStartLabel(form.eventStartAt);
+                    return startLabel ? ` · ${startLabel}` : '';
+                  })()}
+                </span>
+              </p>
+              <div className="admin-editor-visibility-row">
+                <div
+                  className={cn(
+                    'admin-editor-visibility-row__icon',
+                    form.published !== false && 'admin-editor-visibility-row__icon--on',
+                  )}
+                  aria-hidden
+                >
+                  {form.published !== false ? (
+                    <Eye className="w-4 h-4" />
+                  ) : (
+                    <EyeOff className="w-4 h-4" />
+                  )}
+                </div>
+                <Toggle
+                  label="Homepage live"
+                  description="When off, the public homepage (/) shows a not-found state."
+                  checked={form.published !== false}
+                  onChange={(checked) => setForm((prev) => ({ ...prev, published: checked }))}
+                />
+              </div>
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+
+          <AdminEditorSection
+            icon={ExternalLink}
+            title="Saving & deployment"
+            description="Where summit content is stored and how to back it up."
+          >
+            <AdminEditorSubsection title="Persistence notes">
+              <p className="admin-editor-field__hint leading-relaxed">
+                When you click <strong>Save homepage</strong>, content is stored in the API database
+                and uploaded media on the server disk — not in the browser. Changes persist across
+                redeploys with a persistent disk for the database and uploads.
+              </p>
+              <ul className="mt-3 admin-editor-field__hint space-y-2 list-disc pl-5">
+                <li>
+                  <strong>Render:</strong> attach a disk at <code>/var/data</code>
+                </li>
+                <li>
+                  <strong>Docker:</strong> use the named volume for <code>/app/prisma</code>
+                </li>
+                <li>Re-running seed does not overwrite existing CMS content</li>
+                <li>
+                  <strong>Backups:</strong> POST <code>/api/v1/admin/backup</code> or use Dashboard
+                </li>
+              </ul>
+            </AdminEditorSubsection>
+          </AdminEditorSection>
+        </>
+      )}
+
+      {saveError && (
+        <p className="admin-error mt-4" role="alert">
+          {saveError}
+        </p>
+      )}
     </AdminWorkspaceShell>
   );
 };
@@ -1859,11 +1935,7 @@ function Field({
   return (
     <AdminEditorField label={label} value={multiline ? undefined : value}>
       {multiline ? (
-        <AdminEditorTextarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={3}
-        />
+        <AdminEditorTextarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} />
       ) : (
         <AdminEditorInput value={value} onChange={(e) => onChange(e.target.value)} />
       )}
@@ -1937,13 +2009,7 @@ function CollapsibleListItem({
   );
 }
 
-function Row({
-  children,
-  onRemove,
-}: {
-  children: React.ReactNode;
-  onRemove: () => void;
-}) {
+function Row({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
   return (
     <div className="admin-editor-item-group__header">
       <div className="flex-1 min-w-0">{children}</div>

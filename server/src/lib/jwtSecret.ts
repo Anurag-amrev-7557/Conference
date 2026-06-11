@@ -2,6 +2,11 @@ const DEV_FALLBACK = 'supersecret';
 
 let devWarningLogged = false;
 
+function failProduction(message: string): never {
+  console.error(`[jwtSecret] ${message}`);
+  process.exit(1);
+}
+
 /**
  * Resolves JWT signing secret with production fail-fast (SEC-01).
  */
@@ -11,11 +16,10 @@ export function getJwtSecret(): string {
 
   if (isProduction) {
     if (!secret) {
-      console.warn('[jwtSecret] JWT_SECRET missing in production. Using fallback secret; update env immediately.');
-      return DEV_FALLBACK;
+      failProduction('JWT_SECRET is required in production. Refusing to start.');
     }
     if (secret === DEV_FALLBACK) {
-      console.warn('[jwtSecret] JWT_SECRET uses default fallback in production; rotate this secret immediately.');
+      failProduction('JWT_SECRET must not use the default fallback in production.');
     }
     return secret;
   }

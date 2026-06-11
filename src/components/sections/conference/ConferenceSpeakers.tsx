@@ -1,38 +1,36 @@
-import { ArrowUpRight } from 'lucide-react'
-import { useMemo, useState, type CSSProperties } from 'react'
-import { useConferenceContent } from '../../../hooks/useConferenceContent'
-import {
-  getCurrentSpeakers,
-  getHomepageSpeakers,
-} from '../../../lib/speakers'
-import { resolveCtaHref, SectionCtaLink } from '../../../lib/sectionCta'
-import type { ConferenceSectionCopy } from '../../../lib/websiteData'
-import { SpeakerDetailDialog } from '../../speakers/SpeakerDetailDialog'
-import { SectionCarousel, SectionCarouselItem } from '../SectionCarousel'
-import { ConferenceSectionHeader } from './ConferenceSectionHeader'
-import { ConferenceSectionShell } from './ConferenceSectionShell'
-import { SpeakerCard } from './SpeakerCard'
-import type { ConferenceSpeaker } from '../../../lib/websiteData'
+import { ArrowUpRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useConferenceContent } from '../../../hooks/useConferenceContent';
+import { getCurrentSpeakers, getHomepageSpeakers } from '../../../lib/speakers';
+import { resolveCtaHref, SectionCtaLink } from '../../../lib/sectionCta';
+import type { ConferenceSectionCopy } from '../../../lib/websiteData';
+import { SpeakerDetailDialog } from '../../speakers/SpeakerDetailDialog';
+import { SectionCarousel } from '../SectionCarousel';
+import { ConferenceSectionHeader } from './ConferenceSectionHeader';
+import { ConferenceSectionShell } from './ConferenceSectionShell';
+import { SpeakerCarouselItem } from './SpeakerCarouselItem';
+import { SpeakerCard } from './SpeakerCard';
+import type { ConferenceSpeaker } from '../../../lib/websiteData';
 
 function getSpeakersSectionCtaLabel(
   copy: ConferenceSectionCopy | undefined,
   speakerCount: number,
 ): string {
-  const cms = copy?.ctaLabel?.trim()
+  const cms = copy?.ctaLabel?.trim();
   if (cms && !/agenda/i.test(cms)) {
-    return cms
+    return cms;
   }
   if (speakerCount > 0) {
-    return `Meet all ${speakerCount} speakers`
+    return `Meet all ${speakerCount} speakers`;
   }
-  return 'Meet all speakers'
+  return 'Meet all speakers';
 }
 
 export function ConferenceSpeakers() {
-  const conference = useConferenceContent()
-  const { speakers, sections } = conference
-  const copy = sections.speakers
-  const publishableSpeakers = useMemo(() => getCurrentSpeakers(speakers), [speakers])
+  const conference = useConferenceContent();
+  const { speakers, sections } = conference;
+  const copy = sections.speakers;
+  const publishableSpeakers = useMemo(() => getCurrentSpeakers(speakers), [speakers]);
   const featuredSpeakers = useMemo(
     () =>
       getHomepageSpeakers(speakers, {
@@ -40,14 +38,14 @@ export function ConferenceSpeakers() {
         maxFeatured: conference.maxFeaturedSpeakers,
       }),
     [speakers, conference.homepageSpeakerIds, conference.maxFeaturedSpeakers],
-  )
-  const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null)
+  );
+  const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null);
 
   const lede =
     copy?.lede?.trim() ||
     (publishableSpeakers.length > 0
       ? `Featuring ${featuredSpeakers.length} of ${publishableSpeakers.length} summit voices — innovators and leaders shaping the future of AI.`
-      : 'Learn directly from the innovators and leaders who are shaping the future of AI.')
+      : 'Learn directly from the innovators and leaders who are shaping the future of AI.');
 
   const catalogCta =
     publishableSpeakers.length > 0 ? (
@@ -61,7 +59,7 @@ export function ConferenceSpeakers() {
           aria-hidden
         />
       </SectionCtaLink>
-    ) : null
+    ) : null;
 
   return (
     <>
@@ -109,17 +107,9 @@ export function ConferenceSpeakers() {
             ) : null}
           </div>
         ) : (
-          <SectionCarousel
-            ariaLabel="Featured speakers"
-            variant="speakers"
-            showScrollHints
-          >
+          <SectionCarousel ariaLabel="Featured speakers" variant="speakers" showScrollHints>
             {featuredSpeakers.map((speaker, idx) => (
-              <SectionCarouselItem
-                key={speaker.id}
-                className="speaker-card-item"
-                style={{ '--speaker-i': idx } as CSSProperties}
-              >
+              <SpeakerCarouselItem key={speaker.id} itemIndex={idx}>
                 <SpeakerCard
                   speaker={speaker}
                   priority={idx < 2}
@@ -127,16 +117,13 @@ export function ConferenceSpeakers() {
                   showTalkChip
                   onSelect={setSelectedSpeaker}
                 />
-              </SectionCarouselItem>
+              </SpeakerCarouselItem>
             ))}
           </SectionCarousel>
         )}
       </ConferenceSectionShell>
 
-      <SpeakerDetailDialog
-        speaker={selectedSpeaker}
-        onClose={() => setSelectedSpeaker(null)}
-      />
+      <SpeakerDetailDialog speaker={selectedSpeaker} onClose={() => setSelectedSpeaker(null)} />
     </>
-  )
+  );
 }

@@ -1,43 +1,44 @@
-import { useMemo, useState } from "react"
-import { Link } from "react-router-dom"
-import { ArrowUpRight, Clock, MapPin } from "lucide-react"
-import { useWebsiteData } from "../components/WebsiteDataProvider"
-import type { AppEvent } from "../lib/websiteData"
-import { formatEventDayLabel } from "../lib/eventDates"
-import { usePagination } from "../lib/usePagination"
-import { Footer } from "../components/Footer"
-import { FinalCTA } from "../components/sections/FinalCTA"
-import { CatalogHero } from "../components/catalog/CatalogHero"
-import { CatalogToolbar } from "../components/catalog/CatalogToolbar"
-import { CatalogPagination } from "../components/catalog/CatalogPagination"
-import { SeoHead } from "../seo/SeoHead"
-import { JsonLd } from "../seo/JsonLd"
-import { usePageSeo } from "../seo/usePageSeo"
-import { usePageJsonLd } from "../seo/usePageJsonLd"
-import { renderCatalogTitle } from "../lib/renderSectionTitle"
-import { isEffectivelyPublished } from "../lib/publishSchedule"
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, Clock, MapPin } from 'lucide-react';
+import { useWebsiteData } from '../components/WebsiteDataProvider';
+import type { AppEvent } from '../lib/websiteData';
+import { formatEventDayLabel } from '../lib/eventDates';
+import { usePagination } from '../lib/usePagination';
+import { Footer } from '../components/Footer';
+import { FinalCTA } from '../components/sections/FinalCTA';
+import { CatalogHero } from '../components/catalog/CatalogHero';
+import { CatalogToolbar } from '../components/catalog/CatalogToolbar';
+import { CatalogPagination } from '../components/catalog/CatalogPagination';
+import { SeoHead } from '../seo/SeoHead';
+import { JsonLd } from '../seo/JsonLd';
+import { usePageSeo } from '../seo/usePageSeo';
+import { usePageJsonLd } from '../seo/usePageJsonLd';
+import { renderCatalogTitle } from '../lib/renderSectionTitle';
+import { isEffectivelyPublished } from '../lib/publishSchedule';
+import { RoutePageSkeleton } from '../components/RoutePageSkeleton';
 
-type EventFilter = "All" | "Upcoming" | "Past"
+type EventFilter = 'All' | 'Upcoming' | 'Past';
 
 const EVENT_FILTERS = [
-  { id: "All", label: "All" },
-  { id: "Past", label: "Past Events" },
-  { id: "Upcoming", label: "Upcoming Events" },
-] as const
+  { id: 'All', label: 'All' },
+  { id: 'Past', label: 'Past Events' },
+  { id: 'Upcoming', label: 'Upcoming Events' },
+] as const;
 
 export function EventsPage() {
-  const { data } = useWebsiteData()
-  const seo = usePageSeo()
-  const jsonLd = usePageJsonLd()
-  const [activeFilter, setActiveFilter] = useState<EventFilter>("All")
-  const [searchQuery, setSearchQuery] = useState("")
+  const { data, loading } = useWebsiteData();
+  const seo = usePageSeo();
+  const jsonLd = usePageJsonLd();
+  const [activeFilter, setActiveFilter] = useState<EventFilter>('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const q = searchQuery.trim().toLowerCase()
+  const q = searchQuery.trim().toLowerCase();
 
   const filteredEvents = useMemo(() => {
-    let list = data.events.filter((e) => isEffectivelyPublished(e))
-    if (activeFilter !== "All") {
-      list = list.filter((e) => e.status === activeFilter)
+    let list = data.events.filter((e) => isEffectivelyPublished(e));
+    if (activeFilter !== 'All') {
+      list = list.filter((e) => e.status === activeFilter);
     }
     if (q) {
       list = list.filter(
@@ -46,22 +47,28 @@ export function EventsPage() {
           e.host.toLowerCase().includes(q) ||
           e.location.toLowerCase().includes(q) ||
           e.tags.some((t) => t.name.toLowerCase().includes(q)),
-      )
+      );
     }
-    return list
-  }, [data.events, activeFilter, q])
+    return list;
+  }, [data.events, activeFilter, q]);
 
-  const catalog = data.settings.catalogPages?.events
-  const pageSize = catalog?.pageSize && catalog.pageSize > 0 ? catalog.pageSize : 9
-  const { page, setPage, totalPages, paginatedItems, showPagination } =
-    usePagination(filteredEvents, pageSize)
+  const catalog = data.settings.catalogPages?.events;
+  const pageSize = catalog?.pageSize && catalog.pageSize > 0 ? catalog.pageSize : 9;
+  const { page, setPage, totalPages, paginatedItems, showPagination } = usePagination(
+    filteredEvents,
+    pageSize,
+  );
 
   const resetFilters = () => {
-    setActiveFilter("All")
-    setSearchQuery("")
-  }
+    setActiveFilter('All');
+    setSearchQuery('');
+  };
 
-  const publishedCount = data.events.filter((e) => isEffectivelyPublished(e)).length
+  const publishedCount = data.events.filter((e) => isEffectivelyPublished(e)).length;
+
+  if (loading && publishedCount === 0) {
+    return <RoutePageSkeleton />;
+  }
 
   return (
     <>
@@ -69,19 +76,20 @@ export function EventsPage() {
       <JsonLd graph={jsonLd} />
       <div className="events-page overflow-x-hidden public-page-shell public-inner-page">
         <CatalogHero
-          eyebrow={data.settings.catalogPages?.events?.eyebrow?.trim() || "Events"}
-          title={renderCatalogTitle(data.settings.catalogPages?.events, (
+          eyebrow={data.settings.catalogPages?.events?.eyebrow?.trim() || 'Events'}
+          title={renderCatalogTitle(
+            data.settings.catalogPages?.events,
             <>
-              Where AI leaders <em>come together</em>
-            </>
-          ))}
+              Where AI leaders <span className="editorial-accent">come together</span>
+            </>,
+          )}
           lede={
             data.settings.catalogPages?.events?.lede?.trim() ||
-            "Explore upcoming masterclasses, networking sessions, and venture workshops—built for founders shaping the future of agentic AI."
+            'Explore upcoming masterclasses, networking sessions, and venture workshops—built for founders shaping the future of agentic AI.'
           }
         />
 
-        <main className="catalog-main premium-catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12">
+        <div className="catalog-main premium-catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12">
           <CatalogToolbar
             searchId="events-search-input"
             searchPlaceholder="Search for events"
@@ -100,7 +108,7 @@ export function EventsPage() {
           ) : filteredEvents.length === 0 ? (
             <div className="events-empty">
               <p>No events match your search.</p>
-              {(q || activeFilter !== "All") && (
+              {(q || activeFilter !== 'All') && (
                 <button type="button" className="events-empty__reset" onClick={resetFilters}>
                   Show all events
                 </button>
@@ -120,8 +128,7 @@ export function EventsPage() {
               ) : null}
             </>
           )}
-
-        </main>
+        </div>
 
         {(data.settings.visibility.finalCta ?? true) ? (
           <FinalCTA useSummitRegister surfaceVariant="muted" />
@@ -130,11 +137,11 @@ export function EventsPage() {
         <Footer />
       </div>
     </>
-  )
+  );
 }
 
 function EventGridCard({ event }: { event: AppEvent }) {
-  const { day, weekday } = formatEventDayLabel(event)
+  const { day, weekday } = formatEventDayLabel(event);
 
   return (
     <article className="events-grid-card group">
@@ -142,8 +149,8 @@ function EventGridCard({ event }: { event: AppEvent }) {
         <div className="events-grid-card__media">
           <img
             src={event.thumbnail}
-            alt=""
-            className={`events-grid-card__img${event.status === "Past" ? " events-grid-card__img--past" : ""}`}
+            alt={event.title}
+            className={`events-grid-card__img${event.status === 'Past' ? ' events-grid-card__img--past' : ''}`}
             loading="lazy"
           />
           <span
@@ -191,5 +198,5 @@ function EventGridCard({ event }: { event: AppEvent }) {
         <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
       </Link>
     </article>
-  )
+  );
 }

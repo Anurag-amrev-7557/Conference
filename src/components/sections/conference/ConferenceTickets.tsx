@@ -1,15 +1,15 @@
-import { Check } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { useConferenceContent } from '../../../hooks/useConferenceContent'
-import { defaultConferenceTickets } from '../../../lib/conferenceDefaults'
-import { ConferenceSectionHeader } from './ConferenceSectionHeader'
-import { ConferenceSectionShell } from './ConferenceSectionShell'
+import { Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useConferenceContent } from '../../../hooks/useConferenceContent';
+import { defaultConferenceTickets } from '../../../lib/conferenceDefaults';
+import { ConferenceSectionHeader } from './ConferenceSectionHeader';
+import { ConferenceSectionShell } from './ConferenceSectionShell';
 
 export function ConferenceTickets() {
-  const content = useConferenceContent()
-  const block = content.tickets ?? defaultConferenceTickets
-  const tiers = block.tiers?.length ? block.tiers : defaultConferenceTickets.tiers
-  const copy = content.sections.tickets
+  const content = useConferenceContent();
+  const block = content.tickets ?? defaultConferenceTickets;
+  const tiers = block.tiers?.length ? block.tiers : defaultConferenceTickets.tiers;
+  const copy = content.sections.tickets;
 
   return (
     <ConferenceSectionShell
@@ -22,7 +22,7 @@ export function ConferenceTickets() {
         copy={{
           eyebrow: copy?.eyebrow ?? block.eyebrow,
           title: copy?.title ?? block.title,
-          titleAccent: copy?.titleAccent,
+          titleAccent: copy?.titleAccent ?? block.titleAccent,
           lede: copy?.lede ?? block.lede,
         }}
         fallback={
@@ -69,5 +69,5 @@ export function ConferenceTickets() {
         ))}
       </div>
     </ConferenceSectionShell>
-  )
+  );
 }

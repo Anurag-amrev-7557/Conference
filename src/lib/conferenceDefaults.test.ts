@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { mergeConferenceContent } from './conferenceDefaults'
+import { describe, expect, it } from 'vitest';
+import { mergeConferenceContent } from './conferenceDefaults';
 
 describe('mergeConferenceContent', () => {
   it('preserves video section metrics from patch', () => {
@@ -12,13 +12,13 @@ describe('mergeConferenceContent', () => {
           ],
         },
       },
-    })
+    });
 
     expect(merged.sections.video?.metrics).toEqual([
       { id: 'vm1', value: '99+', label: 'Labs' },
       { id: 'vm2', value: '12', label: 'Tracks' },
-    ])
-  })
+    ]);
+  });
 
   it('preserves featured speakers from patch', () => {
     const merged = mergeConferenceContent({
@@ -32,10 +32,25 @@ describe('mergeConferenceContent', () => {
           featured: true,
         },
       ],
-    })
+    });
 
-    expect(merged.speakers[0]?.featured).toBe(true)
-  })
+    expect(merged.speakers[0]?.featured).toBe(true);
+  });
+
+  it('restores full agenda title split when CMS only stores the accent word', () => {
+    const merged = mergeConferenceContent({
+      sections: {
+        agenda: {
+          eyebrow: 'Program',
+          title: 'Agenda',
+          lede: 'Two days. Zero fluff. Just the sessions worth your calendar',
+        },
+      },
+    });
+
+    expect(merged.sections.agenda?.title).toBe('Full');
+    expect(merged.sections.agenda?.titleAccent).toBe('Agenda');
+  });
 
   it('keeps default video metrics when patch metrics are empty', () => {
     const merged = mergeConferenceContent({
@@ -44,8 +59,8 @@ describe('mergeConferenceContent', () => {
           metrics: [],
         },
       },
-    })
+    });
 
-    expect((merged.sections.video?.metrics?.length ?? 0)).toBeGreaterThan(0)
-  })
-})
+    expect(merged.sections.video?.metrics?.length ?? 0).toBeGreaterThan(0);
+  });
+});

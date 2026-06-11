@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Article, AppEvent } from '../../lib/websiteData';
 import { api } from '../../lib/api';
+import { getAdminToken } from '../../lib/adminAuth';
 
 const CONTENT_REFRESHED = 'website-content-refreshed';
-
-function getAdminToken() {
-  return localStorage.getItem('adminToken') || '';
-}
 
 /** Reload admin catalog lists when shared public content refreshes (e.g. after saves). */
 export function notifyWebsiteContentRefreshed() {
@@ -18,9 +15,11 @@ type ReloadOptions = {
   silent?: boolean;
 };
 
-function useAdminCatalogList<T>(
-  fetcher: (token: string) => Promise<T[]>,
-): { items: T[]; loading: boolean; reload: (options?: ReloadOptions) => Promise<T[]> } {
+function useAdminCatalogList<T>(fetcher: (token: string) => Promise<T[]>): {
+  items: T[];
+  loading: boolean;
+  reload: (options?: ReloadOptions) => Promise<T[]>;
+} {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const hasLoadedRef = useRef(false);
@@ -28,44 +27,47 @@ function useAdminCatalogList<T>(
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
-  const reload = useCallback(async (options?: ReloadOptions): Promise<T[]> => {
-    if (reloadInFlightRef.current) {
-      return reloadInFlightRef.current;
-    }
-
-    const run = async (): Promise<T[]> => {
-      const token = getAdminToken();
-      const silent = options?.silent ?? hasLoadedRef.current;
-
-      if (!token) {
-        setItems([]);
-        setLoading(false);
-        return [];
+  const reload = useCallback(
+    async (options?: ReloadOptions): Promise<T[]> => {
+      if (reloadInFlightRef.current) {
+        return reloadInFlightRef.current;
       }
 
-      if (!silent) {
-        setLoading(true);
-      }
+      const run = async (): Promise<T[]> => {
+        const token = getAdminToken();
+        const silent = options?.silent ?? hasLoadedRef.current;
 
-      try {
-        const next = await fetcher(token);
-        setItems(next);
-        hasLoadedRef.current = true;
-        return next;
-      } catch (error) {
-        console.error('Failed to load admin catalog:', error);
-        return itemsRef.current;
-      } finally {
-        if (!silent) {
+        if (!token) {
+          setItems([]);
           setLoading(false);
+          return [];
         }
-        reloadInFlightRef.current = null;
-      }
-    };
 
-    reloadInFlightRef.current = run();
-    return reloadInFlightRef.current;
-  }, [fetcher]);
+        if (!silent) {
+          setLoading(true);
+        }
+
+        try {
+          const next = await fetcher(token);
+          setItems(next);
+          hasLoadedRef.current = true;
+          return next;
+        } catch (error) {
+          console.error('Failed to load admin catalog:', error);
+          return itemsRef.current;
+        } finally {
+          if (!silent) {
+            setLoading(false);
+          }
+          reloadInFlightRef.current = null;
+        }
+      };
+
+      reloadInFlightRef.current = run();
+      return reloadInFlightRef.current;
+    },
+    [fetcher],
+  );
 
   useEffect(() => {
     void reload({ silent: false });

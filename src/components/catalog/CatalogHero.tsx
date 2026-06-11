@@ -1,9 +1,10 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react';
+import { EditorialSectionHeader } from '../ui/EditorialSectionHeader';
 
 interface CatalogHeroProps {
-  eyebrow: string
-  title: ReactNode
-  lede: string
+  eyebrow: string;
+  title: ReactNode;
+  lede: string;
 }
 
 export function CatalogHero({ eyebrow, title, lede }: CatalogHeroProps) {
@@ -12,10 +13,20 @@ export function CatalogHero({ eyebrow, title, lede }: CatalogHeroProps) {
       <div className="catalog-hero__pattern" aria-hidden />
       <div className="catalog-hero__glow" aria-hidden />
       <div className="catalog-hero__inner">
-        <span className="catalog-hero__eyebrow">{eyebrow}</span>
-        <h1 className="catalog-hero__title">{title}</h1>
-        <p className="catalog-hero__lede">{lede}</p>
+        <EditorialSectionHeader
+          eyebrow={eyebrow}
+          title={title}
+          fallback={title}
+          lede={lede}
+          centered
+          headingAs="h1"
+          headingVariant="section"
+          className="catalog-hero__header"
+          eyebrowClassName="catalog-hero__eyebrow"
+          titleClassName="catalog-hero__title"
+          ledeClassName="catalog-hero__lede"
+        />
       </div>
     </header>
-  )
+  );
 }

@@ -1,10 +1,11 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import '../admin/admin.css';
-import { AdminLayout } from '../components/admin/AdminLayout';
+import { AdminLayoutOutlet } from '../components/admin/AdminLayoutOutlet';
 import { ProtectedAdminRoute } from '../components/admin/ProtectedAdminRoute';
 import { AdminWorkspaceNavProvider } from '../components/admin/admin-workspace-nav';
 import { AdminAuthLogin } from '../components/admin/AdminAuthLogin';
+import { AdminSessionProvider } from '../components/admin/useAdminSession';
 import { setAdminSession, clearAdminSession } from '../components/admin/useAdminSession';
 import { SeoHead } from '../seo/SeoHead';
 import { usePageSeo } from '../seo/usePageSeo';
@@ -16,6 +17,7 @@ import { AdminThemeProvider } from '../components/admin/providers/AdminThemeProv
 import { UndoRedoProvider } from '../components/admin/providers/UndoRedoProvider';
 import { PageLoader } from '../components/admin/ui/Skeleton';
 import { api } from '../lib/api';
+import { clearAdminAuth, getAdminToken } from '../lib/adminAuth';
 import { config } from '../lib/config';
 import { notifyAdminSessionChanged } from '../lib/adminSessionEvents';
 
@@ -35,10 +37,14 @@ const ConferenceManager = lazy(() =>
   import('../components/admin/ConferenceManager').then((m) => ({ default: m.ConferenceManager })),
 );
 const RegistrationManager = lazy(() =>
-  import('../components/admin/RegistrationManager').then((m) => ({ default: m.RegistrationManager })),
+  import('../components/admin/RegistrationManager').then((m) => ({
+    default: m.RegistrationManager,
+  })),
 );
 const DesignSystemManager = lazy(() =>
-  import('../components/admin/DesignSystemManager').then((m) => ({ default: m.DesignSystemManager })),
+  import('../components/admin/DesignSystemManager').then((m) => ({
+    default: m.DesignSystemManager,
+  })),
 );
 const MediaManager = lazy(() =>
   import('../components/admin/MediaManager').then((m) => ({ default: m.MediaManager })),
@@ -54,18 +60,32 @@ function ManagerSuspense({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader variant="dashboard" />}>{children}</Suspense>;
 }
 
+function ProtectedManager({
+  pageId,
+  children,
+}: {
+  pageId: Parameters<typeof ProtectedAdminRoute>[0]['pageId'];
+  children: React.ReactNode;
+}) {
+  return (
+    <ProtectedAdminRoute pageId={pageId}>
+      <ManagerSuspense>{children}</ManagerSuspense>
+    </ProtectedAdminRoute>
+  );
+}
+
 export const AdminPage: React.FC = () => {
   const seo = usePageSeo();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [sessionChecking, setSessionChecking] = useState(
-    !!localStorage.getItem('adminToken')
+    !!localStorage.getItem(config.admin.sessionKey),
   );
   const [sessionError, setSessionError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
+    const hasSessionHint = localStorage.getItem(config.admin.sessionKey);
+    if (!hasSessionHint) {
       setSessionChecking(false);
       return;
     }
@@ -73,22 +93,19 @@ export const AdminPage: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const me = await api.getAdminMe(token);
+        const me = await api.getAdminMe(getAdminToken());
         if (!cancelled) {
           setIsAuthenticated(true);
           setAdminSession(me.role, me.username);
         }
       } catch (err: unknown) {
         const status = (err as { status?: number })?.status;
-        if (status === 401 || !cancelled) {
-          localStorage.removeItem('adminToken');
-          localStorage.removeItem(config.admin.sessionKey);
+        if (!cancelled && (status === 401 || status === 403)) {
+          await clearAdminAuth();
           clearAdminSession();
           notifyAdminSessionChanged();
-          if (!cancelled) {
-            setIsAuthenticated(false);
-            setSessionError('Your session has expired. Please sign in again.');
-          }
+          setIsAuthenticated(false);
+          setSessionError('Your session has expired. Please sign in again.');
         }
       } finally {
         if (!cancelled) setSessionChecking(false);
@@ -100,10 +117,9 @@ export const AdminPage: React.FC = () => {
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem(config.admin.sessionKey);
+    await clearAdminAuth();
     clearAdminSession();
     notifyAdminSessionChanged();
     navigate('/admin');
@@ -138,146 +154,116 @@ export const AdminPage: React.FC = () => {
 
   return (
     <>
-    <SeoHead seo={seo} />
-    <AdminThemeProvider>
-    <ToastProvider>
-    <AutosaveProvider>
-    <UndoRedoProvider>
-    <AdminProviders>
-    <AdminWorkspaceNavProvider>
-    <ErrorBoundary fallbackTitle="Admin workspace error">
-    <Routes>
-      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-      <Route 
-        path="dashboard" 
-        element={
-          <ProtectedAdminRoute pageId="dashboard">
-            <AdminLayout title="Dashboard" onLogout={handleLogout}>
-              <ManagerSuspense>
-                <AdminOverview />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        } 
-      />
-      <Route path="pages" element={<Navigate to="/admin/conference" replace />} />
-      <Route path="homepage" element={<Navigate to="/admin/conference" replace />} />
-      <Route 
-        path="design" 
-        element={
-          <ProtectedAdminRoute pageId="design">
-            <AdminLayout title="Brand & theme" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <DesignSystemManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        } 
-      />
-      <Route
-        path="media"
-        element={
-          <ProtectedAdminRoute pageId="media">
-            <AdminLayout title="Media" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <MediaManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        }
-      />
-      <Route 
-        path="blogs" 
-        element={
-          <ProtectedAdminRoute pageId="blogs">
-            <AdminLayout title="Blog workspace" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <BlogManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        } 
-      />
-      <Route 
-        path="events" 
-        element={
-          <ProtectedAdminRoute pageId="events">
-            <AdminLayout title="Events workspace" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <EventManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        } 
-      />
-      <Route 
-        path="settings" 
-        element={
-          <ProtectedAdminRoute pageId="settings">
-            <AdminLayout title="Site settings" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <SettingsManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        } 
-      />
-      <Route
-        path="conference"
-        element={
-          <ProtectedAdminRoute pageId="conference">
-            <AdminLayout title="Summit homepage" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <ConferenceManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        }
-      />
-      <Route
-        path="newsletter"
-        element={
-          <ProtectedAdminRoute pageId="newsletter">
-            <AdminLayout title="Newsletter signups" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <NewsletterManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        }
-      />
-      <Route
-        path="users"
-        element={
-          <ProtectedAdminRoute pageId="users">
-            <AdminLayout title="Team & access" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <AdminUsersManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        }
-      />
-      <Route
-        path="registrations"
-        element={
-          <ProtectedAdminRoute pageId="registrations">
-            <AdminLayout title="Registrations" onLogout={handleLogout} wide>
-              <ManagerSuspense>
-                <RegistrationManager />
-              </ManagerSuspense>
-            </AdminLayout>
-          </ProtectedAdminRoute>
-        }
-      />
-    </Routes>
-    </ErrorBoundary>
-    </AdminWorkspaceNavProvider>
-    </AdminProviders>
-    </UndoRedoProvider>
-    </AutosaveProvider>
-    </ToastProvider>
-    </AdminThemeProvider>
+      <SeoHead seo={seo} />
+      <AdminThemeProvider>
+        <ToastProvider>
+          <AutosaveProvider>
+            <UndoRedoProvider>
+              <AdminProviders>
+                <AdminSessionProvider>
+                  <AdminWorkspaceNavProvider>
+                    <ErrorBoundary fallbackTitle="Admin workspace error">
+                      <Routes>
+                        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route element={<AdminLayoutOutlet onLogout={handleLogout} />}>
+                          <Route
+                            path="dashboard"
+                            element={
+                              <ProtectedManager pageId="dashboard">
+                                <AdminOverview />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="pages"
+                            element={<Navigate to="/admin/conference" replace />}
+                          />
+                          <Route
+                            path="homepage"
+                            element={<Navigate to="/admin/conference" replace />}
+                          />
+                          <Route
+                            path="design"
+                            element={
+                              <ProtectedManager pageId="design">
+                                <DesignSystemManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="media"
+                            element={
+                              <ProtectedManager pageId="media">
+                                <MediaManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="blogs"
+                            element={
+                              <ProtectedManager pageId="blogs">
+                                <BlogManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="events"
+                            element={
+                              <ProtectedManager pageId="events">
+                                <EventManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="settings"
+                            element={
+                              <ProtectedManager pageId="settings">
+                                <SettingsManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="conference"
+                            element={
+                              <ProtectedManager pageId="conference">
+                                <ConferenceManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="newsletter"
+                            element={
+                              <ProtectedManager pageId="newsletter">
+                                <NewsletterManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="users"
+                            element={
+                              <ProtectedManager pageId="users">
+                                <AdminUsersManager />
+                              </ProtectedManager>
+                            }
+                          />
+                          <Route
+                            path="registrations"
+                            element={
+                              <ProtectedManager pageId="registrations">
+                                <RegistrationManager />
+                              </ProtectedManager>
+                            }
+                          />
+                        </Route>
+                      </Routes>
+                    </ErrorBoundary>
+                  </AdminWorkspaceNavProvider>
+                </AdminSessionProvider>
+              </AdminProviders>
+            </UndoRedoProvider>
+          </AutosaveProvider>
+        </ToastProvider>
+      </AdminThemeProvider>
     </>
   );
 };

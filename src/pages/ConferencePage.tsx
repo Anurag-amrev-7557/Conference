@@ -2,11 +2,11 @@ import { ConferenceHero } from '../components/sections/conference/ConferenceHero
 import { ConferenceSpeakers } from '../components/sections/conference/ConferenceSpeakers';
 import { ConferenceVideo } from '../components/sections/conference/ConferenceVideo';
 import { ConferenceAgenda } from '../components/sections/conference/ConferenceAgenda';
-import { ConferenceSponsors } from '../components/sections/conference/ConferenceSponsors'
-import { ConferencePartners } from '../components/sections/conference/ConferencePartners'
-import { ConferenceFaq } from '../components/sections/conference/ConferenceFaq'
-import { ConferenceTickets } from '../components/sections/conference/ConferenceTickets'
-import { ConferenceCountdown } from '../components/sections/conference/ConferenceCountdown'
+import { ConferenceSponsors } from '../components/sections/conference/ConferenceSponsors';
+import { ConferencePartners } from '../components/sections/conference/ConferencePartners';
+import { ConferenceFaq } from '../components/sections/conference/ConferenceFaq';
+import { ConferenceTickets } from '../components/sections/conference/ConferenceTickets';
+import { ConferenceCountdown } from '../components/sections/conference/ConferenceCountdown';
 import { ConferenceVenue } from '../components/sections/conference/ConferenceVenue';
 import { ConferenceTestimonials } from '../components/sections/conference/ConferenceTestimonials';
 import { ConferencePastSpeakers } from '../components/sections/conference/ConferencePastSpeakers';
@@ -19,10 +19,7 @@ import { SeoHead } from '../seo/SeoHead';
 import { usePageSeo } from '../seo/usePageSeo';
 import { useConferenceContent } from '../hooks/useConferenceContent';
 import { conferenceSectionVisible } from '../lib/conferenceDefaults';
-import {
-  resolveEmbeddedBlockOrder,
-  resolveSectionOrder,
-} from '../lib/conferenceSectionOrder';
+import { resolveEmbeddedBlockOrder, resolveSectionOrder } from '../lib/conferenceSectionOrder';
 import type { ConferenceSectionId, EmbeddedBlockId } from '../lib/websiteData';
 import { NotFoundPage } from './NotFoundPage';
 import { BookShowcase } from '../components/sections/BookShowcase';
@@ -98,7 +95,7 @@ export function ConferencePage() {
     <>
       <SeoHead seo={seo} />
 
-      <main className="w-full min-h-screen text-text public-page-shell conference-page-shell overflow-x-hidden">
+      <div className="w-full min-h-screen text-text public-page-shell conference-page-shell overflow-x-hidden">
         {conferenceSectionVisible(sectionVis, 'hero') ? <ConferenceHero /> : null}
 
         <div className="conference-flow public-flow-stack">
@@ -112,7 +109,7 @@ export function ConferencePage() {
         </div>
 
         {(visibility.footer ?? true) ? <Footer /> : null}
-      </main>
+      </div>
     </>
   );
 }

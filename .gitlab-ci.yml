@@ -5,7 +5,7 @@
 #
 # Required GitLab CI/CD variables (Settings → CI/CD → Variables):
 #   EC2_HOST, EC2_USER, EC2_SSH_PRIVATE_KEY (File), DEPLOY_PATH
-#   S3_FRONTEND_BUCKET, STAGING_VITE_API_URL, STAGING_VITE_ADMIN_PASSWORD
+#   S3_FRONTEND_BUCKET, STAGING_VITE_API_URL
 #   CLOUDFRONT_DISTRIBUTION_ID (optional)
 #
 # See docs/AWS_CICD.md for full setup.
@@ -39,6 +39,7 @@ verify_frontend:
   script:
     - npm ci
     - npm run lint
+    - npm test
     - npx tsc -b
     - PRERENDER_SKIP=1 npm run build:no-prerender
   rules:
@@ -101,9 +102,6 @@ build_frontend:
         echo "STAGING_VITE_API_URL not set — using placeholder for artifact build"
       else
         export VITE_API_URL="$STAGING_VITE_API_URL"
-      fi
-      if [ -n "$STAGING_VITE_ADMIN_PASSWORD" ]; then
-        export VITE_ADMIN_PASSWORD="$STAGING_VITE_ADMIN_PASSWORD"
       fi
     - npm run build:staging
   artifacts:

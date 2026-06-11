@@ -1,14 +1,21 @@
-import { Helmet } from 'react-helmet-async'
-import type { PageSeo } from './types'
+import { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
+import type { PageSeo } from './types';
 
 export function SeoHead({ seo }: { seo: PageSeo }) {
+  const title = seo.title?.trim() || 'Superhumanly';
+
+  useEffect(() => {
+    document.title = title;
+  }, [title]);
+
   return (
     <Helmet>
-      <title>{seo.title}</title>
+      <title>{title}</title>
       <meta name="description" content={seo.description} />
       <link rel="canonical" href={seo.canonical} />
       <meta property="og:type" content={seo.ogType} />
-      <meta property="og:title" content={seo.title} />
+      <meta property="og:title" content={title} />
       <meta property="og:description" content={seo.description} />
       <meta property="og:image" content={seo.ogImage} />
       <meta property="og:url" content={seo.ogUrl} />
@@ -16,7 +23,7 @@ export function SeoHead({ seo }: { seo: PageSeo }) {
       {seo.ogLocale ? <meta property="og:locale" content={seo.ogLocale} /> : null}
       <meta name="twitter:card" content="summary_large_image" />
       {seo.twitterSite ? <meta name="twitter:site" content={seo.twitterSite} /> : null}
-      <meta name="twitter:title" content={seo.title} />
+      <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={seo.description} />
       <meta name="twitter:image" content={seo.ogImage} />
       <meta name="twitter:url" content={seo.ogUrl} />
@@ -25,5 +32,5 @@ export function SeoHead({ seo }: { seo: PageSeo }) {
         <meta name="google-site-verification" content={seo.googleSiteVerification} />
       ) : null}
     </Helmet>
-  )
+  );
 }

@@ -1,5 +1,6 @@
 import { readDomCmsBootstrap } from './cmsBootstrap';
 import type { CmsBootstrapPayload } from './cmsBootstrap';
+import { BOOTSTRAP_URL } from './apiBase';
 
 declare global {
   interface Window {
@@ -7,8 +8,6 @@ declare global {
     __CMS_BOOTSTRAP_PROMISE__?: Promise<CmsBootstrapPayload | null>;
   }
 }
-
-const BOOTSTRAP_URL = '/api/v1/content/bootstrap';
 
 function pickNewerBootstrap(
   inline: CmsBootstrapPayload | null,

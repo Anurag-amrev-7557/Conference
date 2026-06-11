@@ -1,7 +1,7 @@
 /** In-route loading placeholder — navbar stays mounted via PublicLayout. */
 export function RoutePageSkeleton() {
   return (
-    <main
+    <div
       className="public-page-shell min-h-[calc(100vh-var(--header-offset,5.5rem))] w-full"
       aria-busy="true"
       aria-live="polite"
@@ -19,6 +19,6 @@ export function RoutePageSkeleton() {
         </div>
       </div>
       <p className="sr-only">Loading page…</p>
-    </main>
-  )
+    </div>
+  );
 }

@@ -1,13 +1,13 @@
-import { useConferenceContent } from '../../../hooks/useConferenceContent'
-import { resolveAssetUrl } from '../../../lib/assetUrl'
-import { ConferenceSectionHeader } from './ConferenceSectionHeader'
-import { ConferenceSectionShell } from './ConferenceSectionShell'
+import { useConferenceContent } from '../../../hooks/useConferenceContent';
+import { resolveAssetUrl } from '../../../lib/assetUrl';
+import { ConferenceSectionHeader } from './ConferenceSectionHeader';
+import { ConferenceSectionShell } from './ConferenceSectionShell';
 
 export function ConferenceTestimonials() {
-  const { testimonials, sections } = useConferenceContent()
-  const copy = sections.testimonials
+  const { testimonials, sections } = useConferenceContent();
+  const copy = sections.testimonials;
 
-  if (!testimonials?.length) return null
+  if (!testimonials?.length) return null;
 
   return (
     <ConferenceSectionShell
@@ -39,7 +39,7 @@ export function ConferenceTestimonials() {
               {item.avatarUrl?.trim() ? (
                 <img
                   src={resolveAssetUrl(item.avatarUrl)}
-                  alt=""
+                  alt={item.name}
                   className="w-11 h-11 rounded-full object-cover shrink-0"
                   loading="lazy"
                 />
@@ -62,5 +62,5 @@ export function ConferenceTestimonials() {
         ))}
       </ul>
     </ConferenceSectionShell>
-  )
+  );
 }

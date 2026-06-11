@@ -1,73 +1,83 @@
-# React + TypeScript + Vite
+# Book Website (Superhumanly Playbook)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Marketing site and admin CMS for the Superhumanly Agentic Playbook — React 19 SPA with an Express/Prisma API.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Layer    | Technology                                                |
+| -------- | --------------------------------------------------------- |
+| Frontend | React 19, Vite 8, Tailwind 4, React Router 7              |
+| API      | Express, Prisma, PostgreSQL (production)                  |
+| Deploy   | Firebase Hosting + Render API (primary), Vercel supported |
 
-## React Compiler
+## Quick start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Frontend
+cp .env.example .env.local   # optional for local API override
+npm ci
+npm run dev                  # http://localhost:5173
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# API (separate terminal)
+cd server
+cp .env.example .env
+# Set DATABASE_URL, JWT_SECRET, ADMIN_PASSWORD
+npm ci
+npx prisma migrate dev
+ADMIN_PASSWORD='your-secure-password' npm run seed
+npm run dev                  # http://localhost:3001
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Production deploy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Primary path:** [docs/FIREBASE_DEPLOY.md](docs/FIREBASE_DEPLOY.md)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Deploy the API to Render using `render.yaml` and `server/.env.example`.
+2. Set `VITE_API_URL` and `VITE_API_ORIGIN` in `.env.production`.
+3. Run `npm run firebase-build` (requires `VITE_API_URL`).
+4. `firebase deploy --only hosting`
+5. Run `node scripts/smoke-production.mjs` against your live URLs.
+
+**Post-deploy SEO:** Production builds fetch `robots.txt` and `sitemap.xml` from the API into `dist/`. For full slug meta tags, run prerender when the API is reachable:
+
+```bash
+VITE_API_URL=https://your-api.onrender.com/api/v1 npm run build
 ```
+
+CI builds use `PRERENDER_SKIP=1` for speed; schedule a prerendered build after CMS content changes.
+
+## Environment variables
+
+| Variable          | Where          | Required                 |
+| ----------------- | -------------- | ------------------------ |
+| `VITE_API_URL`    | Frontend build | Yes (production)         |
+| `VITE_API_ORIGIN` | Frontend build | Recommended              |
+| `JWT_SECRET`      | API            | Yes (production)         |
+| `ADMIN_PASSWORD`  | API seed       | Yes (for `npm run seed`) |
+| `DATABASE_URL`    | API            | Yes                      |
+| `SITE_URL`        | API            | Yes (production)         |
+
+See `.env.example`, `.env.production.example`, and `server/.env.example`.
+
+## Scripts
+
+| Command                    | Description                                         |
+| -------------------------- | --------------------------------------------------- |
+| `npm run dev`              | Vite dev server with API proxy                      |
+| `npm run build`            | Full build + prerender                              |
+| `npm run firebase-build`   | Production build for Firebase (strips heavy assets) |
+| `npm test`                 | Frontend unit tests (Vitest)                        |
+| `npm run smoke:production` | Post-deploy smoke checks                            |
+| `cd server && npm test`    | API unit + integration tests                        |
+
+## Security
+
+- Admin auth uses **httpOnly cookies** (not localStorage).
+- `JWT_SECRET` must be set in production — the API refuses to start without it.
+- Third-party scripts from the CMS require cookie consent and pass a domain allowlist.
+
+## Documentation
+
+- [Firebase + Render deploy](docs/FIREBASE_DEPLOY.md)
+- [Docker / local runbook](docs/deployment.md)
+- [Admin user guide](docs/ADMIN-USER-GUIDE.md)

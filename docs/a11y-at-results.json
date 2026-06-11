@@ -1,0 +1,660 @@
+{
+  "generatedAt": "2026-06-11T13:59:10.119Z",
+  "baseUrl": "http://localhost:5173",
+  "adminAuth": {
+    "ok": true
+  },
+  "adminAxe": [
+    {
+      "label": "admin /admin/dashboard (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/design (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/media (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/blogs (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/events (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/settings (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/conference (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/newsletter (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/users (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/registrations (light)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/dashboard (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/design (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/media (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/blogs (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/events (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/settings (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/conference (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/newsletter (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/users (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "label": "admin /admin/registrations (dark)",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    }
+  ],
+  "publicAxe": [
+    {
+      "label": "public /",
+      "violations": [],
+      "incomplete": 2,
+      "passes": 29
+    },
+    {
+      "label": "public /register",
+      "violations": [],
+      "incomplete": 2,
+      "passes": 28
+    },
+    {
+      "label": "public /blog",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "label": "public /speakers",
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    }
+  ],
+  "landmarks": [
+    {
+      "flow": "home-skip-link",
+      "route": "/",
+      "main": 1,
+      "nav": 4,
+      "h1": 1,
+      "title": "Superhumanly Summit 2026 | The Premier AI Conference",
+      "lang": "en"
+    },
+    {
+      "flow": "register-form",
+      "route": "/register",
+      "main": 1,
+      "nav": 4,
+      "h1": 1,
+      "title": "Register — Superhumanly Summit 2026",
+      "lang": "en"
+    },
+    {
+      "flow": "blog-index",
+      "route": "/blog",
+      "main": 1,
+      "nav": 4,
+      "h1": 1,
+      "title": "Insights & Playbook — Superhumanly Blog",
+      "lang": "en"
+    },
+    {
+      "flow": "speakers-catalog",
+      "route": "/speakers",
+      "main": 1,
+      "nav": 5,
+      "h1": 1,
+      "title": "Summit Speakers — Superhumanly",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/dashboard",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/design",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Brand & theme | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/media",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Media library | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/blogs",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Blog workspace | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/events",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Events workspace | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/settings",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Site settings | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/conference",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Summit homepage | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/newsletter",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/users",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-light",
+      "route": "/admin/registrations",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/dashboard",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/design",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Brand & theme | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/media",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Media library | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/blogs",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Blog workspace | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/events",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Events workspace | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/settings",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Site settings | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/conference",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Summit homepage | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/newsletter",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/users",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    },
+    {
+      "flow": "admin-dark",
+      "route": "/admin/registrations",
+      "main": 0,
+      "nav": 0,
+      "h1": 1,
+      "title": "Dashboard | CMS — Superhumanly Playbook — Master Agentic AI Automation",
+      "lang": "en"
+    }
+  ],
+  "keyboard": [
+    {
+      "check": "skip-link-first-tab",
+      "pass": true,
+      "detail": {
+        "tag": "a",
+        "role": null,
+        "name": "Skip to main content",
+        "href": "#main-content"
+      }
+    },
+    {
+      "check": "mobile-nav-escape",
+      "skipped": true
+    },
+    {
+      "check": "cookie-banner",
+      "skipped": true,
+      "reason": "banner disabled"
+    },
+    {
+      "check": "register-tab-order",
+      "pass": false,
+      "trail": [
+        {
+          "tag": "input",
+          "role": null,
+          "name": "Full name",
+          "href": null
+        },
+        {
+          "tag": "input",
+          "role": null,
+          "name": "Email",
+          "href": null
+        }
+      ]
+    },
+    {
+      "check": "admin-single-h1",
+      "pass": true,
+      "h1count": 1,
+      "route": "/admin/dashboard"
+    },
+    {
+      "check": "command-palette-open",
+      "pass": false
+    }
+  ],
+  "a11ySnapshots": [
+    {
+      "flow": "home-skip-link",
+      "role": "WebArea",
+      "name": "Superhumanly Summit 2026 | The Premier AI Conference",
+      "childRoles": [
+        {
+          "role": "link",
+          "name": "Skip to main content"
+        },
+        {
+          "role": "link",
+          "name": "Superhumanly - Thoughts"
+        },
+        {
+          "role": "link",
+          "name": "Speakers"
+        },
+        {
+          "role": "link",
+          "name": "Blogs"
+        },
+        {
+          "role": "link",
+          "name": "Events"
+        },
+        {
+          "role": "link",
+          "name": "Register"
+        },
+        {
+          "role": "main",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "flow": "register-form",
+      "role": "WebArea",
+      "name": "Register — Superhumanly Summit 2026",
+      "childRoles": [
+        {
+          "role": "link",
+          "name": "Skip to main content"
+        },
+        {
+          "role": "link",
+          "name": "Superhumanly - Thoughts"
+        },
+        {
+          "role": "link",
+          "name": "Speakers"
+        },
+        {
+          "role": "link",
+          "name": "Blogs"
+        },
+        {
+          "role": "link",
+          "name": "Events"
+        },
+        {
+          "role": "link",
+          "name": "Register"
+        },
+        {
+          "role": "main",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "flow": "blog-index",
+      "role": "WebArea",
+      "name": "Insights & Playbook — Superhumanly Blog",
+      "childRoles": [
+        {
+          "role": "link",
+          "name": "Skip to main content"
+        },
+        {
+          "role": "link",
+          "name": "Superhumanly - Thoughts"
+        },
+        {
+          "role": "link",
+          "name": "Speakers"
+        },
+        {
+          "role": "link",
+          "name": "Blogs"
+        },
+        {
+          "role": "link",
+          "name": "Events"
+        },
+        {
+          "role": "link",
+          "name": "Register"
+        },
+        {
+          "role": "main",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "flow": "speakers-catalog",
+      "role": "WebArea",
+      "name": "Summit Speakers — Superhumanly",
+      "childRoles": [
+        {
+          "role": "link",
+          "name": "Skip to main content"
+        },
+        {
+          "role": "link",
+          "name": "Superhumanly - Thoughts"
+        },
+        {
+          "role": "link",
+          "name": "Speakers"
+        },
+        {
+          "role": "link",
+          "name": "Blogs"
+        },
+        {
+          "role": "link",
+          "name": "Events"
+        },
+        {
+          "role": "link",
+          "name": "Register"
+        },
+        {
+          "role": "main",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "flow": "admin-dashboard",
+      "role": "WebArea",
+      "childRoles": [
+        {
+          "role": "text",
+          "name": "CONTENT MANAGEMENT PLATFORM"
+        },
+        {
+          "role": "text",
+          "name": "Superhumanly AI"
+        },
+        {
+          "role": "heading",
+          "name": "Your conference site, under control."
+        },
+        {
+          "role": "text",
+          "name": "The production CMS for marketing teams — edit content, publish pages, and manage"
+        },
+        {
+          "role": "text",
+          "name": "Unified workspace"
+        },
+        {
+          "role": "text",
+          "name": "Homepage, blog, events, and registrations in one panel."
+        },
+        {
+          "role": "text",
+          "name": "Live preview"
+        },
+        {
+          "role": "text",
+          "name": "Preview every change on the public site before publishing."
+        },
+        {
+          "role": "text",
+          "name": "Team access"
+        },
+        {
+          "role": "text",
+          "name": "Role-based permissions for editors, viewers, and admins."
+        },
+        {
+          "role": "text",
+          "name": "© "
+        },
+        {
+          "role": "text",
+          "name": "2026"
+        }
+      ]
+    }
+  ],
+  "manualVoiceOverNvdaChecklist": [
+    {
+      "area": "Homepage",
+      "voiceOver": "Rotor > Landmarks: one Main, nav regions named. Hero H1 announced once.",
+      "nvda": "D landmarks: single main. H quick nav: one H1."
+    },
+    {
+      "area": "Mobile nav",
+      "voiceOver": "Open menu: VO reads expanded state. Tab cycles inside; VO+Esc closes.",
+      "nvda": "Open menu: expanded announced. Tab trapped; Escape closes."
+    },
+    {
+      "area": "Register form",
+      "voiceOver": "Each field label read with control. Error alerts announced on submit.",
+      "nvda": "Tab through fields: label association verified. role=alert on errors."
+    },
+    {
+      "area": "Carousels",
+      "voiceOver": "Prev/next buttons labeled. Pagination group announced.",
+      "nvda": "Carousel controls reachable; slide change does not move focus unexpectedly."
+    },
+    {
+      "area": "Cookie banner",
+      "voiceOver": "Dialog role + modal on open. Focus on Accept.",
+      "nvda": "Browse mode: dialog intercepts focus until Accept."
+    },
+    {
+      "area": "Admin (authenticated)",
+      "voiceOver": "Single H1 per view. Data tables: column headers read with cells.",
+      "nvda": "Table navigation: headers associated. Sort buttons announced."
+    },
+    {
+      "area": "Admin dark mode",
+      "voiceOver": "Contrast sufficient on login + dashboard (visual check).",
+      "nvda": "Muted text readable at 100% zoom."
+    }
+  ],
+  "summary": {
+    "adminViolations": 0,
+    "publicViolations": 0,
+    "keyboardIssues": 2
+  }
+}

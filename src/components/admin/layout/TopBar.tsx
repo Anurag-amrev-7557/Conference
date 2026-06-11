@@ -1,25 +1,35 @@
-import { Bell, Menu, Search, ChevronDown, ChevronRight, LogOut, User, Moon, Sun } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { SaveStatusIndicator } from '../providers/AutosaveProvider'
-import type { SaveStatus } from '../providers/AutosaveProvider'
-import { useAdminTheme } from '../providers/AdminThemeProvider'
+import {
+  Bell,
+  Menu,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  LogOut,
+  User,
+  Moon,
+  Sun,
+} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { SaveStatusIndicator } from '../providers/AutosaveProvider';
+import type { SaveStatus } from '../providers/AutosaveProvider';
+import { useAdminTheme } from '../providers/AdminThemeProvider';
 
 export type PageContext = {
-  pageTitle: string
-  parent: { label: string; path: string } | null
-}
+  pageTitle: string;
+  parent: { label: string; path: string } | null;
+};
 
 interface TopBarProps {
-  pageContext: PageContext
-  onOpenCommandPalette: () => void
-  onLogout: () => void
-  username?: string | null
-  saveStatus?: SaveStatus
-  headerActions?: React.ReactNode
-  onToggleMobileNav: () => void
-  mobileNavOpen: boolean
+  pageContext: PageContext;
+  onOpenCommandPalette: () => void;
+  onLogout: () => void;
+  username?: string | null;
+  saveStatus?: SaveStatus;
+  headerActions?: React.ReactNode;
+  onToggleMobileNav: () => void;
+  mobileNavOpen: boolean;
 }
 
 export function TopBar({
@@ -32,9 +42,9 @@ export function TopBar({
   onToggleMobileNav,
   mobileNavOpen,
 }: TopBarProps) {
-  const { theme, toggleTheme } = useAdminTheme()
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const initials = username?.slice(0, 2).toUpperCase() ?? '?'
+  const { theme, toggleTheme } = useAdminTheme();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const initials = username?.slice(0, 2).toUpperCase() ?? '?';
 
   return (
     <header className="admin-topbar">
@@ -58,7 +68,9 @@ export function TopBar({
               <ChevronRight className="admin-topbar__context-sep" aria-hidden />
             </>
           ) : null}
-          <h1 className="admin-topbar__page-title">{pageContext.pageTitle}</h1>
+          <p className="admin-topbar__page-title" aria-current="page">
+            {pageContext.pageTitle}
+          </p>
         </div>
       </div>
 
@@ -158,23 +170,23 @@ export function TopBar({
                     transition={{ duration: 0.15, ease: [0, 0, 0.2, 1] }}
                     className="admin-topbar__user-menu"
                   >
-                  <div className="admin-topbar__user-menu-header">
-                    <p className="admin-topbar__user-menu-name truncate">{username}</p>
-                    <p className="admin-topbar__user-menu-hint">Signed in</p>
-                  </div>
-                  <button type="button" role="menuitem" className="admin-topbar__user-menu-item">
-                    <User aria-hidden />
-                    Profile
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={onLogout}
-                    className="admin-topbar__user-menu-item admin-topbar__user-menu-item--danger"
-                  >
-                    <LogOut aria-hidden />
-                    Sign out
-                  </button>
+                    <div className="admin-topbar__user-menu-header">
+                      <p className="admin-topbar__user-menu-name truncate">{username}</p>
+                      <p className="admin-topbar__user-menu-hint">Signed in</p>
+                    </div>
+                    <button type="button" role="menuitem" className="admin-topbar__user-menu-item">
+                      <User aria-hidden />
+                      Profile
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={onLogout}
+                      className="admin-topbar__user-menu-item admin-topbar__user-menu-item--danger"
+                    >
+                      <LogOut aria-hidden />
+                      Sign out
+                    </button>
                   </motion.div>
                 </>
               ) : null}
@@ -183,26 +195,24 @@ export function TopBar({
         </div>
       </div>
     </header>
-  )
+  );
 }
 
 export function buildPageContext(pathname: string, pageTitle: string): PageContext {
   const isDashboard =
-    pathname === '/admin/dashboard' ||
-    pathname === '/admin' ||
-    pathname.endsWith('/dashboard')
+    pathname === '/admin/dashboard' || pathname === '/admin' || pathname.endsWith('/dashboard');
 
   return {
     pageTitle,
     parent: isDashboard ? null : { label: 'Home', path: '/admin/dashboard' },
-  }
+  };
 }
 
 /** @deprecated Use buildPageContext */
 export function buildBreadcrumbs(pathname: string, pageTitle: string) {
-  const ctx = buildPageContext(pathname, pageTitle)
-  const items: Array<{ label: string; path?: string }> = []
-  if (ctx.parent) items.push(ctx.parent)
-  items.push({ label: ctx.pageTitle })
-  return items
+  const ctx = buildPageContext(pathname, pageTitle);
+  const items: Array<{ label: string; path?: string }> = [];
+  if (ctx.parent) items.push(ctx.parent);
+  items.push({ label: ctx.pageTitle });
+  return items;
 }

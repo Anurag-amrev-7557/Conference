@@ -1,25 +1,25 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown, Search } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, ChevronDown, Search } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export type CatalogSelectOption = {
-  value: string
-  label: string
-}
+  value: string;
+  label: string;
+};
 
 type CatalogSelectProps = {
-  value: string
-  onChange: (value: string) => void
-  options: CatalogSelectOption[]
-  placeholder?: string
-  disabled?: boolean
-  searchable?: boolean
-  searchPlaceholder?: string
-  className?: string
-  'aria-label'?: string
-}
+  value: string;
+  onChange: (value: string) => void;
+  options: CatalogSelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  className?: string;
+  'aria-label'?: string;
+};
 
 export function CatalogSelect({
   value,
@@ -32,32 +32,31 @@ export function CatalogSelect({
   className,
   'aria-label': ariaLabel,
 }: CatalogSelectProps) {
-  const [open, setOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({})
-  const rootRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const selected = options.find((option) => option.value === value)
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const rootRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const selected = options.find((option) => option.value === value);
 
   const visibleOptions = useMemo(() => {
-    if (!searchable) return options
-    const query = searchQuery.trim().toLowerCase()
-    if (!query) return options
+    if (!searchable) return options;
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return options;
     return options.filter(
-      (option) =>
-        option.value === 'all' || option.label.toLowerCase().includes(query),
-    )
-  }, [options, searchable, searchQuery])
+      (option) => option.value === 'all' || option.label.toLowerCase().includes(query),
+    );
+  }, [options, searchable, searchQuery]);
 
   const updateMenuPosition = useCallback(() => {
-    const root = rootRef.current
-    if (!root) return
+    const root = rootRef.current;
+    if (!root) return;
 
-    const rect = root.getBoundingClientRect()
-    const menuMaxHeight = 280
-    const gap = 8
-    const spaceBelow = window.innerHeight - rect.bottom
-    const openUpward = spaceBelow < menuMaxHeight + gap && rect.top > spaceBelow
+    const rect = root.getBoundingClientRect();
+    const menuMaxHeight = 280;
+    const gap = 8;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward = spaceBelow < menuMaxHeight + gap && rect.top > spaceBelow;
 
     setMenuStyle({
       position: 'fixed',
@@ -67,59 +66,61 @@ export function CatalogSelect({
       ...(openUpward
         ? { bottom: window.innerHeight - rect.top + gap }
         : { top: rect.bottom + gap }),
-    })
-  }, [])
+    });
+  }, []);
 
   useLayoutEffect(() => {
-    if (!open) return
-    updateMenuPosition()
-  }, [open, updateMenuPosition])
+    if (!open) return;
+    updateMenuPosition();
+  }, [open, updateMenuPosition]);
+
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    setSearchQuery('');
+  }, []);
 
   useEffect(() => {
-    if (!open) {
-      setSearchQuery('')
-      return
-    }
+    if (!open) return;
 
     if (searchable) {
       requestAnimationFrame(() => {
-        searchInputRef.current?.focus({ preventScroll: true })
-      })
+        searchInputRef.current?.focus({ preventScroll: true });
+      });
     }
 
     const onDoc = (event: MouseEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
-        const target = event.target as HTMLElement
-        if (!target.closest('.catalog-select__menu')) setOpen(false)
+        const target = event.target as HTMLElement;
+        if (!target.closest('.catalog-select__menu')) closeMenu();
       }
-    }
+    };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    const onReflow = () => updateMenuPosition()
+      if (event.key === 'Escape') closeMenu();
+    };
+    const onReflow = () => updateMenuPosition();
 
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    window.addEventListener('resize', onReflow)
-    window.addEventListener('scroll', onReflow, true)
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onReflow);
+    window.addEventListener('scroll', onReflow, true);
 
     return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-      window.removeEventListener('resize', onReflow)
-      window.removeEventListener('scroll', onReflow, true)
-    }
-  }, [open, searchable, updateMenuPosition])
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onReflow);
+      window.removeEventListener('scroll', onReflow, true);
+    };
+  }, [open, searchable, updateMenuPosition, closeMenu]);
 
   const toggleOpen = () => {
-    if (disabled) return
+    if (disabled) return;
     if (open) {
-      setOpen(false)
-      return
+      closeMenu();
+      return;
     }
-    updateMenuPosition()
-    setOpen(true)
-  }
+    updateMenuPosition();
+    setOpen(true);
+  };
 
   const menu = (
     <AnimatePresence>
@@ -133,9 +134,7 @@ export function CatalogSelect({
           style={{
             ...menuStyle,
             visibility:
-              menuStyle.top !== undefined || menuStyle.bottom !== undefined
-                ? 'visible'
-                : 'hidden',
+              menuStyle.top !== undefined || menuStyle.bottom !== undefined ? 'visible' : 'hidden',
           }}
           role="listbox"
         >
@@ -163,7 +162,7 @@ export function CatalogSelect({
             </li>
           ) : null}
           {visibleOptions.map((option) => {
-            const active = option.value === value
+            const active = option.value === value;
             return (
               <li key={option.value} role="presentation">
                 <button
@@ -175,8 +174,8 @@ export function CatalogSelect({
                     active && 'catalog-select__option--active',
                   )}
                   onClick={() => {
-                    onChange(option.value)
-                    setOpen(false)
+                    onChange(option.value);
+                    closeMenu();
                   }}
                 >
                   <span className="catalog-select__option-label">{option.label}</span>
@@ -185,12 +184,12 @@ export function CatalogSelect({
                   </span>
                 </button>
               </li>
-            )
+            );
           })}
         </motion.ul>
       ) : null}
     </AnimatePresence>
-  )
+  );
 
   return (
     <div ref={rootRef} className={cn('catalog-select', className)}>
@@ -203,9 +202,7 @@ export function CatalogSelect({
         aria-label={ariaLabel}
         disabled={disabled}
       >
-        <span className="catalog-select__trigger-label">
-          {selected?.label ?? placeholder}
-        </span>
+        <span className="catalog-select__trigger-label">{selected?.label ?? placeholder}</span>
         <ChevronDown
           className={cn('catalog-select__chevron', open && 'catalog-select__chevron--open')}
           aria-hidden
@@ -213,5 +210,5 @@ export function CatalogSelect({
       </button>
       {typeof document !== 'undefined' ? createPortal(menu, document.body) : null}
     </div>
-  )
+  );
 }

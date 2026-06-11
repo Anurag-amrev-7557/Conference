@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
   Eye,
@@ -12,16 +12,16 @@ import {
   Sun,
   Users,
   AlertCircle,
-} from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { config } from '../../lib/config'
-import { api } from '../../lib/api'
-import { setAdminSession } from './useAdminSession'
-import { TextInput } from './ui/TextInput'
-import { Button } from './ui/Button'
+} from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { api } from '../../lib/api';
+import { markAdminSessionActive, setAdminToken } from '../../lib/adminAuth';
+import { setAdminSession } from './useAdminSession';
+import { TextInput } from './ui/TextInput';
+import { Button } from './ui/Button';
 
-const REMEMBER_KEY = 'admin_remember_username'
-const BRAND_LOGO = '/Superhumanly AI Logo.png'
+const REMEMBER_KEY = 'admin_remember_username';
+const BRAND_LOGO = '/Superhumanly AI Logo.png';
 
 const FEATURES = [
   {
@@ -39,28 +39,31 @@ const FEATURES = [
     title: 'Team access',
     description: 'Role-based permissions for editors, viewers, and admins.',
   },
-] as const
+] as const;
 
 const STATS = [
   { value: '12+', label: 'Modules' },
   { value: 'Live', label: 'Preview' },
   { value: 'RBAC', label: 'Access' },
-] as const
+] as const;
 
 function BrandLogo({ variant }: { variant: 'desktop' | 'mobile' }) {
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState(false);
 
   if (failed) {
     return (
       <div className="admin-auth-brand__logo-fallback">
         <div className={cn('admin-auth-brand__logo-mark', variant === 'mobile' && '!w-8 !h-8')}>
-          <Shield className={cn('text-white', variant === 'mobile' ? 'w-4 h-4' : 'w-5 h-5')} aria-hidden />
+          <Shield
+            className={cn('text-white', variant === 'mobile' ? 'w-4 h-4' : 'w-5 h-5')}
+            aria-hidden
+          />
         </div>
         {variant === 'desktop' ? (
           <span className="admin-auth-brand__logo-text">Superhumanly AI</span>
         ) : null}
       </div>
-    )
+    );
   }
 
   return (
@@ -75,63 +78,63 @@ function BrandLogo({ variant }: { variant: 'desktop' | 'mobile' }) {
         <span className="admin-auth-brand__logo-text">Superhumanly AI</span>
       ) : null}
     </>
-  )
+  );
 }
 
 type AdminAuthLoginProps = {
-  onSuccess: () => void
-  initialError?: string
-}
+  onSuccess: () => void;
+  initialError?: string;
+};
 
 export function AdminAuthLogin({ onSuccess, initialError = '' }: AdminAuthLoginProps) {
-  const [username, setUsername] = useState(() => localStorage.getItem(REMEMBER_KEY) || 'admin')
-  const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem(REMEMBER_KEY))
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState(initialError)
-  const [loading, setLoading] = useState(false)
-  const [shakeError, setShakeError] = useState(false)
+  const [username, setUsername] = useState(() => localStorage.getItem(REMEMBER_KEY) || 'admin');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem(REMEMBER_KEY));
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(initialError);
+  const [loading, setLoading] = useState(false);
+  const [shakeError, setShakeError] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const stored = localStorage.getItem('admin_theme')
-    if (stored === 'dark' || stored === 'light') return stored
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  })
+    const stored = localStorage.getItem('admin_theme');
+    if (stored === 'dark' || stored === 'light') return stored;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
-    setError(initialError)
-  }, [initialError])
+    setError(initialError);
+  }, [initialError]);
 
   useEffect(() => {
-    localStorage.setItem('admin_theme', theme)
-  }, [theme])
+    localStorage.setItem('admin_theme', theme);
+  }, [theme]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
-      const { token, role, username: loggedInUser } = await api.login(username, password)
-      localStorage.setItem('adminToken', token)
-      localStorage.setItem(config.admin.sessionKey, 'true')
-      setAdminSession(role || 'super_admin', loggedInUser || username)
+      const { role, username: loggedInUser, token } = await api.login(username, password);
+      if (token) setAdminToken(token);
+      markAdminSessionActive();
+      setAdminSession(role || 'super_admin', loggedInUser || username);
 
       if (rememberMe) {
-        localStorage.setItem(REMEMBER_KEY, username)
+        localStorage.setItem(REMEMBER_KEY, username);
       } else {
-        localStorage.removeItem(REMEMBER_KEY)
+        localStorage.removeItem(REMEMBER_KEY);
       }
 
-      onSuccess()
+      onSuccess();
     } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message || 'Incorrect username or password.'
-      setError(msg)
-      setShakeError(true)
-      setTimeout(() => setShakeError(false), 500)
+      const msg = (err as { message?: string })?.message || 'Incorrect username or password.';
+      setError(msg);
+      setShakeError(true);
+      setTimeout(() => setShakeError(false), 500);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="admin-shell admin-auth-shell" data-admin data-theme={theme}>
@@ -306,9 +309,7 @@ export function AdminAuthLogin({ onSuccess, initialError = '' }: AdminAuthLoginP
               </Button>
             </form>
 
-            <p className="admin-auth-form__help">
-              Need access? Contact your site administrator.
-            </p>
+            <p className="admin-auth-form__help">Need access? Contact your site administrator.</p>
           </motion.div>
         </div>
 
@@ -320,5 +321,5 @@ export function AdminAuthLogin({ onSuccess, initialError = '' }: AdminAuthLoginP
         </footer>
       </div>
     </div>
-  )
+  );
 }

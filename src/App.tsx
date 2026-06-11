@@ -1,80 +1,103 @@
-import { lazy } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { PublicLayout } from './components/PublicLayout'
-import { useEffect } from 'react'
-import { ConferencePage } from './pages/ConferencePage'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { ConferenceRevealProvider } from './context/ConferenceRevealContext'
-import { useWebsiteData } from './components/WebsiteDataProvider'
-import { ScrollToHash } from './components/ScrollToHash'
-import { InjectedScripts } from './components/InjectedScripts'
-import { ErrorBoundary } from './components/ErrorBoundary'
-import { CookieBanner } from './components/CookieBanner'
-import { ApiKeepAlive } from './components/ApiKeepAlive'
-import { RouteVisibilityGuard } from './components/RouteVisibilityGuard'
-import { RouteSuspense } from './components/RouteSuspense'
+import { lazy, useEffect, useState } from 'react';
+import { ensureAccentContrast } from './lib/contrast';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { PublicLayout } from './components/PublicLayout';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { ConferenceRevealProvider } from './context/ConferenceRevealContext';
+import { useWebsiteData } from './components/WebsiteDataProvider';
+import { ScrollToHash } from './components/ScrollToHash';
+import { InjectedScripts } from './components/InjectedScripts';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { CookieBanner } from './components/CookieBanner';
+import { ApiKeepAlive } from './components/ApiKeepAlive';
+import { RouteVisibilityGuard } from './components/RouteVisibilityGuard';
+import { RouteSuspense } from './components/RouteSuspense';
 
-const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
-const EventsPage = lazy(() => import('./pages/EventsPage').then((m) => ({ default: m.EventsPage })))
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
+const EventsPage = lazy(() =>
+  import('./pages/EventsPage').then((m) => ({ default: m.EventsPage })),
+);
 const EventDetailPage = lazy(() =>
   import('./pages/EventDetailPage').then((m) => ({ default: m.EventDetailPage })),
-)
-const BlogPage = lazy(() => import('./pages/BlogPage').then((m) => ({ default: m.BlogPage })))
-const BlogPostPage = lazy(() => import('./pages/BlogPostPage').then((m) => ({ default: m.BlogPostPage })))
+);
+const BlogPage = lazy(() => import('./pages/BlogPage').then((m) => ({ default: m.BlogPage })));
+const BlogPostPage = lazy(() =>
+  import('./pages/BlogPostPage').then((m) => ({ default: m.BlogPostPage })),
+);
 const ConferenceRegisterPage = lazy(() =>
   import('./pages/ConferenceRegisterPage').then((m) => ({ default: m.ConferenceRegisterPage })),
-)
-const SpeakersPage = lazy(() => import('./pages/SpeakersPage').then((m) => ({ default: m.SpeakersPage })))
+);
+const SpeakersPage = lazy(() =>
+  import('./pages/SpeakersPage').then((m) => ({ default: m.SpeakersPage })),
+);
+const ConferencePage = lazy(() =>
+  import('./pages/ConferencePage').then((m) => ({ default: m.ConferencePage })),
+);
+
+function sanitizeCustomCss(css: string): string {
+  return css
+    .replace(/javascript:/gi, '')
+    .replace(/expression\s*\(/gi, '')
+    .replace(/@import/gi, '/* @import blocked */');
+}
 
 function ThemeSynchronizer() {
-  const { data } = useWebsiteData()
-  const { appearance, settings } = data
+  const { data } = useWebsiteData();
+  const { appearance, settings } = data;
+  const [consentVersion, setConsentVersion] = useState(0);
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--color-accent', appearance.primaryColor)
+    const onConsent = () => setConsentVersion((value) => value + 1);
+    window.addEventListener('cms:cookie-consent', onConsent);
+    return () => window.removeEventListener('cms:cookie-consent', onConsent);
+  }, []);
+
+  useEffect(() => {
+    const accessibleAccent = ensureAccentContrast(appearance.primaryColor);
+    document.documentElement.style.setProperty('--color-accent', accessibleAccent);
 
     const darkenColor = (hex: string) => {
-      const num = parseInt(hex.replace('#', ''), 16)
-      const amt = Math.round(2.55 * 10)
-      const r = Math.max(0, (num >> 16) - amt)
-      const g = Math.max(0, ((num >> 8) & 0x00ff) - amt)
-      const b = Math.max(0, (num & 0x0000ff) - amt)
-      return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1)
-    }
-    document.documentElement.style.setProperty('--color-accent2', darkenColor(appearance.primaryColor))
+      const num = parseInt(hex.replace('#', ''), 16);
+      const amt = Math.round(2.55 * 10);
+      const r = Math.max(0, (num >> 16) - amt);
+      const g = Math.max(0, ((num >> 8) & 0x00ff) - amt);
+      const b = Math.max(0, (num & 0x0000ff) - amt);
+      return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+    };
+    document.documentElement.style.setProperty('--color-accent2', darkenColor(accessibleAccent));
 
     const fontMapping = {
       serif: "'Instrument Serif', serif",
       sans: "'Plus Jakarta Sans', sans-serif",
       mono: "'JetBrains Mono', monospace",
-    }
+    };
     if (appearance?.typography?.headingFont) {
       document.documentElement.style.setProperty(
         '--font-serif',
         fontMapping[appearance.typography.headingFont as keyof typeof fontMapping],
-      )
+      );
     }
     if (appearance?.typography?.bodyFont) {
       document.documentElement.style.setProperty(
         '--font-sans',
         fontMapping[appearance.typography.bodyFont as keyof typeof fontMapping],
-      )
+      );
     }
 
     if (appearance?.typography?.baseSize) {
-      const sizeMapping = { small: '14px', medium: '15px', large: '17px' }
+      const sizeMapping = { small: '14px', medium: '15px', large: '17px' };
       document.documentElement.style.setProperty(
         '--base-font-size',
         sizeMapping[appearance.typography.baseSize as keyof typeof sizeMapping],
-      )
+      );
     }
 
     if (appearance?.theme?.borderRadius) {
-      const radiusMapping = { none: '0px', sm: '8px', md: '16px', lg: '32px', full: '999px' }
+      const radiusMapping = { none: '0px', sm: '8px', md: '16px', lg: '32px', full: '999px' };
       document.documentElement.style.setProperty(
         '--radius-global',
         radiusMapping[appearance.theme.borderRadius as keyof typeof radiusMapping],
-      )
+      );
     }
 
     if (appearance?.theme?.shadowIntensity) {
@@ -82,28 +105,36 @@ function ThemeSynchronizer() {
         none: 'none',
         soft: '0 10px 30px -5px rgba(0,0,0,0.05)',
         heavy: '0 20px 50px -10px rgba(0,0,0,0.15)',
-      }
+      };
       document.documentElement.style.setProperty(
         '--shadow-dynamic',
         shadowMapping[appearance.theme.shadowIntensity as keyof typeof shadowMapping],
-      )
+      );
     }
 
-    let styleTag = document.getElementById('custom-css-runtime')
+    let styleTag = document.getElementById('custom-css-runtime');
     if (!styleTag) {
-      styleTag = document.createElement('style')
-      styleTag.id = 'custom-css-runtime'
-      document.head.appendChild(styleTag)
+      styleTag = document.createElement('style');
+      styleTag.id = 'custom-css-runtime';
+      document.head.appendChild(styleTag);
     }
-    styleTag.innerHTML = settings.customCss
-  }, [appearance, settings])
+    styleTag.innerHTML = sanitizeCustomCss(settings.customCss ?? '');
+  }, [appearance, settings]);
 
   return (
     <>
-      <InjectedScripts html={settings.scripts?.header ?? ''} target="head" />
-      <InjectedScripts html={settings.scripts?.footer ?? ''} target="body" />
+      <InjectedScripts
+        key={`head-${consentVersion}`}
+        html={settings.scripts?.header ?? ''}
+        target="head"
+      />
+      <InjectedScripts
+        key={`footer-${consentVersion}`}
+        html={settings.scripts?.footer ?? ''}
+        target="body"
+      />
     </>
-  )
+  );
 }
 
 function App() {
@@ -119,7 +150,14 @@ function App() {
             <ErrorBoundary fallbackTitle="This page failed to load">
               <Routes>
                 <Route element={<PublicLayout />}>
-                  <Route path="/" element={<ConferencePage />} />
+                  <Route
+                    path="/"
+                    element={
+                      <RouteSuspense>
+                        <ConferencePage />
+                      </RouteSuspense>
+                    }
+                  />
                   <Route path="/home" element={<Navigate to="/" replace />} />
                   <Route path="/conference" element={<Navigate to="/" replace />} />
                   <Route
@@ -200,7 +238,7 @@ function App() {
         </ConferenceRevealProvider>
       </Router>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

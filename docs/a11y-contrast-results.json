@@ -1,0 +1,240 @@
+{
+  "generatedAt": "2026-06-11T13:37:49.548Z",
+  "standard": "WCAG 2.2",
+  "results": [
+    {
+      "context": "Primary body text on page bg",
+      "foreground": "#000000",
+      "background": "#F2F2F0",
+      "ratio": 18.73,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Primary text on white body",
+      "foreground": "#000000",
+      "background": "#ffffff",
+      "ratio": 21,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Secondary text on page bg",
+      "foreground": "#2D2D2D",
+      "background": "#F2F2F0",
+      "ratio": 12.29,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Tertiary text on page bg",
+      "foreground": "#5C5C5C",
+      "background": "#F2F2F0",
+      "ratio": 5.97,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Tertiary text on off-white surface",
+      "foreground": "#5C5C5C",
+      "background": "#EBEBE8",
+      "ratio": 5.6,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Muted text on page bg",
+      "foreground": "#333333",
+      "background": "#F2F2F0",
+      "ratio": 11.27,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Success text on success bg",
+      "foreground": "#0E4F25",
+      "background": "#E8F5EE",
+      "ratio": 8.65,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "White text on accent button",
+      "foreground": "#ffffff",
+      "background": "#003E99",
+      "ratio": 9.77,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "White text on accent2",
+      "foreground": "#ffffff",
+      "background": "#002D70",
+      "ratio": 13.05,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Accent text on accent-light bg",
+      "foreground": "#003E99",
+      "background": "#E0E9FF",
+      "ratio": 8.04,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Tag/meta text on tag bg",
+      "foreground": "#5C5C5C",
+      "background": "#E2E2DF",
+      "ratio": 5.15,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Nav links on dark hero (approx)",
+      "foreground": "#ffffff",
+      "background": "#1a1a2e",
+      "ratio": 17.06,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Nav secondary on dark hero",
+      "foreground": "rgb(186,186,192)",
+      "background": "#1a1a2e",
+      "ratio": 8.83,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Admin primary on base (light)",
+      "foreground": "#0f0f0f",
+      "background": "#fafafa",
+      "ratio": 18.36,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Admin secondary on surface (light)",
+      "foreground": "#525252",
+      "background": "#ffffff",
+      "ratio": 7.81,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Admin tertiary on surface (light)",
+      "foreground": "#737373",
+      "background": "#ffffff",
+      "ratio": 4.74,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "White on admin accent button (light)",
+      "foreground": "#ffffff",
+      "background": "#2563eb",
+      "ratio": 5.17,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Danger text on surface (light)",
+      "foreground": "#dc2626",
+      "background": "#ffffff",
+      "ratio": 4.83,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Admin primary on base (dark)",
+      "foreground": "#fafafa",
+      "background": "#0a0a0a",
+      "ratio": 18.97,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Admin secondary on surface (dark)",
+      "foreground": "#a3a3a3",
+      "background": "#171717",
+      "ratio": 7.11,
+      "wcagAA": "AAA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "Admin tertiary on surface (dark)",
+      "foreground": "#737373",
+      "background": "#171717",
+      "ratio": 3.78,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "AA"
+    },
+    {
+      "context": "White on admin accent button (dark)",
+      "foreground": "#ffffff",
+      "background": "#3b82f6",
+      "ratio": 3.68,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "AA"
+    },
+    {
+      "context": "Danger text on surface (dark)",
+      "foreground": "#f87171",
+      "background": "#171717",
+      "ratio": 6.48,
+      "wcagAA": "AA",
+      "wcagAALarge": "AAA"
+    },
+    {
+      "context": "White on yellow accent (edge case CMS)",
+      "foreground": "#ffffff",
+      "background": "#ffcc00",
+      "ratio": 1.51,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "FAIL"
+    },
+    {
+      "context": "White on light green accent (edge case CMS)",
+      "foreground": "#ffffff",
+      "background": "#88cc88",
+      "ratio": 1.9,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "FAIL"
+    }
+  ],
+  "failures": [
+    {
+      "context": "Admin tertiary on surface (dark)",
+      "foreground": "#737373",
+      "background": "#171717",
+      "ratio": 3.78,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "AA"
+    },
+    {
+      "context": "White on admin accent button (dark)",
+      "foreground": "#ffffff",
+      "background": "#3b82f6",
+      "ratio": 3.68,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "AA"
+    },
+    {
+      "context": "White on yellow accent (edge case CMS)",
+      "foreground": "#ffffff",
+      "background": "#ffcc00",
+      "ratio": 1.51,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "FAIL"
+    },
+    {
+      "context": "White on light green accent (edge case CMS)",
+      "foreground": "#ffffff",
+      "background": "#88cc88",
+      "ratio": 1.9,
+      "wcagAA": "FAIL",
+      "wcagAALarge": "FAIL"
+    }
+  ]
+}

@@ -7,16 +7,14 @@ import { validateBody } from '../middleware/validateBody';
 import { contentPatchSchema } from '../schemas/content';
 import { articleCreateSchema, articleUpdateSchema } from '../schemas/article';
 import { eventCreateSchema, eventUpdateSchema } from '../schemas/event';
-import {
-  registrationAdminCreateSchema,
-  registrationUpdateSchema,
-} from '../schemas/registration';
+import { registrationAdminCreateSchema, registrationUpdateSchema } from '../schemas/registration';
 import { getConferenceRegistrationSettings } from '../lib/conferenceRegistrationSettings';
 import {
   conferenceRegistrations,
   type ConferenceRegistrationRow,
 } from '../lib/conferenceRegistrations';
 import { getJwtSecret } from '../lib/jwtSecret';
+import { readAdminTokenFromRequest } from '../lib/adminAuthCookie';
 import { sanitizeArticleHtml, validateCustomCss, validateInjectedScripts } from '../lib/sanitize';
 import { embedHomepageInSettingsPatch, expandHomepageFromSettings } from '../lib/homepageContent';
 import { isSafeMediaFilename, listMediaFiles } from '../lib/listMediaFiles';
@@ -85,8 +83,10 @@ function normalizeArticleInput(body: Record<string, unknown>) {
 
 function normalizeEventInput(body: Record<string, unknown>) {
   const { tags, coordinates, lat, lng, startDate, endDate, publishAt, unpublishAt, ...rest } = body;
-  const resolvedLat = (lat as number | undefined) ?? (coordinates as { lat?: number } | undefined)?.lat;
-  const resolvedLng = (lng as number | undefined) ?? (coordinates as { lng?: number } | undefined)?.lng;
+  const resolvedLat =
+    (lat as number | undefined) ?? (coordinates as { lat?: number } | undefined)?.lat;
+  const resolvedLng =
+    (lng as number | undefined) ?? (coordinates as { lng?: number } | undefined)?.lng;
   return {
     weekday: '',
     time: '',
@@ -112,9 +112,9 @@ function normalizeEventInput(body: Record<string, unknown>) {
   };
 }
 
-function serializeArticle<T extends { content: string; publishAt?: Date | null; unpublishAt?: Date | null }>(
-  article: T,
-) {
+function serializeArticle<
+  T extends { content: string; publishAt?: Date | null; unpublishAt?: Date | null },
+>(article: T) {
   return {
     ...article,
     content: sanitizeArticleHtml(article.content),
@@ -149,12 +149,10 @@ function serializeEventRow<
 }
 
 export const authenticateAdmin = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = readAdminTokenFromRequest(req);
+  if (!token) {
     return res.status(401).json({ error: 'Unauthorized. Admin access required.' });
   }
-
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as AdminJwtPayload;
     (req as Request & { admin?: AdminJwtPayload }).admin = decoded;
@@ -169,62 +167,70 @@ router.use(blockViewerMutations);
 router.use(cmsBootstrapPublishMiddleware);
 
 // POST /api/v1/admin/og-image — resize to 1200×630 JPEG under public/og/
-router.post('/og-image', (req, res, next) => {
-  ogUpload.single('file')(req, res, (err: unknown) => {
-    if (err) {
-      const code = (err as { code?: string }).code;
-      if (code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'Image must be 5MB or smaller.' });
+router.post(
+  '/og-image',
+  (req, res, next) => {
+    ogUpload.single('file')(req, res, (err: unknown) => {
+      if (err) {
+        const code = (err as { code?: string }).code;
+        if (code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ error: 'Image must be 5MB or smaller.' });
+        }
+        return res.status(400).json({ error: 'Invalid upload.' });
       }
-      return res.status(400).json({ error: 'Invalid upload.' });
+      next();
+    });
+  },
+  async (req, res) => {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded. Use field name "file".' });
     }
-    next();
-  });
-}, async (req, res) => {
-  const file = req.file;
-  if (!file) {
-    return res.status(400).json({ error: 'No file uploaded. Use field name "file".' });
-  }
-  if (!isAllowedOgMime(file.mimetype)) {
-    return res.status(400).json({ error: 'Only JPEG, PNG, and WebP images are allowed.' });
-  }
+    if (!isAllowedOgMime(file.mimetype)) {
+      return res.status(400).json({ error: 'Only JPEG, PNG, and WebP images are allowed.' });
+    }
 
-  try {
-    const url = await uploadOgImage(file.buffer);
-    res.json({ url });
-  } catch {
-    res.status(500).json({ error: 'Failed to process image.' });
-  }
-});
+    try {
+      const url = await uploadOgImage(file.buffer);
+      res.json({ url });
+    } catch {
+      res.status(500).json({ error: 'Failed to process image.' });
+    }
+  },
+);
 
 // POST /api/v1/admin/media-image — general images under public/media/
-router.post('/media-image', (req, res, next) => {
-  ogUpload.single('file')(req, res, (err: unknown) => {
-    if (err) {
-      const code = (err as { code?: string }).code;
-      if (code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'Image must be 5MB or smaller.' });
+router.post(
+  '/media-image',
+  (req, res, next) => {
+    ogUpload.single('file')(req, res, (err: unknown) => {
+      if (err) {
+        const code = (err as { code?: string }).code;
+        if (code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ error: 'Image must be 5MB or smaller.' });
+        }
+        return res.status(400).json({ error: 'Invalid upload.' });
       }
-      return res.status(400).json({ error: 'Invalid upload.' });
+      next();
+    });
+  },
+  async (req, res) => {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded. Use field name "file".' });
     }
-    next();
-  });
-}, async (req, res) => {
-  const file = req.file;
-  if (!file) {
-    return res.status(400).json({ error: 'No file uploaded. Use field name "file".' });
-  }
-  if (!isAllowedOgMime(file.mimetype)) {
-    return res.status(400).json({ error: 'Only JPEG, PNG, and WebP images are allowed.' });
-  }
+    if (!isAllowedOgMime(file.mimetype)) {
+      return res.status(400).json({ error: 'Only JPEG, PNG, and WebP images are allowed.' });
+    }
 
-  try {
-    const url = await uploadMediaImage(file.buffer, file.mimetype);
-    res.json({ url });
-  } catch {
-    res.status(500).json({ error: 'Failed to process image.' });
-  }
-});
+    try {
+      const url = await uploadMediaImage(file.buffer, file.mimetype);
+      res.json({ url });
+    } catch {
+      res.status(500).json({ error: 'Failed to process image.' });
+    }
+  },
+);
 
 // GET /api/v1/admin/media — list uploaded library images
 router.get('/media', async (_req, res) => {
@@ -331,7 +337,11 @@ router.post('/backup', requireMinRole('super_admin'), async (req, res) => {
     if (!result) {
       return res.status(400).json({ error: 'Backup is only available for SQLite file databases.' });
     }
-    await writeAuditLog(req, { action: 'backup', entityType: 'database', summary: result.backupPath });
+    await writeAuditLog(req, {
+      action: 'backup',
+      entityType: 'database',
+      summary: result.backupPath,
+    });
     res.json({ success: true, backupPath: result.backupPath, pruned: result.pruned });
   } catch {
     res.status(500).json({ error: 'Backup failed.' });
@@ -417,14 +427,19 @@ router.post('/revisions/:id/restore', requireMinRole('editor'), async (req, res)
     const admin = getAdminFromRequest(req);
 
     if (revision.entityType === 'site_content') {
-      await saveContentRevision('site_content', 'global', {
-        hero: snapshot.hero,
-        settings: snapshot.settings,
-        appearance: snapshot.appearance,
-        stats: snapshot.stats,
-        pillars: snapshot.pillars,
-        perks: snapshot.perks,
-      }, admin.username ?? 'admin');
+      await saveContentRevision(
+        'site_content',
+        'global',
+        {
+          hero: snapshot.hero,
+          settings: snapshot.settings,
+          appearance: snapshot.appearance,
+          stats: snapshot.stats,
+          pillars: snapshot.pillars,
+          perks: snapshot.perks,
+        },
+        admin.username ?? 'admin',
+      );
       await prisma.siteContent.update({
         where: { id: 'global' },
         data: {
@@ -437,10 +452,22 @@ router.post('/revisions/:id/restore', requireMinRole('editor'), async (req, res)
         },
       });
     } else if (revision.entityType === 'article') {
-      const { id: _id, createdAt: _c, updatedAt: _u, deletedAt: _d, ...data } = snapshot as Record<string, unknown>;
+      const {
+        id: _id,
+        createdAt: _c,
+        updatedAt: _u,
+        deletedAt: _d,
+        ...data
+      } = snapshot as Record<string, unknown>;
       await prisma.article.update({ where: { id: revision.entityId }, data: data as never });
     } else if (revision.entityType === 'event') {
-      const { id: _id, createdAt: _c, updatedAt: _u, deletedAt: _d, ...data } = snapshot as Record<string, unknown>;
+      const {
+        id: _id,
+        createdAt: _c,
+        updatedAt: _u,
+        deletedAt: _d,
+        ...data
+      } = snapshot as Record<string, unknown>;
       await prisma.event.update({ where: { id: revision.entityId }, data: data as never });
     } else {
       return res.status(400).json({ error: 'Unsupported entity type for restore.' });
@@ -553,10 +580,18 @@ router.post('/import', requireMinRole('super_admin'), async (req, res) => {
   };
 
   if (!body?.siteContent && !body?.articles?.length && !body?.events?.length) {
-    return res.status(400).json({ error: 'Import payload must include siteContent, articles, or events.' });
+    return res
+      .status(400)
+      .json({ error: 'Import payload must include siteContent, articles, or events.' });
   }
 
-  const summary = { siteContent: 0, articlesCreated: 0, articlesUpdated: 0, eventsCreated: 0, eventsUpdated: 0 };
+  const summary = {
+    siteContent: 0,
+    articlesCreated: 0,
+    articlesUpdated: 0,
+    eventsCreated: 0,
+    eventsUpdated: 0,
+  };
 
   try {
     if (body.siteContent) {
@@ -601,13 +636,7 @@ router.post('/import', requireMinRole('super_admin'), async (req, res) => {
     }
 
     for (const raw of body.articles ?? []) {
-      const {
-        id,
-        createdAt: _c,
-        updatedAt: _u,
-        deletedAt: _d,
-        ...fields
-      } = raw;
+      const { id, createdAt: _c, updatedAt: _u, deletedAt: _d, ...fields } = raw;
       if (typeof fields.content === 'string') {
         fields.content = sanitizeArticleHtml(fields.content);
       }
@@ -680,7 +709,7 @@ router.get('/content', async (_req, res) => {
         return fallback;
       }
     };
-    const asList = <T,>(value: unknown, fallback: T[]): T[] =>
+    const asList = <T>(value: unknown, fallback: T[]): T[] =>
       Array.isArray(value) ? value : fallback;
     res.json({
       hero: parse(content.hero),
@@ -714,7 +743,9 @@ router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
   }
 
   if (settings && typeof settings === 'object' && settings !== null && 'scripts' in settings) {
-    const scripts = (settings as Record<string, unknown>).scripts as Record<string, unknown> | undefined;
+    const scripts = (settings as Record<string, unknown>).scripts as
+      | Record<string, unknown>
+      | undefined;
     if (scripts) {
       for (const [key, value] of Object.entries(scripts)) {
         const check = validateInjectedScripts(value, `settings.scripts.${key}`);
@@ -727,11 +758,7 @@ router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
 
   try {
     const existing = await prisma.siteContent.findUnique({ where: { id: 'global' } });
-    if (
-      existing &&
-      typeof clientVersion === 'number' &&
-      clientVersion !== existing.version
-    ) {
+    if (existing && typeof clientVersion === 'number' && clientVersion !== existing.version) {
       return res.status(409).json({
         error: 'Content was updated elsewhere. Refresh and try again.',
         currentVersion: existing.version,
@@ -754,7 +781,10 @@ router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
     }
     const mergedSettings =
       settings && typeof settings === 'object'
-        ? deepMergeObjects(safeParseJsonRecord(existing?.settings), settings as Record<string, unknown>)
+        ? deepMergeObjects(
+            safeParseJsonRecord(existing?.settings),
+            settings as Record<string, unknown>,
+          )
         : undefined;
 
     const updated = await prisma.siteContent.upsert({
@@ -793,45 +823,60 @@ router.patch('/content', validateBody(contentPatchSchema), async (req, res) => {
 
 // --- Blog Management ---
 
-router.post('/blogs', requireMinRole('editor'), validateBody(articleCreateSchema), async (req, res) => {
-  try {
-    const data = normalizeArticleInput(req.body);
-    const article = await prisma.article.create({ data: data as never });
-    await writeAuditLog(req, {
-      action: 'create',
-      entityType: 'article',
-      entityId: article.id,
-      summary: article.title,
-    });
-    res.json(serializeArticle(article));
-  } catch (err) {
-    console.error('Article create error:', err);
-    res.status(500).json({ error: 'Failed to create article.' });
-  }
-});
-
-router.put('/blogs/:id', requireMinRole('editor'), validateBody(articleUpdateSchema), async (req, res) => {
-  try {
-    const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
-    if (existing) {
-      await saveContentRevision('article', existing.id, existing, getAdminFromRequest(req).username ?? 'admin');
+router.post(
+  '/blogs',
+  requireMinRole('editor'),
+  validateBody(articleCreateSchema),
+  async (req, res) => {
+    try {
+      const data = normalizeArticleInput(req.body);
+      const article = await prisma.article.create({ data: data as never });
+      await writeAuditLog(req, {
+        action: 'create',
+        entityType: 'article',
+        entityId: article.id,
+        summary: article.title,
+      });
+      res.json(serializeArticle(article));
+    } catch (err) {
+      console.error('Article create error:', err);
+      res.status(500).json({ error: 'Failed to create article.' });
     }
-    const data = normalizeArticleInput(req.body);
-    const article = await prisma.article.update({
-      where: { id: req.params.id },
-      data: data as never,
-    });
-    await writeAuditLog(req, {
-      action: 'update',
-      entityType: 'article',
-      entityId: article.id,
-      summary: article.title,
-    });
-    res.json(serializeArticle(article));
-  } catch {
-    res.status(500).json({ error: 'Failed to update article.' });
-  }
-});
+  },
+);
+
+router.put(
+  '/blogs/:id',
+  requireMinRole('editor'),
+  validateBody(articleUpdateSchema),
+  async (req, res) => {
+    try {
+      const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
+      if (existing) {
+        await saveContentRevision(
+          'article',
+          existing.id,
+          existing,
+          getAdminFromRequest(req).username ?? 'admin',
+        );
+      }
+      const data = normalizeArticleInput(req.body);
+      const article = await prisma.article.update({
+        where: { id: req.params.id },
+        data: data as never,
+      });
+      await writeAuditLog(req, {
+        action: 'update',
+        entityType: 'article',
+        entityId: article.id,
+        summary: article.title,
+      });
+      res.json(serializeArticle(article));
+    } catch {
+      res.status(500).json({ error: 'Failed to update article.' });
+    }
+  },
+);
 
 router.delete('/blogs/:id', requireMinRole('editor'), async (req, res) => {
   try {
@@ -891,60 +936,76 @@ router.delete('/blogs/:id/permanent', requireMinRole('super_admin'), async (req,
 
 // --- Event Management ---
 
-router.post('/events', requireMinRole('editor'), validateBody(eventCreateSchema), async (req, res) => {
-  try {
-    const event = await prisma.event.create({
-      data: normalizeEventInput(req.body) as never,
-    });
-    await writeAuditLog(req, {
-      action: 'create',
-      entityType: 'event',
-      entityId: event.id,
-      summary: event.title,
-    });
-    res.json(event);
-  } catch (err) {
-    console.error('Event create error:', err);
-    res.status(500).json({ error: 'Failed to create event.' });
-  }
-});
-
-router.put('/events/:id', requireMinRole('editor'), validateBody(eventUpdateSchema), async (req, res) => {
-  const { tags, coordinates, lat, lng, startDate, endDate, publishAt, unpublishAt, ...rest } = req.body;
-  try {
-    const existing = await prisma.event.findUnique({ where: { id: req.params.id } });
-    if (existing) {
-      await saveContentRevision('event', existing.id, existing, getAdminFromRequest(req).username ?? 'admin');
+router.post(
+  '/events',
+  requireMinRole('editor'),
+  validateBody(eventCreateSchema),
+  async (req, res) => {
+    try {
+      const event = await prisma.event.create({
+        data: normalizeEventInput(req.body) as never,
+      });
+      await writeAuditLog(req, {
+        action: 'create',
+        entityType: 'event',
+        entityId: event.id,
+        summary: event.title,
+      });
+      res.json(event);
+    } catch (err) {
+      console.error('Event create error:', err);
+      res.status(500).json({ error: 'Failed to create event.' });
     }
-    const resolvedLat = lat ?? coordinates?.lat;
-    const resolvedLng = lng ?? coordinates?.lng;
-    const event = await prisma.event.update({
-      where: { id: req.params.id },
-      data: {
-        ...rest,
-        ...(startDate !== undefined
-          ? { startDate: startDate ? new Date(startDate) : null }
-          : {}),
-        ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
-        ...(publishAt !== undefined ? { publishAt: parseOptionalDate(publishAt) ?? null } : {}),
-        ...(unpublishAt !== undefined ? { unpublishAt: parseOptionalDate(unpublishAt) ?? null } : {}),
-        ...(tags !== undefined ? { tags: JSON.stringify(tags) } : {}),
-        ...(coordinates !== undefined || lat !== undefined
-          ? { lat: resolvedLat, lng: resolvedLng }
-          : {}),
-      },
-    });
-    await writeAuditLog(req, {
-      action: 'update',
-      entityType: 'event',
-      entityId: event.id,
-      summary: event.title,
-    });
-    res.json(event);
-  } catch {
-    res.status(500).json({ error: 'Failed to update event.' });
-  }
-});
+  },
+);
+
+router.put(
+  '/events/:id',
+  requireMinRole('editor'),
+  validateBody(eventUpdateSchema),
+  async (req, res) => {
+    const { tags, coordinates, lat, lng, startDate, endDate, publishAt, unpublishAt, ...rest } =
+      req.body;
+    try {
+      const existing = await prisma.event.findUnique({ where: { id: req.params.id } });
+      if (existing) {
+        await saveContentRevision(
+          'event',
+          existing.id,
+          existing,
+          getAdminFromRequest(req).username ?? 'admin',
+        );
+      }
+      const resolvedLat = lat ?? coordinates?.lat;
+      const resolvedLng = lng ?? coordinates?.lng;
+      const event = await prisma.event.update({
+        where: { id: req.params.id },
+        data: {
+          ...rest,
+          ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
+          ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
+          ...(publishAt !== undefined ? { publishAt: parseOptionalDate(publishAt) ?? null } : {}),
+          ...(unpublishAt !== undefined
+            ? { unpublishAt: parseOptionalDate(unpublishAt) ?? null }
+            : {}),
+          ...(tags !== undefined ? { tags: JSON.stringify(tags) } : {}),
+          ...(coordinates !== undefined || lat !== undefined
+            ? { lat: resolvedLat, lng: resolvedLng }
+            : {}),
+        },
+      });
+      await writeAuditLog(req, {
+        action: 'update',
+        entityType: 'event',
+        entityId: event.id,
+        summary: event.title,
+      });
+      res.json(event);
+    } catch {
+      res.status(500).json({ error: 'Failed to update event.' });
+    }
+  },
+);
 
 router.delete('/events/:id', requireMinRole('editor'), async (req, res) => {
   try {

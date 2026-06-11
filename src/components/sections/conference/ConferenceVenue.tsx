@@ -1,10 +1,10 @@
-import { useConferenceContent } from '../../../hooks/useConferenceContent'
-import { ConferenceSectionHeader } from './ConferenceSectionHeader'
-import { ConferenceSectionShell } from './ConferenceSectionShell'
+import { useConferenceContent } from '../../../hooks/useConferenceContent';
+import { ConferenceSectionHeader } from './ConferenceSectionHeader';
+import { ConferenceSectionShell } from './ConferenceSectionShell';
 
 export function ConferenceVenue() {
-  const { venue } = useConferenceContent()
-  if (!venue?.title && !venue?.address && !venue?.mapEmbedUrl) return null
+  const { venue } = useConferenceContent();
+  if (!venue?.title && !venue?.address && !venue?.mapEmbedUrl) return null;
 
   return (
     <ConferenceSectionShell
@@ -17,9 +17,14 @@ export function ConferenceVenue() {
         copy={{
           eyebrow: venue.eyebrow,
           title: venue.title,
+          titleAccent: venue.titleAccent,
           lede: venue.lede,
         }}
-        fallback={venue.title || 'Venue'}
+        fallback={
+          <>
+            Where we <span className="editorial-accent">gather</span>
+          </>
+        }
         centered={false}
         className="conference-venue-section__header"
       />
@@ -43,5 +48,5 @@ export function ConferenceVenue() {
         ) : null}
       </div>
     </ConferenceSectionShell>
-  )
+  );
 }

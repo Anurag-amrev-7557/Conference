@@ -1,28 +1,31 @@
-import { useEffect } from 'react'
-import '../styles/book-demo.css'
-import { Footer } from '../components/Footer'
-import { BookDemoForm } from '../components/book-demo/BookDemoForm'
-import { BookDemoPanel } from '../components/book-demo/BookDemoPanel'
-import { BookDemoTrustFooter } from '../components/book-demo/BookDemoTrustFooter'
-import { WaveDivider } from '../components/wave/WaveDivider'
-import { RegistrationFormSettingsProvider, useRegistrationFormSettingsContext } from '../context/RegistrationFormSettingsContext'
-import { SeoHead } from '../seo/SeoHead'
-import { usePageSeo } from '../seo/usePageSeo'
+import { useEffect } from 'react';
+import '../styles/book-demo.css';
+import { Footer } from '../components/Footer';
+import { BookDemoForm } from '../components/book-demo/BookDemoForm';
+import { BookDemoPanel } from '../components/book-demo/BookDemoPanel';
+import { BookDemoTrustFooter } from '../components/book-demo/BookDemoTrustFooter';
+import { WaveDivider } from '../components/wave/WaveDivider';
+import {
+  RegistrationFormSettingsProvider,
+  useRegistrationFormSettingsContext,
+} from '../context/RegistrationFormSettingsContext';
+import { SeoHead } from '../seo/SeoHead';
+import { usePageSeo } from '../seo/usePageSeo';
 
 function ConferenceRegisterContent() {
-  const seo = usePageSeo()
-  const registration = useRegistrationFormSettingsContext()
+  const seo = usePageSeo();
+  const registration = useRegistrationFormSettingsContext();
 
   useEffect(() => {
-    document.documentElement.classList.add('book-demo-route')
-    return () => document.documentElement.classList.remove('book-demo-route')
-  }, [])
+    document.documentElement.classList.add('book-demo-route');
+    return () => document.documentElement.classList.remove('book-demo-route');
+  }, []);
 
   return (
     <>
       <SeoHead seo={seo} />
       <div className="book-demo-page min-h-svh text-white">
-        <main id="main-content" tabIndex={-1} className="book-demo-main">
+        <div className="book-demo-main">
           <div className="book-demo">
             <section className="book-demo-dark" aria-labelledby="book-demo-heading">
               <div className="book-demo__backdrop" aria-hidden>
@@ -53,11 +56,11 @@ function ConferenceRegisterContent() {
               </div>
             </section>
           </div>
-        </main>
+        </div>
         {registration.showSiteFooter !== false ? <Footer /> : null}
       </div>
     </>
-  )
+  );
 }
 
 export function ConferenceRegisterPage() {
@@ -65,5 +68,5 @@ export function ConferenceRegisterPage() {
     <RegistrationFormSettingsProvider>
       <ConferenceRegisterContent />
     </RegistrationFormSettingsProvider>
-  )
+  );
 }

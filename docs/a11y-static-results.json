@@ -1,0 +1,843 @@
+{
+  "generatedAt": "2026-06-11T13:45:44.728Z",
+  "filesScanned": 239,
+  "patternCounts": {
+    "img-no-alt": 1,
+    "role-dialog": 1,
+    "outline-none": 11,
+    "div-onclick": 3,
+    "empty-alt": 21,
+    "sr-only": 17,
+    "aria-live": 11,
+    "main-usage": 10,
+    "h1-usage": 8,
+    "autofocus": 1,
+    "text-xs-below-12": 2,
+    "video": 2,
+    "iframe": 2
+  },
+  "totalFindings": 90,
+  "findings": [
+    {
+      "pattern": "img-no-alt",
+      "file": "src/components/CmsImage.tsx",
+      "line": 33,
+      "snippet": "<img",
+      "severity": "high",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "role-dialog",
+      "file": "src/components/CookieBanner.tsx",
+      "line": 22,
+      "snippet": "role=\"dialog\"",
+      "severity": "info",
+      "wcag": "4.1.2"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/LeadCaptureModal.tsx",
+      "line": 100,
+      "snippet": "className=\"w-full min-h-11 pl-12 pr-4 rounded-2xl border border-border/80 bg-off outline-none focus-visible:border-accen",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/LeadCaptureModal.tsx",
+      "line": 117,
+      "snippet": "className=\"w-full min-h-11 pl-12 pr-4 rounded-2xl border border-border/80 bg-off outline-none focus-visible:border-accen",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/LeadCaptureModal.tsx",
+      "line": 134,
+      "snippet": "className=\"w-full min-h-11 pl-12 pr-4 rounded-2xl border border-border/80 bg-off outline-none focus-visible:border-accen",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/LeadCaptureModal.tsx",
+      "line": 146,
+      "snippet": "className=\"w-full min-h-11 py-4 bg-text text-white rounded-2xl font-semibold flex items-center justify-center gap-2 hove",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/Navbar.tsx",
+      "line": 285,
+      "snippet": "className=\"flex items-center gap-2.5 min-w-0 shrink-0 md:justify-self-start md:self-center group focus-visible:outline-n",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/Navbar.tsx",
+      "line": 314,
+      "snippet": "className={`nav-mobile-trigger md:hidden self-center inline-flex items-center justify-center min-h-10 min-w-10 rounded-f",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "div-onclick",
+      "file": "src/components/Navbar.tsx",
+      "line": 265,
+      "snippet": "<div",
+      "severity": "high",
+      "wcag": "4.1.2"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/NavbarBrandLogo.tsx",
+      "line": 26,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/PublicLayout.tsx",
+      "line": 10,
+      "snippet": "className=\"sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:rounded-lg focus:bg-w",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/PublicLayout.tsx",
+      "line": 10,
+      "snippet": "className=\"sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:rounded-lg focus:bg-w",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/RoutePageSkeleton.tsx",
+      "line": 7,
+      "snippet": "aria-live=\"polite\"",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/RoutePageSkeleton.tsx",
+      "line": 21,
+      "snippet": "<p className=\"sr-only\">Loading page…</p>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/components/RoutePageSkeleton.tsx",
+      "line": 4,
+      "snippet": "<main",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/AdminAuthLogin.tsx",
+      "line": 70,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/components/admin/AdminAuthLogin.tsx",
+      "line": 155,
+      "snippet": "<h1 className=\"admin-auth-brand__headline\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/admin/AdminConfirmDialog.tsx",
+      "line": 55,
+      "snippet": "<Dialog.Description className=\"sr-only\">{title}</Dialog.Description>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/components/admin/AdminLayout.tsx",
+      "line": 88,
+      "snippet": "<main id=\"admin-main\" className=\"flex-1 flex flex-col overflow-hidden min-w-0\" role=\"main\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/admin/AdminOverview.tsx",
+      "line": 216,
+      "snippet": "<h2 id=\"dashboard-stats-heading\" className=\"sr-only\">At a glance</h2>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/admin/AdminOverview.tsx",
+      "line": 329,
+      "snippet": "className=\"sr-only\"",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/ArticleSeoTab.tsx",
+      "line": 147,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/BlogManager.tsx",
+      "line": 596,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/BlogManager.tsx",
+      "line": 762,
+      "snippet": "thumbnail={<img src={article.thumbnail} alt=\"\" className=\"w-full h-full object-cover\" />}",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/EventManager.tsx",
+      "line": 670,
+      "snippet": "<img src={editForm.thumbnail} alt=\"\" className=\"w-full h-full object-cover\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/EventManager.tsx",
+      "line": 827,
+      "snippet": "<img src={event.thumbnail} alt=\"\" className=\"w-full h-full object-cover\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/EventSeoTab.tsx",
+      "line": 147,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/MediaManager.tsx",
+      "line": 85,
+      "snippet": "<img src={resolveAssetUrl(item.url)} alt=\"\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/MediaManager.tsx",
+      "line": 502,
+      "snippet": "<img src={resolveAssetUrl(item.url)} alt=\"\" loading=\"lazy\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/MediaManager.tsx",
+      "line": 530,
+      "snippet": "<img src={resolveAssetUrl(item.url)} alt=\"\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "div-onclick",
+      "file": "src/components/admin/MediaManager.tsx",
+      "line": 390,
+      "snippet": "<div",
+      "severity": "high",
+      "wcag": "4.1.2"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/OgImageUpload.tsx",
+      "line": 73,
+      "snippet": "<img src={value} alt=\"\" className=\"w-full h-full object-cover\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/admin/RegistrationManager.tsx",
+      "line": 835,
+      "snippet": "<span className=\"sr-only\">Search submissions</span>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/SeoPreviewPanel.tsx",
+      "line": 55,
+      "snippet": "<img src={debouncedSeo.ogImage} alt=\"\" className=\"h-full w-full object-cover\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/admin/admin-editor-ui.tsx",
+      "line": 42,
+      "snippet": "aria-live=\"polite\"",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/admin/admin-editor-ui.tsx",
+      "line": 62,
+      "snippet": "<span className=\"admin-editor-save-status\" aria-live=\"polite\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/admin/admin-editor-ui.tsx",
+      "line": 71,
+      "snippet": "<span className=\"admin-editor-save-status admin-editor-save-status--unsaved\" aria-live=\"polite\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/admin/admin-editor-ui.tsx",
+      "line": 79,
+      "snippet": "<span className=\"admin-editor-save-status\" aria-live=\"polite\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/components/admin/admin-editor-ui.tsx",
+      "line": 149,
+      "snippet": "<h1 className=\"admin-editor-page-header__title\">{header.title}</h1>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/layout/Sidebar.tsx",
+      "line": 51,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/components/admin/layout/TopBar.tsx",
+      "line": 61,
+      "snippet": "<h1 className=\"admin-topbar__page-title\">{pageContext.pageTitle}</h1>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/admin/ui/CommandPalette.tsx",
+      "line": 247,
+      "snippet": "className=\"flex-1 h-10 bg-transparent text-[var(--ds-text-base)] text-[var(--ds-text-primary)] outline-none placeholder:",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "autofocus",
+      "file": "src/components/admin/ui/CommandPalette.tsx",
+      "line": 243,
+      "snippet": "autoFocus",
+      "severity": "low",
+      "wcag": "2.4.3"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/ui/DataDisplay.tsx",
+      "line": 118,
+      "snippet": "<img src={item.avatar} alt=\"\" className=\"w-full h-full rounded-[var(--ds-radius-full)] object-cover\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "div-onclick",
+      "file": "src/components/admin/ui/DataTable.tsx",
+      "line": 195,
+      "snippet": "<div",
+      "severity": "high",
+      "wcag": "4.1.2"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/admin/ui/ImageUpload.tsx",
+      "line": 105,
+      "snippet": "<img src={value} alt=\"\" className=\"w-full h-full object-cover\" />",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/components/admin/ui/Navigation.tsx",
+      "line": 124,
+      "snippet": "<h1 className=\"text-[var(--ds-text-xl)] font-[var(--ds-font-medium)] text-[var(--ds-text-primary)] leading-[var(--ds-lea",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/admin/ui/TextInput.tsx",
+      "line": 187,
+      "snippet": "'border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-primary-600)] focus-visible:ring-of",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/admin/ui/Toast.tsx",
+      "line": 58,
+      "snippet": "aria-live=\"polite\"",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/blog/PlaybookArticleCard.tsx",
+      "line": 66,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/components/book-demo/BookDemoPanel.tsx",
+      "line": 23,
+      "snippet": "<h1 id=\"book-demo-heading\" className=\"book-demo-panel__title\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/book-demo/RegisterSuccessPanel.tsx",
+      "line": 28,
+      "snippet": "aria-live=\"polite\"",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/components/catalog/CatalogHero.tsx",
+      "line": 16,
+      "snippet": "<h1 className=\"catalog-hero__title\">{title}</h1>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/catalog/CatalogToolbar.tsx",
+      "line": 63,
+      "snippet": "<label className=\"sr-only\" htmlFor={searchId}>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/landing/WaitlistForm.tsx",
+      "line": 77,
+      "snippet": "<span className=\"sr-only\">Work email</span>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/sections/BlogSection.tsx",
+      "line": 77,
+      "snippet": "<div aria-live=\"polite\" aria-busy=\"true\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/sections/BlogSection.tsx",
+      "line": 79,
+      "snippet": "<span className=\"sr-only\">Loading playbook articles</span>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "text-xs-below-12",
+      "file": "src/components/sections/BookShowcase.tsx",
+      "line": 47,
+      "snippet": "<div className=\"flex items-center gap-2 text-white/65 text-[11px] font-medium uppercase tracking-[0.22em]\">",
+      "severity": "low",
+      "wcag": "1.4.4"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/sections/EventsSection.tsx",
+      "line": 238,
+      "snippet": "className=\"btn-cta-secondary group events-section__cta active:scale-[0.97] focus-visible:outline-none focus-visible:ring",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/sections/conference/ConferenceAgenda.tsx",
+      "line": 171,
+      "snippet": "<div className=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/sections/conference/ConferenceAgenda.tsx",
+      "line": 171,
+      "snippet": "<div className=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "video",
+      "file": "src/components/sections/conference/ConferenceHero.tsx",
+      "line": 86,
+      "snippet": "<video",
+      "severity": "info",
+      "wcag": "1.2.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/sections/conference/ConferenceTestimonials.tsx",
+      "line": 42,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "iframe",
+      "file": "src/components/sections/conference/ConferenceVenue.tsx",
+      "line": 34,
+      "snippet": "<iframe",
+      "severity": "info",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "iframe",
+      "file": "src/components/sections/conference/ConferenceVideo.tsx",
+      "line": 177,
+      "snippet": "<iframe",
+      "severity": "info",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "video",
+      "file": "src/components/sections/conference/ConferenceVideo.tsx",
+      "line": 186,
+      "snippet": "<video",
+      "severity": "info",
+      "wcag": "1.2.1"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/components/sections/conference/PastSpeakerEditionTabs.tsx",
+      "line": 143,
+      "snippet": "<div className=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/sections/conference/PastSpeakerEditionTabs.tsx",
+      "line": 143,
+      "snippet": "<div className=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/speakers/SpeakerDetailDialog.tsx",
+      "line": 57,
+      "snippet": "<Dialog.Description className=\"sr-only\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/components/speakers/SpeakerListRow.tsx",
+      "line": 36,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/speakers/SpeakersCatalogToolbar.tsx",
+      "line": 82,
+      "snippet": "<label className=\"sr-only\" htmlFor={searchId}>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/ui/AppDialog.tsx",
+      "line": 31,
+      "snippet": "'max-h-[min(90vh,720px)] overflow-y-auto focus:outline-none',",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/components/ui/AppDialog.tsx",
+      "line": 36,
+      "snippet": "<Dialog.Description className=\"sr-only\">{description}</Dialog.Description>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "outline-none",
+      "file": "src/components/ui/Button.tsx",
+      "line": 7,
+      "snippet": "\"inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-sans font-bold tracking-tight transit",
+      "severity": "medium",
+      "wcag": "2.4.7"
+    },
+    {
+      "pattern": "aria-live",
+      "file": "src/pages/BlogPage.tsx",
+      "line": 103,
+      "snippet": "<div aria-live=\"polite\" aria-busy=\"true\">",
+      "severity": "info",
+      "wcag": "4.1.3"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/pages/BlogPage.tsx",
+      "line": 105,
+      "snippet": "<span className=\"sr-only\">Loading articles</span>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/BlogPage.tsx",
+      "line": 90,
+      "snippet": "<main className=\"catalog-main premium-catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/BlogPostPage.tsx",
+      "line": 340,
+      "snippet": "<main className=\"blog-post-page__content\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "text-xs-below-12",
+      "file": "src/pages/BlogPostPage.tsx",
+      "line": 310,
+      "snippet": "className=\"absolute -top-11 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-text px-3 py-1.5 text-[10px] ",
+      "severity": "low",
+      "wcag": "1.4.4"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/ConferencePage.tsx",
+      "line": 101,
+      "snippet": "<main className=\"w-full min-h-screen text-text public-page-shell conference-page-shell overflow-x-hidden\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/ConferenceRegisterPage.tsx",
+      "line": 25,
+      "snippet": "<main className=\"book-demo-main\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/pages/EventDetailPage.tsx",
+      "line": 141,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "sr-only",
+      "file": "src/pages/EventDetailPage.tsx",
+      "line": 107,
+      "snippet": "<p className=\"sr-only\">Loading event…</p>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/pages/EventDetailPage.tsx",
+      "line": 153,
+      "snippet": "<h1 className=\"event-detail__title\">{event.title}</h1>",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/EventDetailPage.tsx",
+      "line": 106,
+      "snippet": "<main className=\"catalog-main max-w-[1200px] mx-auto px-5 py-32 text-center text-text3\" aria-busy=\"true\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/EventDetailPage.tsx",
+      "line": 131,
+      "snippet": "<main className=\"event-detail\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "empty-alt",
+      "file": "src/pages/EventsPage.tsx",
+      "line": 167,
+      "snippet": "alt=\"\"",
+      "severity": "medium",
+      "wcag": "1.1.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/EventsPage.tsx",
+      "line": 89,
+      "snippet": "<main className=\"catalog-main premium-catalog-main max-w-[1200px] mx-auto px-5 sm:px-8 lg:px-12\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "h1-usage",
+      "file": "src/pages/NotFoundPage.tsx",
+      "line": 35,
+      "snippet": "<h1 className=\"text-5xl sm:text-7xl font-semibold tracking-tight text-text leading-none mb-6\">",
+      "severity": "info",
+      "wcag": "1.3.1"
+    },
+    {
+      "pattern": "main-usage",
+      "file": "src/pages/SpeakersPage.tsx",
+      "line": 121,
+      "snippet": "<main className=\"catalog-main premium-catalog-main speakers-page__main w-full max-w-none mx-auto px-5 sm:px-8 lg:px-10 x",
+      "severity": "info",
+      "wcag": "1.3.1"
+    }
+  ],
+  "headingInventory": [
+    {
+      "file": "src/pages/AdminPage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/BlogPage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 2,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/BlogPostPage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 1,
+        "h3": 1,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/ConferencePage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/ConferenceRegisterPage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/EventDetailPage.tsx",
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/EventsPage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 3,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/NotFoundPage.tsx",
+      "headings": {
+        "h1": 1,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    },
+    {
+      "file": "src/pages/SpeakersPage.tsx",
+      "headings": {
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0
+      }
+    }
+  ]
+}

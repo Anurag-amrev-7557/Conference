@@ -1,0 +1,497 @@
+{
+  "generatedAt": "2026-06-11T13:54:51.128Z",
+  "baseUrl": "http://localhost:5173",
+  "publicScans": [
+    {
+      "route": "/",
+      "viewport": "mobile",
+      "label": "/ @ mobile",
+      "url": "http://localhost:5173/",
+      "status": 200,
+      "violations": [],
+      "incomplete": 2,
+      "passes": 29
+    },
+    {
+      "route": "/",
+      "viewport": "tablet",
+      "label": "/ @ tablet",
+      "url": "http://localhost:5173/",
+      "status": 200,
+      "violations": [],
+      "incomplete": 2,
+      "passes": 29
+    },
+    {
+      "route": "/",
+      "viewport": "desktop",
+      "label": "/ @ desktop",
+      "url": "http://localhost:5173/",
+      "status": 200,
+      "violations": [],
+      "incomplete": 2,
+      "passes": 29
+    },
+    {
+      "route": "/register",
+      "viewport": "mobile",
+      "label": "/register @ mobile",
+      "url": "http://localhost:5173/register",
+      "status": 200,
+      "violations": [],
+      "incomplete": 2,
+      "passes": 27
+    },
+    {
+      "route": "/register",
+      "viewport": "tablet",
+      "label": "/register @ tablet",
+      "url": "http://localhost:5173/register",
+      "status": 200,
+      "violations": [],
+      "incomplete": 2,
+      "passes": 28
+    },
+    {
+      "route": "/register",
+      "viewport": "desktop",
+      "label": "/register @ desktop",
+      "url": "http://localhost:5173/register",
+      "status": 200,
+      "violations": [],
+      "incomplete": 2,
+      "passes": 28
+    },
+    {
+      "route": "/blog",
+      "viewport": "mobile",
+      "label": "/blog @ mobile",
+      "url": "http://localhost:5173/blog",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/blog",
+      "viewport": "tablet",
+      "label": "/blog @ tablet",
+      "url": "http://localhost:5173/blog",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/blog",
+      "viewport": "desktop",
+      "label": "/blog @ desktop",
+      "url": "http://localhost:5173/blog",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/events",
+      "viewport": "mobile",
+      "label": "/events @ mobile",
+      "url": "http://localhost:5173/events",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/events",
+      "viewport": "tablet",
+      "label": "/events @ tablet",
+      "url": "http://localhost:5173/events",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/events",
+      "viewport": "desktop",
+      "label": "/events @ desktop",
+      "url": "http://localhost:5173/events",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/speakers",
+      "viewport": "mobile",
+      "label": "/speakers @ mobile",
+      "url": "http://localhost:5173/speakers",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 28
+    },
+    {
+      "route": "/speakers",
+      "viewport": "tablet",
+      "label": "/speakers @ tablet",
+      "url": "http://localhost:5173/speakers",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/speakers",
+      "viewport": "desktop",
+      "label": "/speakers @ desktop",
+      "url": "http://localhost:5173/speakers",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 29
+    },
+    {
+      "route": "/nonexistent-page-for-404",
+      "viewport": "mobile",
+      "label": "/nonexistent-page-for-404 @ mobile",
+      "url": "http://localhost:5173/nonexistent-page-for-404",
+      "status": 200,
+      "violations": [],
+      "incomplete": 0,
+      "passes": 19
+    },
+    {
+      "route": "/nonexistent-page-for-404",
+      "viewport": "tablet",
+      "label": "/nonexistent-page-for-404 @ tablet",
+      "url": "http://localhost:5173/nonexistent-page-for-404",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 17
+    },
+    {
+      "route": "/nonexistent-page-for-404",
+      "viewport": "desktop",
+      "label": "/nonexistent-page-for-404 @ desktop",
+      "url": "http://localhost:5173/nonexistent-page-for-404",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 17
+    },
+    {
+      "route": "/blog/strategic-ai-implementation-impact",
+      "viewport": "mobile",
+      "label": "/blog/strategic-ai-implementation-impact @ mobile",
+      "url": "http://localhost:5173/blog/strategic-ai-implementation-impact",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 23
+    },
+    {
+      "route": "/blog/strategic-ai-implementation-impact",
+      "viewport": "tablet",
+      "label": "/blog/strategic-ai-implementation-impact @ tablet",
+      "url": "http://localhost:5173/blog/strategic-ai-implementation-impact",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    },
+    {
+      "route": "/blog/strategic-ai-implementation-impact",
+      "viewport": "desktop",
+      "label": "/blog/strategic-ai-implementation-impact @ desktop",
+      "url": "http://localhost:5173/blog/strategic-ai-implementation-impact",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    },
+    {
+      "route": "/blog/strategic-ai-implementation",
+      "viewport": "mobile",
+      "label": "/blog/strategic-ai-implementation @ mobile",
+      "url": "http://localhost:5173/blog/strategic-ai-implementation",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 23
+    },
+    {
+      "route": "/blog/strategic-ai-implementation",
+      "viewport": "tablet",
+      "label": "/blog/strategic-ai-implementation @ tablet",
+      "url": "http://localhost:5173/blog/strategic-ai-implementation",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 23
+    },
+    {
+      "route": "/blog/strategic-ai-implementation",
+      "viewport": "desktop",
+      "label": "/blog/strategic-ai-implementation @ desktop",
+      "url": "http://localhost:5173/blog/strategic-ai-implementation",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    },
+    {
+      "route": "/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f",
+      "viewport": "mobile",
+      "label": "/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f @ mobile",
+      "url": "http://localhost:5173/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 21
+    },
+    {
+      "route": "/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f",
+      "viewport": "tablet",
+      "label": "/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f @ tablet",
+      "url": "http://localhost:5173/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    },
+    {
+      "route": "/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f",
+      "viewport": "desktop",
+      "label": "/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f @ desktop",
+      "url": "http://localhost:5173/events/4504a5b4-cc1f-4aa2-afec-de7d5ff20f3f",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    },
+    {
+      "route": "/events/1",
+      "viewport": "mobile",
+      "label": "/events/1 @ mobile",
+      "url": "http://localhost:5173/events/1",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 21
+    },
+    {
+      "route": "/events/1",
+      "viewport": "tablet",
+      "label": "/events/1 @ tablet",
+      "url": "http://localhost:5173/events/1",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    },
+    {
+      "route": "/events/1",
+      "viewport": "desktop",
+      "label": "/events/1 @ desktop",
+      "url": "http://localhost:5173/events/1",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 22
+    }
+  ],
+  "adminScans": [
+    {
+      "route": "/admin",
+      "label": "admin /admin",
+      "url": "http://localhost:5173/admin",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/dashboard",
+      "label": "admin /admin/dashboard",
+      "url": "http://localhost:5173/admin/dashboard",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/design",
+      "label": "admin /admin/design",
+      "url": "http://localhost:5173/admin/design",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/media",
+      "label": "admin /admin/media",
+      "url": "http://localhost:5173/admin/media",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/blogs",
+      "label": "admin /admin/blogs",
+      "url": "http://localhost:5173/admin/blogs",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/events",
+      "label": "admin /admin/events",
+      "url": "http://localhost:5173/admin/events",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/settings",
+      "label": "admin /admin/settings",
+      "url": "http://localhost:5173/admin/settings",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/conference",
+      "label": "admin /admin/conference",
+      "url": "http://localhost:5173/admin/conference",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/newsletter",
+      "label": "admin /admin/newsletter",
+      "url": "http://localhost:5173/admin/newsletter",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/users",
+      "label": "admin /admin/users",
+      "url": "http://localhost:5173/admin/users",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin/registrations",
+      "label": "admin /admin/registrations",
+      "url": "http://localhost:5173/admin/registrations",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    },
+    {
+      "route": "/admin",
+      "theme": "dark",
+      "label": "admin login dark theme",
+      "url": "http://localhost:5173/admin",
+      "status": 200,
+      "violations": [],
+      "incomplete": 1,
+      "passes": 25
+    }
+  ],
+  "keyboardChecks": [
+    {
+      "route": "/",
+      "issues": [
+        {
+          "check": "focusable-count",
+          "count": 80
+        },
+        {
+          "check": "main-inside-main-content-div",
+          "landmarks": {
+            "main": 1,
+            "nav": 4,
+            "h1": 1,
+            "mainContentDiv": 1
+          }
+        }
+      ]
+    },
+    {
+      "route": "/register",
+      "issues": [
+        {
+          "check": "focusable-count",
+          "count": 32
+        },
+        {
+          "check": "main-inside-main-content-div",
+          "landmarks": {
+            "main": 1,
+            "nav": 4,
+            "h1": 1,
+            "mainContentDiv": 1
+          }
+        }
+      ]
+    },
+    {
+      "route": "/blog",
+      "issues": [
+        {
+          "check": "focusable-count",
+          "count": 34
+        },
+        {
+          "check": "main-inside-main-content-div",
+          "landmarks": {
+            "main": 1,
+            "nav": 4,
+            "h1": 1,
+            "mainContentDiv": 1
+          }
+        }
+      ]
+    },
+    {
+      "route": "/speakers",
+      "issues": [
+        {
+          "check": "focusable-count",
+          "count": 49
+        },
+        {
+          "check": "main-inside-main-content-div",
+          "landmarks": {
+            "main": 1,
+            "nav": 5,
+            "h1": 1,
+            "mainContentDiv": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalViolations": 0,
+    "routesScanned": 41,
+    "routesWithViolations": 0,
+    "axeErrors": 0
+  }
+}

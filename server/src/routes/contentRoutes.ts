@@ -15,8 +15,6 @@ import {
   fetchPublicArticles,
   fetchPublicEvents,
   fetchSitePayload,
-  mapPublicArticle,
-  mapPublicEvent,
 } from '../lib/publicSiteContent';
 
 const router = Router();
@@ -82,64 +80,74 @@ router.get('/events', async (req, res) => {
 });
 
 // POST /api/v1/content/conference-registration
-router.post('/conference-registration', registrationLimiter, validateBody(registrationCreateSchema), async (req, res) => {
-  const { name, email, phone, linkedIn, designation } = req.body;
-  try {
-    const regSettings = await getConferenceRegistrationSettings();
-    if (regSettings.registrationOpen === false) {
-      return res.status(403).json({ error: 'Registration is currently closed.' });
+router.post(
+  '/conference-registration',
+  registrationLimiter,
+  validateBody(registrationCreateSchema),
+  async (req, res) => {
+    const { name, email, phone, linkedIn, designation } = req.body;
+    try {
+      const regSettings = await getConferenceRegistrationSettings();
+      if (regSettings.registrationOpen === false) {
+        return res.status(403).json({ error: 'Registration is currently closed.' });
+      }
+      const record = await prisma.conferenceRegistration.create({
+        data: {
+          name,
+          email: email.toLowerCase(),
+          phone,
+          linkedIn: linkedIn ?? '',
+          designation,
+          ticketPriceCents: regSettings.ticketPriceCents,
+          status: 'pending',
+        },
+      });
+      void notifyAdminOfRegistration(record).catch((err) => {
+        console.error('Registration notify admin failed:', err);
+      });
+      void notifyRegistrantOfSubmission(record).catch((err) => {
+        console.error('Registration notify registrant failed:', err);
+      });
+      res.status(201).json({
+        id: record.id,
+        success: true,
+        message: 'Registration received.',
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code === 'P2002') {
+        return res.status(409).json({ error: 'This email is already registered for the summit.' });
+      }
+      console.error('Registration create error:', error);
+      res.status(500).json({ error: 'Failed to submit registration.' });
     }
-    const record = await prisma.conferenceRegistration.create({
-      data: {
-        name,
-        email: email.toLowerCase(),
-        phone,
-        linkedIn: linkedIn ?? '',
-        designation,
-        ticketPriceCents: regSettings.ticketPriceCents,
-        status: 'pending',
-      },
-    });
-    void notifyAdminOfRegistration(record).catch((err) => {
-      console.error('Registration notify admin failed:', err);
-    });
-    void notifyRegistrantOfSubmission(record).catch((err) => {
-      console.error('Registration notify registrant failed:', err);
-    });
-    res.status(201).json({
-      id: record.id,
-      success: true,
-      message: 'Registration received.',
-    });
-  } catch (error) {
-    if ((error as { code?: string }).code === 'P2002') {
-      return res.status(409).json({ error: 'This email is already registered for the summit.' });
-    }
-    console.error('Registration create error:', error);
-    res.status(500).json({ error: 'Failed to submit registration.' });
-  }
-});
+  },
+);
 
 // POST /api/v1/content/newsletter — waitlist / playbook signup
-router.post('/newsletter', newsletterLimiter, validateBody(newsletterSignupSchema), async (req, res) => {
-  const { email, source } = req.body;
-  try {
-    const { enabled } = await getNewsletterSettings();
-    if (!enabled) {
-      return res.status(403).json({ error: 'Newsletter signup is currently disabled.' });
+router.post(
+  '/newsletter',
+  newsletterLimiter,
+  validateBody(newsletterSignupSchema),
+  async (req, res) => {
+    const { email, source } = req.body;
+    try {
+      const { enabled } = await getNewsletterSettings();
+      if (!enabled) {
+        return res.status(403).json({ error: 'Newsletter signup is currently disabled.' });
+      }
+      const normalized = email.toLowerCase().trim();
+      await prisma.newsletterSignup.upsert({
+        where: { email: normalized },
+        create: { email: normalized, source: source?.trim() || 'waitlist' },
+        update: {},
+      });
+      res.status(201).json({ success: true, message: 'Thanks for subscribing!' });
+    } catch (error) {
+      console.error('Newsletter signup error:', error);
+      res.status(500).json({ error: 'Failed to save signup.' });
     }
-    const normalized = email.toLowerCase().trim();
-    await prisma.newsletterSignup.upsert({
-      where: { email: normalized },
-      create: { email: normalized, source: source?.trim() || 'waitlist' },
-      update: {},
-    });
-    res.status(201).json({ success: true, message: 'Thanks for subscribing!' });
-  } catch (error) {
-    console.error('Newsletter signup error:', error);
-    res.status(500).json({ error: 'Failed to save signup.' });
-  }
-});
+  },
+);
 
 // GET /api/v1/content — legacy monolithic (backward compat)
 router.get('/', async (_req, res) => {
