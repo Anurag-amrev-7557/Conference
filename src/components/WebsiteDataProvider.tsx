@@ -79,51 +79,32 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       try {
-        const [siteResult, articlesResult, eventsResult] = await Promise.allSettled([
-          api.getContentSite(),
-          api.getArticles(),
-          api.getEvents(),
-        ]);
+        let remotePayload: Record<string, unknown> | null = null;
 
-        if (siteResult.status === 'rejected') {
-          console.error('Failed to fetch site slice:', siteResult.reason);
-        }
-        if (articlesResult.status === 'rejected') {
-          console.error('Failed to fetch articles slice:', articlesResult.reason);
-        }
-        if (eventsResult.status === 'rejected') {
-          console.error('Failed to fetch events slice:', eventsResult.reason);
+        if (typeof window !== 'undefined' && window.__CMS_BOOTSTRAP_PROMISE__) {
+          try {
+            remotePayload = (await window.__CMS_BOOTSTRAP_PROMISE__) as Record<string, unknown> | null;
+          } catch {
+            remotePayload = null;
+          }
         }
 
-        const site =
-          siteResult.status === 'fulfilled'
-            ? (siteResult.value as Record<string, unknown>)
-            : {};
+        if (!remotePayload) {
+          remotePayload = (await api.getContentBootstrap()) as Record<string, unknown>;
+        }
+
+        const site = remotePayload ?? {};
 
         if (typeof site.siteUrl === 'string') {
           setSiteOrigin(site.siteUrl);
         }
-        if (typeof site.contentVersion === 'number') {
-          setContentVersion(site.contentVersion);
-        }
 
         const remoteVersion =
-          siteResult.status === 'fulfilled' && typeof site.contentVersion === 'number'
-            ? site.contentVersion
-            : contentVersionRef.current;
+          typeof site.contentVersion === 'number' ? site.contentVersion : contentVersionRef.current;
 
         const merged = (() => {
           const base = hasLoadedRef.current ? sourceDataRef.current : structuralDefaults;
-          const articles =
-            articlesResult.status === 'fulfilled' ? articlesResult.value : base.articles;
-          const events = eventsResult.status === 'fulfilled' ? eventsResult.value : base.events;
-
-          const remoteData: Record<string, unknown> = { articles, events };
-          if (siteResult.status === 'fulfilled') {
-            Object.assign(remoteData, site);
-          }
-
-          return mergeRemoteWebsiteData(remoteData, base);
+          return mergeRemoteWebsiteData(site, base);
         })();
 
         const versionChanged = remoteVersion !== contentVersionRef.current;
@@ -162,8 +143,9 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [initial.source]);
 
   useEffect(() => {
-    void fetchContent({ silent: false });
-  }, [fetchContent]);
+    // When baked bootstrap exists, refresh silently — avoids blank first paint.
+    void fetchContent({ silent: initial.source !== 'structural' });
+  }, [fetchContent, initial.source]);
 
   useEffect(() => {
     const onVisible = () => {

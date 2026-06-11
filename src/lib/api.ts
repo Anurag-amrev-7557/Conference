@@ -168,6 +168,12 @@ export const api = {
     return res.json();
   },
 
+  async getContentBootstrap() {
+    const res = await fetch(`${API_BASE}/content/bootstrap`, NO_STORE);
+    if (!res.ok) throw new Error('Failed to fetch CMS bootstrap');
+    return res.json();
+  },
+
   async getArticles(limit = 50, offset = 0) {
     const res = await fetch(`${API_BASE}/content/articles?limit=${limit}&offset=${offset}`, NO_STORE);
     if (!res.ok) throw new Error('Failed to fetch articles');
