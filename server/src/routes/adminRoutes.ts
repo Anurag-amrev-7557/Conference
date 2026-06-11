@@ -26,6 +26,7 @@ import { notifyRegistrantOfStatus } from '../lib/registrationNotifications';
 import { writeAuditLog, saveContentRevision, getAdminFromRequest } from '../lib/auditLog';
 import { blockViewerMutations, requireMinRole } from '../middleware/requireRole';
 import { cmsBootstrapPublishMiddleware } from '../middleware/cmsBootstrapPublish';
+import { bumpSiteContentVersion } from '../lib/bumpSiteContentVersion';
 import {
   assertCanChangePrivilegedRole,
   assertCanDeleteAdminUser,
@@ -479,6 +480,7 @@ router.post('/revisions/:id/restore', requireMinRole('editor'), async (req, res)
       entityId: revision.entityId,
       summary: `Restored from revision ${revision.id}`,
     });
+    await bumpSiteContentVersion();
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to restore revision.' });
@@ -837,6 +839,7 @@ router.post(
         entityId: article.id,
         summary: article.title,
       });
+      await bumpSiteContentVersion();
       res.json(serializeArticle(article));
     } catch (err) {
       console.error('Article create error:', err);
@@ -871,6 +874,7 @@ router.put(
         entityId: article.id,
         summary: article.title,
       });
+      await bumpSiteContentVersion();
       res.json(serializeArticle(article));
     } catch {
       res.status(500).json({ error: 'Failed to update article.' });
@@ -890,6 +894,7 @@ router.delete('/blogs/:id', requireMinRole('editor'), async (req, res) => {
       entityId: article.id,
       summary: article.title,
     });
+    await bumpSiteContentVersion();
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to delete article.' });
@@ -908,6 +913,7 @@ router.post('/blogs/:id/restore', requireMinRole('editor'), async (req, res) => 
       entityId: article.id,
       summary: article.title,
     });
+    await bumpSiteContentVersion();
     res.json(article);
   } catch {
     res.status(500).json({ error: 'Failed to restore article.' });
@@ -928,6 +934,7 @@ router.delete('/blogs/:id/permanent', requireMinRole('super_admin'), async (req,
       entityId: article.id,
       summary: article.title,
     });
+    await bumpSiteContentVersion();
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to permanently delete article.' });
@@ -951,6 +958,7 @@ router.post(
         entityId: event.id,
         summary: event.title,
       });
+      await bumpSiteContentVersion();
       res.json(event);
     } catch (err) {
       console.error('Event create error:', err);
@@ -1000,6 +1008,7 @@ router.put(
         entityId: event.id,
         summary: event.title,
       });
+      await bumpSiteContentVersion();
       res.json(event);
     } catch {
       res.status(500).json({ error: 'Failed to update event.' });
@@ -1019,6 +1028,7 @@ router.delete('/events/:id', requireMinRole('editor'), async (req, res) => {
       entityId: event.id,
       summary: event.title,
     });
+    await bumpSiteContentVersion();
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to delete event.' });
@@ -1037,6 +1047,7 @@ router.post('/events/:id/restore', requireMinRole('editor'), async (req, res) =>
       entityId: event.id,
       summary: event.title,
     });
+    await bumpSiteContentVersion();
     res.json(event);
   } catch {
     res.status(500).json({ error: 'Failed to restore event.' });
@@ -1057,6 +1068,7 @@ router.delete('/events/:id/permanent', requireMinRole('super_admin'), async (req
       entityId: event.id,
       summary: event.title,
     });
+    await bumpSiteContentVersion();
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to permanently delete event.' });

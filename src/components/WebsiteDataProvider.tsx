@@ -88,7 +88,14 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         try {
           let remotePayload: Record<string, unknown> | null = null;
 
-          if (typeof window !== 'undefined' && window.__CMS_BOOTSTRAP_PROMISE__) {
+          // Only reuse the inline prefetch on first paint — later refreshes must hit the live API
+          // (articles/events update without a client-visible refetch otherwise).
+          const usePrefetch =
+            !hasLoadedRef.current &&
+            typeof window !== 'undefined' &&
+            window.__CMS_BOOTSTRAP_PROMISE__;
+
+          if (usePrefetch) {
             try {
               remotePayload = (await window.__CMS_BOOTSTRAP_PROMISE__) as Record<
                 string,
@@ -114,23 +121,17 @@ export const WebsiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
               ? site.contentVersion
               : contentVersionRef.current;
 
-          const merged = (() => {
-            const base = hasLoadedRef.current ? sourceDataRef.current : structuralDefaults;
-            return mergeRemoteWebsiteData(site, base);
-          })();
+          const merged = mergeRemoteWebsiteData(
+            site,
+            hasLoadedRef.current ? sourceDataRef.current : structuralDefaults,
+          );
 
-          const versionChanged = remoteVersion !== contentVersionRef.current;
-          const firstLoad = !hasLoadedRef.current;
-
-          if (firstLoad || versionChanged) {
-            sourceDataRef.current = merged;
-            setSourceData(merged);
-            setData(merged);
-            contentVersionRef.current = remoteVersion;
-            setContentVersion(remoteVersion);
-            writeSessionCmsCache(merged, remoteVersion);
-          }
-
+          sourceDataRef.current = merged;
+          setSourceData(merged);
+          setData(merged);
+          contentVersionRef.current = remoteVersion;
+          setContentVersion(remoteVersion);
+          writeSessionCmsCache(merged, remoteVersion);
           hasLoadedRef.current = true;
           notifyWebsiteContentRefreshed();
         } catch (error) {
