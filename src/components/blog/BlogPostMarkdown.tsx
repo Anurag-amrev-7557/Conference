@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react"
+import { useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import type { Components } from "react-markdown"
 import type { MarkdownTocItem } from "../../lib/extractMarkdownToc"
@@ -27,11 +27,8 @@ interface BlogPostMarkdownProps {
 
 /** Heading ids match extractMarkdownToc order; cursor resets every render before parsing. */
 export function BlogPostMarkdown({ toc, content, extraComponents }: BlogPostMarkdownProps) {
-  const cursorRef = useRef({ n: 0 })
-  cursorRef.current.n = 0
-
   const components = useMemo(() => {
-    const headings = buildHeadingComponents(toc, cursorRef.current)
+    const headings = buildHeadingComponents(toc, { n: 0 })
     return { ...headings, ...extraComponents } as Components
   }, [toc, extraComponents])
 

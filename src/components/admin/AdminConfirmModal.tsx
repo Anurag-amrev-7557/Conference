@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X } from 'lucide-react';
@@ -40,26 +40,29 @@ export function AdminConfirmModal({
   const confirmMatches =
     !needsTypedConfirm || confirmInput.trim() === requireConfirmText?.trim();
 
-  useEffect(() => {
-    if (!open) {
-      setConfirmInput('');
-      return;
-    }
-  }, [open]);
+  const handleCancel = useCallback(() => {
+    setConfirmInput('');
+    onCancel();
+  }, [onCancel]);
+
+  const handleConfirm = useCallback(async () => {
+    await onConfirm();
+    setConfirmInput('');
+  }, [onConfirm]);
 
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onCancel();
+      if (e.key === 'Escape' && !busy) handleCancel();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
     };
-  }, [open, busy, onCancel]);
+  }, [open, busy, handleCancel]);
 
   if (typeof document === 'undefined') return null;
 
@@ -74,7 +77,7 @@ export function AdminConfirmModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => !busy && onCancel()}
+            onClick={() => !busy && handleCancel()}
           />
           <motion.div
             role="alertdialog"
@@ -93,7 +96,7 @@ export function AdminConfirmModal({
               className="admin-modal__close"
               aria-label="Close"
               disabled={busy}
-              onClick={onCancel}
+              onClick={handleCancel}
             >
               <X className="w-4 h-4" />
             </button>
@@ -128,7 +131,7 @@ export function AdminConfirmModal({
                 type="button"
                 className="admin-btn admin-btn--secondary"
                 disabled={busy}
-                onClick={onCancel}
+                onClick={handleCancel}
               >
                 {cancelLabel}
               </button>
@@ -139,7 +142,7 @@ export function AdminConfirmModal({
                   variant === 'danger' ? 'admin-btn--danger-solid' : 'admin-btn--primary',
                 )}
                 disabled={busy || !confirmMatches}
-                onClick={() => void onConfirm()}
+                onClick={() => void handleConfirm()}
               >
                 {busy ? 'Working…' : confirmLabel}
               </button>

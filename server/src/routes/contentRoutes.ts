@@ -1,16 +1,20 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import prisma from '../lib/prisma';
-import { sanitizeArticleHtml } from '../lib/sanitize';
-import { getSiteUrl } from '../lib/siteUrl';
 import { validateBody } from '../middleware/validateBody';
 import { registrationCreateSchema } from '../schemas/registration';
-import { getConferenceRegistrationSettings } from '../lib/conferenceRegistrationSettings';
 import { notifyAdminOfRegistration } from '../lib/registrationNotifications';
 import { registrationLimiter, newsletterLimiter } from '../middleware/rateLimiters';
-import { scheduledArticleWhere, scheduledEventWhere } from '../lib/publishSchedule';
 import { getNewsletterSettings } from '../lib/newsletterSettings';
 import { newsletterSignupSchema } from '../schemas/newsletter';
-import { sanitizeAppearanceRecord } from '../lib/brandLogo';
+import { getConferenceRegistrationSettings } from '../lib/conferenceRegistrationSettings';
+import {
+  buildCmsBootstrapPayload,
+  fetchPublicArticles,
+  fetchPublicEvents,
+  fetchSitePayload,
+  mapPublicArticle,
+  mapPublicEvent,
+} from '../lib/publicSiteContent';
 
 const router = Router();
 
@@ -22,82 +26,21 @@ router.use((_req, res, next) => {
   next();
 });
 
-const safeParse = (str: string | null | undefined, fallback: unknown = {}) => {
-  try {
-    return str ? JSON.parse(str) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-function asList<T>(value: unknown, fallback: T[]): T[] {
-  return Array.isArray(value) ? value : fallback;
-}
-
 function parsePagination(req: Request) {
   const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1), 100);
   const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
   return { limit, offset };
 }
 
-function mapEvent(e: {
-  id: string;
-  day: string;
-  weekday: string;
-  time: string;
-  full_time: string;
-  title: string;
-  host: string;
-  location: string;
-  tags: string;
-  price: string;
-  thumbnail: string;
-  status: string;
-  isPublished: boolean;
-  startDate: Date | null;
-  endDate: Date | null;
-  lat: number | null;
-  lng: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
-  return {
-    ...e,
-    startDate: e.startDate?.toISOString() ?? null,
-    endDate: e.endDate?.toISOString() ?? null,
-    tags: safeParse(e.tags, []),
-    coordinates: e.lat != null && e.lng != null ? { lat: e.lat, lng: e.lng } : undefined,
-  };
-}
-
-function mapArticle<T extends { content: string }>(article: T): T {
-  return { ...article, content: sanitizeArticleHtml(article.content) };
-}
-
-async function fetchSitePayload() {
-  const content = await prisma.siteContent.findUnique({ where: { id: 'global' } });
-  const hero = safeParse(content?.hero);
-  const stats = asList(safeParse(content?.stats, []), []);
-  const pillars = asList(safeParse(content?.pillars, []), []);
-  const perks = asList(safeParse(content?.perks, []), []);
-  const settings = (safeParse(content?.settings) ?? {}) as Record<string, unknown>;
-  if (!settings.homepage) {
-    settings.homepage = { hero, stats, pillars, perks };
+// GET /api/v1/content/bootstrap — unified first-paint payload (live CMS source)
+router.get('/bootstrap', async (_req, res) => {
+  try {
+    res.json(await buildCmsBootstrapPayload());
+  } catch (error) {
+    console.error('Content bootstrap fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch CMS bootstrap.' });
   }
-  settings.conferenceRegistration = await getConferenceRegistrationSettings();
-  return {
-    siteUrl: getSiteUrl(),
-    hero,
-    stats,
-    pillars,
-    perks,
-    settings,
-    appearance: sanitizeAppearanceRecord(
-      (safeParse(content?.appearance) ?? {}) as Record<string, unknown>,
-    ),
-    contentVersion: content?.version ?? 1,
-  };
-}
+});
 
 // GET /api/v1/content/site
 router.get('/site', async (_req, res) => {
@@ -113,17 +56,9 @@ router.get('/site', async (_req, res) => {
 router.get('/articles', async (req, res) => {
   const { limit, offset } = parsePagination(req);
   try {
-    const [items, total] = await Promise.all([
-      prisma.article.findMany({
-        where: scheduledArticleWhere(),
-        orderBy: { publishedAt: 'desc' },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.article.count({ where: scheduledArticleWhere() }),
-    ]);
+    const { items, total } = await fetchPublicArticles(limit, offset);
     res.setHeader('X-Total-Count', String(total));
-    res.json({ items: items.map(mapArticle), total });
+    res.json({ items, total });
   } catch (error) {
     console.error('Articles fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch articles.' });
@@ -134,16 +69,7 @@ router.get('/articles', async (req, res) => {
 router.get('/events', async (req, res) => {
   const { limit, offset } = parsePagination(req);
   try {
-    const [rows, total] = await Promise.all([
-      prisma.event.findMany({
-        where: scheduledEventWhere(),
-        orderBy: { day: 'asc' },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.event.count({ where: scheduledEventWhere() }),
-    ]);
-    const items = rows.map(mapEvent);
+    const { items, total } = await fetchPublicEvents(limit, offset);
     res.setHeader('X-Total-Count', String(total));
     res.json({ items, total });
   } catch (error) {
@@ -212,17 +138,7 @@ router.post('/newsletter', newsletterLimiter, validateBody(newsletterSignupSchem
 // GET /api/v1/content — legacy monolithic (backward compat)
 router.get('/', async (_req, res) => {
   try {
-    const site = await fetchSitePayload();
-    const [articlesRes, eventsRes] = await Promise.all([
-      prisma.article.findMany({ where: { isPublished: true, deletedAt: null }, orderBy: { publishedAt: 'desc' } }),
-      prisma.event.findMany({ where: { isPublished: true, deletedAt: null }, orderBy: { day: 'asc' } }),
-    ]);
-
-    res.json({
-      ...site,
-      articles: articlesRes.map(mapArticle),
-      events: eventsRes.map(mapEvent),
-    });
+    res.json(await buildCmsBootstrapPayload());
   } catch (error) {
     console.error('Content fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch site content.' });

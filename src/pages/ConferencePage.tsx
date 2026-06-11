@@ -9,6 +9,7 @@ import { ConferenceTickets } from '../components/sections/conference/ConferenceT
 import { ConferenceCountdown } from '../components/sections/conference/ConferenceCountdown'
 import { ConferenceVenue } from '../components/sections/conference/ConferenceVenue';
 import { ConferenceTestimonials } from '../components/sections/conference/ConferenceTestimonials';
+import { ConferencePastSpeakers } from '../components/sections/conference/ConferencePastSpeakers';
 import { BlogSection } from '../components/sections/BlogSection';
 import { EventsSection } from '../components/sections/EventsSection';
 import { FinalCTA } from '../components/sections/FinalCTA';
@@ -47,6 +48,8 @@ function SummitSection({ id }: { id: ConferenceSectionId }) {
       return <ConferencePartners />;
     case 'testimonials':
       return <ConferenceTestimonials />;
+    case 'pastSpeakers':
+      return <ConferencePastSpeakers />;
     case 'venue':
       return <ConferenceVenue />;
     case 'tickets':
@@ -63,13 +66,17 @@ function EmbeddedBlock({ id }: { id: EmbeddedBlockId }) {
 
   switch (id) {
     case 'showcase':
-      return visibility.showcase ? <BookShowcase className="book-section-bg--conference" /> : null;
+      return visibility.showcase ? (
+        <BookShowcase className="book-section-bg--conference conference-section--white" />
+      ) : null;
     case 'blog':
-      return visibility.blog ? <BlogSection /> : null;
+      return visibility.blog ? <BlogSection className="conference-section--muted" /> : null;
     case 'events':
-      return visibility.events ? <EventsSection /> : null;
+      return visibility.events ? <EventsSection className="conference-section--white" /> : null;
     case 'finalCta':
-      return (visibility.finalCta ?? true) ? <FinalCTA useSummitRegister /> : null;
+      return (visibility.finalCta ?? true) ? (
+        <FinalCTA useSummitRegister surfaceVariant="muted" />
+      ) : null;
     default:
       return null;
   }

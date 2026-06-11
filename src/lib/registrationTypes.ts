@@ -74,6 +74,7 @@ export interface ConferenceRegistrationFormSettings {
     emailRequired?: string;
     emailInvalid?: string;
     phoneRequired?: string;
+    linkedInRequired?: string;
     designationRequired?: string;
   };
 }

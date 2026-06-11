@@ -5,6 +5,7 @@ import { WaitlistForm } from "../landing/WaitlistForm"
 import { useWebsiteData } from "../WebsiteDataProvider"
 import { renderSectionHeading } from "../../lib/renderSectionTitle"
 import { EditorialEyebrow } from "../ui/EditorialEyebrow"
+import { cn } from "../../lib/utils"
 
 const DEFAULT_TRUST_ITEMS = [
   "2,500+ on the registry",
@@ -61,9 +62,12 @@ function FinalCtaLink({
 export function FinalCTA({
   forceDark = false,
   useSummitRegister = false,
+  surfaceVariant = "default",
 }: {
   forceDark?: boolean
   useSummitRegister?: boolean
+  /** On summit homepage: `muted` matches alternating conference section surfaces. */
+  surfaceVariant?: "default" | "muted"
 }) {
   const { data } = useWebsiteData()
   const copy = data.settings.sections?.finalCta
@@ -111,11 +115,17 @@ export function FinalCTA({
     return () => observer.disconnect()
   }, [])
 
+  const isMutedSurface = surfaceVariant === "muted"
+
   return (
     <section
       ref={sectionRef}
       id="final-cta"
-      className={`final-cta-section premium-home-section${forceDark ? " final-cta-section--dark" : ""}`}
+      className={cn(
+        "final-cta-section premium-home-section",
+        forceDark && "final-cta-section--dark",
+        isMutedSurface && "conference-section--muted conference-embedded--muted",
+      )}
     >
       <div className="final-cta-section__ambient" aria-hidden />
       <div className="final-cta-section__glow" aria-hidden />
@@ -125,7 +135,7 @@ export function FinalCTA({
           <div className="final-cta-section__copy">
             <header className="final-cta-section__header">
               <EditorialEyebrow
-                theme="dark"
+                theme={isMutedSurface ? "light" : "dark"}
                 className="mb-5 sm:mb-6"
                 textClassName="final-cta-section__eyebrow"
               >

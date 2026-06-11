@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, type SVGProps } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import { useWebsiteData } from '../components/WebsiteDataProvider';
-import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { extractArticleToc } from '../lib/extractArticleToc';
 import { BlogPostBody } from '../components/blog/BlogPostBody';
@@ -18,7 +17,7 @@ import {
 } from '../lib/articleScrollOffset';
 
 // Custom icons for the professional monograph feel
-const XIcon = (props: any) => (
+const XIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
     <path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M20 4L4 20"/>
   </svg>
@@ -32,12 +31,16 @@ export const BlogPostPage: React.FC = () => {
   const article = data.articles.find((a) => a.slug === slug && isEffectivelyPublished(a));
   const tocItems = useMemo(
     () => (article ? extractArticleToc(article.content) : []),
-    [article?.id, article?.content],
+    [article],
   );
 
   const [copied, setCopied] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [activeTocId, setActiveTocId] = useState<string | undefined>();
+  const [scrollTocId, setScrollTocId] = useState<string | undefined>();
+  const activeTocId =
+    scrollTocId && tocItems.some((item) => item.id === scrollTocId)
+      ? scrollTocId
+      : tocItems[0]?.id;
   const relatedRailRef = useRef<HTMLDivElement>(null);
   const tocNavRef = useRef<HTMLElement>(null);
   const tocScrollLockRef = useRef(false);
@@ -50,10 +53,6 @@ export const BlogPostPage: React.FC = () => {
     damping: 30,
     restDelta: 0.001,
   });
-
-  useEffect(() => {
-    setActiveTocId(tocItems[0]?.id);
-  }, [article?.id, tocItems]);
 
   useEffect(() => {
     if (!loading && !article) {
@@ -73,11 +72,11 @@ export const BlogPostPage: React.FC = () => {
 
     const frame = requestAnimationFrame(() => {
       scrollToArticleSection(hash, 'auto');
-      setActiveTocId(hash);
+      setScrollTocId(hash);
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [article?.id, tocItems]);
+  }, [article, tocItems]);
 
   useEffect(() => {
     if (!article || tocItems.length === 0) return;
@@ -91,7 +90,7 @@ export const BlogPostPage: React.FC = () => {
     let raf = 0;
     const syncActiveSection = () => {
       const next = resolveActiveSectionId(sections);
-      if (next) setActiveTocId(next);
+      if (next) setScrollTocId(next);
     };
 
     const onScroll = () => {
@@ -131,7 +130,7 @@ export const BlogPostPage: React.FC = () => {
   ) => {
     event.preventDefault();
     tocScrollLockRef.current = true;
-    setActiveTocId(sectionId);
+    setScrollTocId(sectionId);
     scrollToArticleSection(sectionId);
   };
 
@@ -158,8 +157,6 @@ export const BlogPostPage: React.FC = () => {
     <JsonLd graph={jsonLd} />
     {article ? (
     <motion.div className="min-h-screen bg-white public-page-shell public-inner-page public-article-page">
-      <Navbar />
-      
       {/* Cinematic Reading Progress */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-accent z-[110] origin-left"

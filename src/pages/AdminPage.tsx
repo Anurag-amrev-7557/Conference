@@ -1,17 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import '../admin/admin.css';
 import { AdminLayout } from '../components/admin/AdminLayout';
-import { BlogManager } from '../components/admin/BlogManager';
-import { EventManager } from '../components/admin/EventManager';
-import { SettingsManager } from '../components/admin/SettingsManager';
-import { ConferenceManager } from '../components/admin/ConferenceManager';
-import { RegistrationManager } from '../components/admin/RegistrationManager';
-import { DesignSystemManager } from '../components/admin/DesignSystemManager';
-import { MediaManager } from '../components/admin/MediaManager';
-import { AdminOverview } from '../components/admin/AdminOverview';
-import { AdminUsersManager } from '../components/admin/AdminUsersManager';
 import { ProtectedAdminRoute } from '../components/admin/ProtectedAdminRoute';
-import { NewsletterManager } from '../components/admin/NewsletterManager';
 import { AdminWorkspaceNavProvider } from '../components/admin/admin-workspace-nav';
 import { AdminAuthLogin } from '../components/admin/AdminAuthLogin';
 import { setAdminSession, clearAdminSession } from '../components/admin/useAdminSession';
@@ -26,6 +17,42 @@ import { UndoRedoProvider } from '../components/admin/providers/UndoRedoProvider
 import { PageLoader } from '../components/admin/ui/Skeleton';
 import { api } from '../lib/api';
 import { config } from '../lib/config';
+import { notifyAdminSessionChanged } from '../lib/adminSessionEvents';
+
+const AdminOverview = lazy(() =>
+  import('../components/admin/AdminOverview').then((m) => ({ default: m.AdminOverview })),
+);
+const BlogManager = lazy(() =>
+  import('../components/admin/BlogManager').then((m) => ({ default: m.BlogManager })),
+);
+const EventManager = lazy(() =>
+  import('../components/admin/EventManager').then((m) => ({ default: m.EventManager })),
+);
+const SettingsManager = lazy(() =>
+  import('../components/admin/SettingsManager').then((m) => ({ default: m.SettingsManager })),
+);
+const ConferenceManager = lazy(() =>
+  import('../components/admin/ConferenceManager').then((m) => ({ default: m.ConferenceManager })),
+);
+const RegistrationManager = lazy(() =>
+  import('../components/admin/RegistrationManager').then((m) => ({ default: m.RegistrationManager })),
+);
+const DesignSystemManager = lazy(() =>
+  import('../components/admin/DesignSystemManager').then((m) => ({ default: m.DesignSystemManager })),
+);
+const MediaManager = lazy(() =>
+  import('../components/admin/MediaManager').then((m) => ({ default: m.MediaManager })),
+);
+const AdminUsersManager = lazy(() =>
+  import('../components/admin/AdminUsersManager').then((m) => ({ default: m.AdminUsersManager })),
+);
+const NewsletterManager = lazy(() =>
+  import('../components/admin/NewsletterManager').then((m) => ({ default: m.NewsletterManager })),
+);
+
+function ManagerSuspense({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoader variant="dashboard" />}>{children}</Suspense>;
+}
 
 export const AdminPage: React.FC = () => {
   const seo = usePageSeo();
@@ -57,6 +84,7 @@ export const AdminPage: React.FC = () => {
           localStorage.removeItem('adminToken');
           localStorage.removeItem(config.admin.sessionKey);
           clearAdminSession();
+          notifyAdminSessionChanged();
           if (!cancelled) {
             setIsAuthenticated(false);
             setSessionError('Your session has expired. Please sign in again.');
@@ -77,6 +105,7 @@ export const AdminPage: React.FC = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem(config.admin.sessionKey);
     clearAdminSession();
+    notifyAdminSessionChanged();
     navigate('/admin');
   };
 
@@ -100,6 +129,7 @@ export const AdminPage: React.FC = () => {
           onSuccess={() => {
             setSessionError('');
             setIsAuthenticated(true);
+            notifyAdminSessionChanged();
           }}
         />
       </>
@@ -123,7 +153,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="dashboard">
             <AdminLayout title="Dashboard" onLogout={handleLogout}>
-              <AdminOverview />
+              <ManagerSuspense>
+                <AdminOverview />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         } 
@@ -135,7 +167,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="design">
             <AdminLayout title="Brand & theme" onLogout={handleLogout} wide>
-              <DesignSystemManager />
+              <ManagerSuspense>
+                <DesignSystemManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         } 
@@ -145,7 +179,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="media">
             <AdminLayout title="Media" onLogout={handleLogout} wide>
-              <MediaManager />
+              <ManagerSuspense>
+                <MediaManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         }
@@ -155,7 +191,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="blogs">
             <AdminLayout title="Blog workspace" onLogout={handleLogout} wide>
-              <BlogManager />
+              <ManagerSuspense>
+                <BlogManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         } 
@@ -165,7 +203,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="events">
             <AdminLayout title="Events workspace" onLogout={handleLogout} wide>
-              <EventManager />
+              <ManagerSuspense>
+                <EventManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         } 
@@ -175,7 +215,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="settings">
             <AdminLayout title="Site settings" onLogout={handleLogout} wide>
-              <SettingsManager />
+              <ManagerSuspense>
+                <SettingsManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         } 
@@ -185,7 +227,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="conference">
             <AdminLayout title="Summit homepage" onLogout={handleLogout} wide>
-              <ConferenceManager />
+              <ManagerSuspense>
+                <ConferenceManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         }
@@ -195,7 +239,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="newsletter">
             <AdminLayout title="Newsletter signups" onLogout={handleLogout} wide>
-              <NewsletterManager />
+              <ManagerSuspense>
+                <NewsletterManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         }
@@ -205,7 +251,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="users">
             <AdminLayout title="Team & access" onLogout={handleLogout} wide>
-              <AdminUsersManager />
+              <ManagerSuspense>
+                <AdminUsersManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         }
@@ -215,7 +263,9 @@ export const AdminPage: React.FC = () => {
         element={
           <ProtectedAdminRoute pageId="registrations">
             <AdminLayout title="Registrations" onLogout={handleLogout} wide>
-              <RegistrationManager />
+              <ManagerSuspense>
+                <RegistrationManager />
+              </ManagerSuspense>
             </AdminLayout>
           </ProtectedAdminRoute>
         }

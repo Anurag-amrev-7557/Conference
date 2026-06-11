@@ -1,4 +1,5 @@
 import type { AppEvent } from "./websiteData"
+import { isEffectivelyPublished } from "./publishSchedule"
 
 const MONTH_ABBR = [
   "Jan",
@@ -138,15 +139,16 @@ export function getPreviewEvents(
   limit = 4,
   featuredIds?: string[],
 ): AppEvent[] {
-  const published = events.filter((e) => e.isPublished)
+  const published = events.filter((e) => isEffectivelyPublished(e))
   const curatedIds = featuredIds?.filter(Boolean) ?? []
 
   if (curatedIds.length > 0) {
     const byId = new Map(published.map((event) => [event.id, event]))
-    return curatedIds
+    const curated = curatedIds
       .map((id) => byId.get(id))
       .filter((event): event is AppEvent => Boolean(event))
       .slice(0, limit)
+    if (curated.length > 0) return curated
   }
 
   return published

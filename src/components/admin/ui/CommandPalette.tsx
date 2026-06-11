@@ -99,12 +99,19 @@ export function CommandPalette({
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [pinnedPaths, setPinnedPaths] = useState<string[]>(() => getPinnedPages())
+  const [prevOpen, setPrevOpen] = useState(open)
 
-  useEffect(() => {
-    if (open) setPinnedPaths(getPinnedPages())
-  }, [open])
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
+      setPinnedPaths(getPinnedPages())
+    } else {
+      setQuery('')
+      setSelectedIndex(0)
+    }
+  }
 
-  const recentPaths = useMemo(() => getRecentPages(), [open, pinnedPaths])
+  const recentPaths = useMemo(() => (open ? getRecentPages() : []), [open])
 
   const filtered = useMemo(() => {
     if (query.trim()) {
@@ -142,16 +149,14 @@ export function CommandPalette({
     setPinnedPaths(togglePinnedPage(path))
   }
 
-  useEffect(() => {
-    setSelectedIndex(0)
-  }, [query, pinnedPaths])
+  const filterKey = `${query}\0${pinnedPaths.join(',')}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    if (selectedIndex !== 0) setSelectedIndex(0)
+  }
 
-  useEffect(() => {
-    if (!open) {
-      setQuery('')
-      setSelectedIndex(0)
-    }
-  }, [open])
+  const activeIndex = Math.min(selectedIndex, Math.max(0, filtered.length - 1))
 
   useEffect(() => {
     if (!open) return
@@ -162,22 +167,18 @@ export function CommandPalette({
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
         setSelectedIndex((i) => Math.max(i - 1, 0))
-      } else if (e.key === 'Enter' && filtered[selectedIndex]) {
+      } else if (e.key === 'Enter' && filtered[activeIndex]) {
         e.preventDefault()
-        selectItem(filtered[selectedIndex])
+        selectItem(filtered[activeIndex])
       } else if (e.key === 'Escape') {
         onOpenChange(false)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [open, filtered, selectedIndex, selectItem, onOpenChange])
+  }, [open, filtered, activeIndex, selectItem, onOpenChange])
 
-  let runningIndex = -1
-
-  const renderItem = (item: CommandItem, section?: 'pinned' | 'recent') => {
-    runningIndex += 1
-    const index = runningIndex
+  const renderItem = (item: CommandItem, index: number, section?: 'pinned' | 'recent') => {
     const isPinned = item.path ? pinnedPaths.includes(item.path) : false
 
     return (
@@ -187,7 +188,7 @@ export function CommandPalette({
           onClick={() => selectItem(item)}
           className={cn(
             'w-full flex items-center gap-3 px-3 py-2 rounded-[var(--ds-radius-md)] text-left ds-transition-base',
-            index === selectedIndex
+            index === activeIndex
               ? 'bg-[var(--ds-primary-50)] text-[var(--ds-primary-700)]'
               : 'text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-sunken)]',
           )}
@@ -255,7 +256,7 @@ export function CommandPalette({
                   No results for &ldquo;{query}&rdquo;
                 </p>
               ) : query.trim() ? (
-                filtered.map((item) => renderItem(item))
+                filtered.map((item, index) => renderItem(item, index))
               ) : (
                 <>
                   {pinnedCount > 0 && (
@@ -263,7 +264,7 @@ export function CommandPalette({
                       <p className="px-2 py-1 text-[var(--ds-text-xs)] font-[var(--ds-font-medium)] text-[var(--ds-text-subtle)] uppercase tracking-[var(--ds-tracking-wide)] flex items-center gap-1">
                         <Pin className="w-3 h-3" /> Pinned
                       </p>
-                      {itemsFromPaths(pinnedPaths).map((item) => renderItem(item, 'pinned'))}
+                      {itemsFromPaths(pinnedPaths).map((item, index) => renderItem(item, index, 'pinned'))}
                     </>
                   )}
                   {recentCount > 0 && (
@@ -271,8 +272,8 @@ export function CommandPalette({
                       <p className="px-2 py-1 mt-1 text-[var(--ds-text-xs)] font-[var(--ds-font-medium)] text-[var(--ds-text-subtle)] uppercase tracking-[var(--ds-tracking-wide)] flex items-center gap-1">
                         <Clock className="w-3 h-3" /> Recent
                       </p>
-                      {itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p))).map((item) =>
-                        renderItem(item, 'recent'),
+                      {itemsFromPaths(recentPaths.filter((p) => !pinnedPaths.includes(p))).map((item, index) =>
+                        renderItem(item, index + pinnedCount, 'recent'),
                       )}
                     </>
                   )}
@@ -286,7 +287,7 @@ export function CommandPalette({
                       item.path &&
                       !pinnedPaths.includes(item.path) &&
                       !recentPaths.includes(item.path),
-                  ).map((item) => renderItem(item))}
+                  ).map((item, index) => renderItem(item, index + pinnedCount + recentCount))}
                 </>
               )}
             </div>

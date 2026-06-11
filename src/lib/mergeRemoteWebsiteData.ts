@@ -6,20 +6,23 @@ import { hydrateHomepage } from './homepageContent';
 import { mergeRemoteSettings } from './mergeRemoteSettings';
 
 /** Deep-merge API payload into defaults — shared by initial load and background refresh. */
-export function mergeRemoteWebsiteData(remoteData: Record<string, unknown>): WebsiteData {
-  const merged = { ...initialData, ...remoteData } as WebsiteData;
+export function mergeRemoteWebsiteData(
+  remoteData: Record<string, unknown>,
+  base: WebsiteData = initialData,
+): WebsiteData {
+  const merged = { ...base, ...remoteData } as WebsiteData;
 
   if (remoteData.appearance && typeof remoteData.appearance === 'object') {
     const appearance = remoteData.appearance as WebsiteData['appearance'];
-    merged.appearance = { ...initialData.appearance, ...appearance };
+    merged.appearance = { ...base.appearance, ...appearance };
     if (appearance.typography) {
       merged.appearance.typography = {
-        ...initialData.appearance.typography,
+        ...base.appearance.typography,
         ...appearance.typography,
       };
     }
     if (appearance.theme) {
-      merged.appearance.theme = { ...initialData.appearance.theme, ...appearance.theme };
+      merged.appearance.theme = { ...base.appearance.theme, ...appearance.theme };
     }
   }
 
@@ -93,7 +96,7 @@ export function mergeRemoteWebsiteData(remoteData: Record<string, unknown>): Web
         secondaryCtaHref?: string;
         secondaryCtaLabel?: string;
       };
-    merged.hero = { ...initialData.hero, ...hero };
+    merged.hero = { ...base.hero, ...hero };
   }
 
   if (Array.isArray(remoteData.stats)) {

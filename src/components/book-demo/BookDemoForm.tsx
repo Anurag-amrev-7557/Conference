@@ -1,7 +1,11 @@
 import { ArrowRight } from 'lucide-react'
 import { type FormEvent, useRef, useState } from 'react'
 import { api } from '../../lib/api'
-import type { RegistrationDesignation } from '../../lib/registrationTypes'
+import { cn } from '../../lib/utils'
+import type {
+  ConferenceRegistrationFormSettings,
+  RegistrationDesignation,
+} from '../../lib/registrationTypes'
 import { useRegistrationFormSettings } from '../../hooks/useRegistrationFormSettings'
 import { RegisterSuccessPanel } from './RegisterSuccessPanel'
 import { SummitTicket } from './SummitTicket'
@@ -15,6 +19,46 @@ type FormState = {
 }
 
 type FormPhase = 'idle' | 'submitting' | 'success'
+
+type FormFieldKey = keyof FormState
+
+type FieldErrors = Partial<Record<FormFieldKey, string>>
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validateForm(
+  form: FormState,
+  validation: ConferenceRegistrationFormSettings['validationMessages'] | undefined,
+): FieldErrors {
+  const errors: FieldErrors = {}
+  const messages = validation ?? {}
+
+  if (!form.name.trim()) {
+    errors.name = messages.nameRequired?.trim() || 'Please enter your full name.'
+  }
+
+  const email = form.email.trim()
+  if (!email) {
+    errors.email = messages.emailRequired?.trim() || 'Please enter your email.'
+  } else if (!EMAIL_PATTERN.test(email)) {
+    errors.email = messages.emailInvalid?.trim() || 'Please enter a valid email address.'
+  }
+
+  if (!form.phone.trim()) {
+    errors.phone = messages.phoneRequired?.trim() || 'Please enter your phone number.'
+  }
+
+  if (!form.linkedIn.trim()) {
+    errors.linkedIn = messages.linkedInRequired?.trim() || 'Please enter your LinkedIn profile.'
+  }
+
+  if (!form.designation) {
+    errors.designation =
+      messages.designationRequired?.trim() || 'Please select how you are registering.'
+  }
+
+  return errors
+}
 
 const initialState: FormState = {
   name: '',
@@ -31,6 +75,7 @@ export function BookDemoForm() {
   const [form, setForm] = useState<FormState>(initialState)
   const [phase, setPhase] = useState<FormPhase>('idle')
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const morphRef = useRef<HTMLDivElement>(null)
   const [morphHeight, setMorphHeight] = useState<number | null>(null)
 
@@ -45,7 +90,7 @@ export function BookDemoForm() {
           <h2 className="book-demo-form-card__title mb-4">
             {copy.registrationClosedTitle?.trim() || 'Registration closed'}
           </h2>
-          <p className="text-white/70 leading-relaxed max-w-md mx-auto">
+          <p className="book-demo-form-card__closed-copy">
             {copy.registrationClosedMessage ||
               'Registration is currently closed. Check back soon or visit the homepage to join our waitlist.'}
           </p>
@@ -58,6 +103,12 @@ export function BookDemoForm() {
     if (isLocked) return
     setForm((prev) => ({ ...prev, [key]: value }))
     setError('')
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -65,29 +116,16 @@ export function BookDemoForm() {
     if (phase !== 'idle') return
 
     const validation = copy.validationMessages ?? {}
-    if (!form.name.trim()) {
-      setError(validation.nameRequired?.trim() || 'Please enter your full name.')
-      return
-    }
-    if (!form.email.trim()) {
-      setError(validation.emailRequired?.trim() || 'Please enter your email.')
-      return
-    }
-    if (!form.phone.trim()) {
-      setError(validation.phoneRequired?.trim() || 'Please enter your phone number.')
-      return
-    }
-    if (!form.linkedIn.trim()) {
-      setError('Please enter your LinkedIn profile.')
-      return
-    }
-    if (!form.designation) {
-      setError(validation.designationRequired?.trim() || 'Please select how you are registering.')
+    const nextFieldErrors = validateForm(form, validation)
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors)
+      setError(Object.values(nextFieldErrors)[0] ?? '')
       return
     }
 
     setPhase('submitting')
     setError('')
+    setFieldErrors({})
     const started = Date.now()
 
     try {
@@ -159,7 +197,7 @@ export function BookDemoForm() {
                   ) : null}
                   <label className="book-demo-field">
                     <span className="book-demo-field__label">{copy.fields.name.label}</span>
-                    <div className="book-demo-control">
+                    <div className={cn('book-demo-control', fieldErrors.name && 'book-demo-control--error')}>
                       <input
                         type="text"
                         name="name"
@@ -169,14 +207,20 @@ export function BookDemoForm() {
                         className="book-demo-input"
                         value={form.name}
                         disabled={isLocked}
+                        aria-invalid={Boolean(fieldErrors.name)}
                         onChange={(e) => update('name', e.target.value)}
                       />
                     </div>
+                    {fieldErrors.name ? (
+                      <span className="book-demo-field__error" role="alert">
+                        {fieldErrors.name}
+                      </span>
+                    ) : null}
                   </label>
 
                   <label className="book-demo-field">
                     <span className="book-demo-field__label">{copy.fields.email.label}</span>
-                    <div className="book-demo-control">
+                    <div className={cn('book-demo-control', fieldErrors.email && 'book-demo-control--error')}>
                       <input
                         type="email"
                         name="email"
@@ -186,15 +230,21 @@ export function BookDemoForm() {
                         className="book-demo-input"
                         value={form.email}
                         disabled={isLocked}
+                        aria-invalid={Boolean(fieldErrors.email)}
                         onChange={(e) => update('email', e.target.value)}
                       />
                     </div>
+                    {fieldErrors.email ? (
+                      <span className="book-demo-field__error" role="alert">
+                        {fieldErrors.email}
+                      </span>
+                    ) : null}
                   </label>
 
                   <div className="book-demo-form__row">
                     <label className="book-demo-field">
                       <span className="book-demo-field__label">{copy.fields.phone.label}</span>
-                      <div className="book-demo-control">
+                      <div className={cn('book-demo-control', fieldErrors.phone && 'book-demo-control--error')}>
                         <input
                           type="tel"
                           name="phone"
@@ -204,14 +254,22 @@ export function BookDemoForm() {
                           className="book-demo-input"
                           value={form.phone}
                           disabled={isLocked}
+                          aria-invalid={Boolean(fieldErrors.phone)}
                           onChange={(e) => update('phone', e.target.value)}
                         />
                       </div>
+                      {fieldErrors.phone ? (
+                        <span className="book-demo-field__error" role="alert">
+                          {fieldErrors.phone}
+                        </span>
+                      ) : null}
                     </label>
 
                     <label className="book-demo-field">
                       <span className="book-demo-field__label">{copy.fields.linkedIn.label}</span>
-                      <div className="book-demo-control">
+                      <div
+                        className={cn('book-demo-control', fieldErrors.linkedIn && 'book-demo-control--error')}
+                      >
                         <input
                           type="url"
                           name="linkedIn"
@@ -221,15 +279,31 @@ export function BookDemoForm() {
                           className="book-demo-input"
                           value={form.linkedIn}
                           disabled={isLocked}
+                          aria-invalid={Boolean(fieldErrors.linkedIn)}
                           onChange={(e) => update('linkedIn', e.target.value)}
                         />
                       </div>
+                      {fieldErrors.linkedIn ? (
+                        <span className="book-demo-field__error" role="alert">
+                          {fieldErrors.linkedIn}
+                        </span>
+                      ) : null}
                     </label>
                   </div>
 
-                  <fieldset className="book-demo-field border-0 p-0 m-0 min-w-0">
+                  <fieldset
+                    className={cn(
+                      'book-demo-field border-0 p-0 m-0 min-w-0',
+                      fieldErrors.designation && 'book-demo-field--error',
+                    )}
+                  >
                     <legend className="book-demo-field__label">{copy.fields.designation.label}</legend>
-                    <div className="book-demo-designation">
+                    <div
+                      className={cn(
+                        'book-demo-designation',
+                        fieldErrors.designation && 'book-demo-designation--error',
+                      )}
+                    >
                       {copy.designationOptions.map((option) => (
                         <label
                           key={option.value}
@@ -256,12 +330,17 @@ export function BookDemoForm() {
                         </label>
                       ))}
                     </div>
+                    {fieldErrors.designation ? (
+                      <span className="book-demo-field__error" role="alert">
+                        {fieldErrors.designation}
+                      </span>
+                    ) : null}
                   </fieldset>
               </div>
 
-              {error ? (
+              {error && Object.keys(fieldErrors).length > 1 ? (
                 <p className="book-demo-form__error" role="alert">
-                  {error}
+                  Please fix the highlighted fields below.
                 </p>
               ) : null}
 

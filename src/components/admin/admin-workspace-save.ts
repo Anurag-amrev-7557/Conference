@@ -12,9 +12,9 @@ export function useRegisterWorkspaceSave(
   config: WorkspaceSaveConfig | null,
 ) {
   const onSaveRef = useRef(config?.onSave)
-  onSaveRef.current = config?.onSave
 
   useEffect(() => {
+    onSaveRef.current = config?.onSave
     if (!onSaveReady) return
 
     if (!config) {
@@ -29,5 +29,5 @@ export function useRegisterWorkspaceSave(
     })
 
     return () => onSaveReady(null)
-  }, [onSaveReady, config?.label, config?.saving, config === null])
+  }, [onSaveReady, config])
 }

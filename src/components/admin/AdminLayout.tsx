@@ -36,10 +36,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   });
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = React.useState(location.pathname);
 
-  useEffect(() => {
-    setMobileNavOpen(false);
-  }, [location.pathname]);
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname);
+    if (mobileNavOpen) setMobileNavOpen(false);
+  }
 
   useEffect(() => {
     trackRecentPage(location.pathname);

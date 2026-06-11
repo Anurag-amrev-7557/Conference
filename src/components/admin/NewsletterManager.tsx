@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Mail, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -27,7 +27,7 @@ export const NewsletterManager: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<SignupRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -39,11 +39,11 @@ export const NewsletterManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     void load();
-  }, [token]);
+  }, [load]);
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;

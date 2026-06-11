@@ -1,25 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useWebsiteData } from './WebsiteDataProvider'
 
 const STORAGE_KEY = 'cms_cookie_consent'
 
+function hasAcceptedCookies() {
+  try {
+    return Boolean(localStorage.getItem(STORAGE_KEY))
+  } catch {
+    return false
+  }
+}
+
 export function CookieBanner() {
   const { data } = useWebsiteData()
   const banner = data.settings.cookieBanner
-  const [visible, setVisible] = useState(false)
+  const [dismissed, setDismissed] = useState(hasAcceptedCookies)
 
-  useEffect(() => {
-    if (!banner?.enabled) return
-    const accepted = localStorage.getItem(STORAGE_KEY)
-    if (!accepted) setVisible(true)
-  }, [banner?.enabled])
-
-  if (!banner?.enabled || !visible) return null
+  if (!banner?.enabled || dismissed) return null
 
   const accept = () => {
     localStorage.setItem(STORAGE_KEY, '1')
-    setVisible(false)
+    setDismissed(true)
   }
 
   return (

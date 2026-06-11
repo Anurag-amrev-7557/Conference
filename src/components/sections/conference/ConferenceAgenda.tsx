@@ -1,13 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarDays, Download } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { defaultConferenceContent } from '../../../lib/conferenceDefaults'
 import { cn } from '../../../lib/utils'
-import {
-  downloadAgendaIcs,
-  getUniqueTracks,
-  getTrackSlug,
-} from '../../../lib/agenda'
+import { downloadAgendaIcs } from '../../../lib/agenda'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
 import type { ConferenceSpeaker } from '../../../lib/websiteData'
 import { SpeakerDetailDialog } from '../../speakers/SpeakerDetailDialog'
@@ -36,35 +32,20 @@ export function ConferenceAgenda() {
   const copy = sections.agenda
   const baseId = useId()
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const [activeDayId, setActiveDayId] = useState(agenda[0]?.id ?? '')
-  const [trackFilter, setTrackFilter] = useState('all')
+  const [pickedDayId, setPickedDayId] = useState<string | null>(null)
+  const activeDayId =
+    agenda.length === 0
+      ? ''
+      : pickedDayId && agenda.some((day) => day.id === pickedDayId)
+        ? pickedDayId
+        : (agenda[0]?.id ?? '')
   const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null)
   const [liveMessage, setLiveMessage] = useState('')
 
   const eventTitle = hero?.title?.trim() || 'Superhumanly AI Summit'
 
-  useEffect(() => {
-    if (agenda.length === 0) {
-      setActiveDayId('')
-      return
-    }
-    if (!agenda.some((day) => day.id === activeDayId)) {
-      setActiveDayId(agenda[0].id)
-    }
-  }, [agenda, activeDayId])
-
   const activeDay = agenda.find((day) => day.id === activeDayId) ?? agenda[0]
   const sessions = activeDay?.sessions ?? []
-  const tracks = useMemo(() => getUniqueTracks(sessions), [sessions])
-
-  const filteredSessions = useMemo(() => {
-    if (trackFilter === 'all') return sessions
-    return sessions.filter((session) => session.track === trackFilter)
-  }, [sessions, trackFilter])
-
-  useEffect(() => {
-    setTrackFilter('all')
-  }, [activeDayId])
 
   const panelId = `${baseId}-panel`
 
@@ -73,7 +54,7 @@ export function ConferenceAgenda() {
       const tab = tabRefs.current[index]
       if (!tab) return
       tab.focus()
-      setActiveDayId(agenda[index].id)
+      setPickedDayId(agenda[index].id)
     },
     [agenda],
   )
@@ -109,7 +90,7 @@ export function ConferenceAgenda() {
   )
 
   const handleDayChange = (dayId: string, label: string) => {
-    setActiveDayId(dayId)
+    setPickedDayId(dayId)
     setLiveMessage(`${label} agenda loaded`)
   }
 
@@ -185,46 +166,6 @@ export function ConferenceAgenda() {
                 })}
               </div>
 
-              {tracks.length > 1 ? (
-                <div className="conference-agenda__track-filters-group">
-                  <p
-                    className="conference-agenda__track-filters-label"
-                    id={`${baseId}-track-label`}
-                  >
-                    Filter by track
-                  </p>
-                  <div
-                    className="conference-agenda__track-filters"
-                    role="group"
-                    aria-labelledby={`${baseId}-track-label`}
-                  >
-                    <button
-                      type="button"
-                      className={cn(
-                        'conference-agenda__track-filter',
-                        trackFilter === 'all' && 'conference-agenda__track-filter--active',
-                      )}
-                      onClick={() => setTrackFilter('all')}
-                    >
-                      {copy?.trackFilterLabel?.trim() || 'All tracks'}
-                    </button>
-                    {tracks.map((track) => (
-                      <button
-                        key={track}
-                        type="button"
-                        data-track={getTrackSlug(track)}
-                        className={cn(
-                          'conference-agenda__track-filter',
-                          trackFilter === track && 'conference-agenda__track-filter--active',
-                        )}
-                        onClick={() => setTrackFilter(track)}
-                      >
-                        {track}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
 
             <div className="sr-only" aria-live="polite" aria-atomic="true">
@@ -243,23 +184,16 @@ export function ConferenceAgenda() {
                 animate="animate"
                 exit="exit"
               >
-                {filteredSessions.length === 0 ? (
+                {sessions.length === 0 ? (
                   <div className="conference-agenda-empty-state conference-agenda-empty-state--inset">
-                    <h3 className="conference-agenda-empty-state__title">No sessions in this track</h3>
+                    <h3 className="conference-agenda-empty-state__title">No sessions scheduled</h3>
                     <p className="conference-agenda-empty-state__body">
-                      Try another track filter or switch days to explore the full program.
+                      Switch days to explore the full program.
                     </p>
-                    <button
-                      type="button"
-                      className="conference-agenda__inline-link"
-                      onClick={() => setTrackFilter('all')}
-                    >
-                      Show all sessions
-                    </button>
                   </div>
                 ) : (
                   <ol className="conference-agenda__sessions list-none p-0 m-0">
-                    {filteredSessions.map((session, idx) => (
+                    {sessions.map((session, idx) => (
                       <AgendaSessionCard
                         key={session.id}
                         session={session}

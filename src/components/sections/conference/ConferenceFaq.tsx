@@ -11,7 +11,7 @@ export function ConferenceFaq() {
       id="conference-faq"
       sectionClass="conference-faq-section"
       visibleClass="conference-faq-section--visible"
-      variant="light"
+      variant="muted"
     >
       <ConferenceSectionHeader
         copy={copy}

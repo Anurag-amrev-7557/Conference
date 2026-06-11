@@ -100,7 +100,7 @@ export function SectionCarousel({
     if (viewport.scrollLeft > 0 && viewport.scrollLeft <= 8) {
       viewport.scrollLeft = 0
     }
-    updateScrollState()
+    const raf = requestAnimationFrame(() => updateScrollState())
 
     viewport.addEventListener('scroll', updateScrollState, { passive: true })
     const resizeObserver = new ResizeObserver(updateScrollState)
@@ -110,6 +110,7 @@ export function SectionCarousel({
     if (track) resizeObserver.observe(track)
 
     return () => {
+      cancelAnimationFrame(raf)
       viewport.removeEventListener('scroll', updateScrollState)
       resizeObserver.disconnect()
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Plus, Shield, Trash2, UserPlus } from 'lucide-react';
 import { api } from '../../lib/api';
 import {
@@ -77,7 +77,7 @@ export const AdminUsersManager: React.FC = () => {
     ? USERS_SUBNAV_GROUPS
     : [{ label: 'Team', items: [{ id: 'team', label: 'Team members', icon: UserPlus }] }];
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -89,11 +89,11 @@ export const AdminUsersManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     void load();
-  }, [token]);
+  }, [load]);
 
   useEffect(() => {
     if (!isSuperAdmin && activeTab === 'permissions') {

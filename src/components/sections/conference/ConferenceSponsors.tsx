@@ -31,7 +31,7 @@ export function ConferenceSponsors() {
       id="conference-sponsors"
       sectionClass="conference-sponsors-section"
       visibleClass="conference-sponsors-section--visible"
-      variant="light"
+      variant="muted"
       fullBleed={hasContent ? <SponsorsMarquee logos={logos} /> : null}
     >
       <ConferenceSectionHeader

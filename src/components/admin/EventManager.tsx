@@ -45,6 +45,7 @@ import { MediaUrlField } from './MediaUrlField';
 import { AdminWorkspaceShell } from './AdminWorkspaceShell';
 import { EVENTS_TAB_INTROS } from './workspaceTabIntros';
 import { useApplyPendingAdminSection } from './admin-workspace-nav';
+import { useAdminEvents } from './useAdminCatalog';
 import {
   CatalogViewToggle,
   CatalogListSkeleton,
@@ -68,7 +69,9 @@ const EVENT_FIELD_LIMITS = {
 } as const;
 
 export const EventManager: React.FC = () => {
-  const { data, sourceData, updateEvent, deleteEvent, refresh } = useWebsiteData();
+  const { data, updateEvent, deleteEvent, refresh } = useWebsiteData();
+  const { items: adminEvents, loading: loadingAdminEvents, reload: reloadAdminEvents } =
+    useAdminEvents();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [workspaceTab, setWorkspaceTab] = useState<'events' | 'page' | 'seo'>('events');
@@ -116,10 +119,10 @@ export const EventManager: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [eventView, adminToken]);
+  }, [eventView, adminToken, toast]);
 
   const storedEvent = editingId
-    ? sourceData.events.find((e) => e.id === editingId)
+    ? adminEvents.find((e) => e.id === editingId)
     : undefined;
 
   const handleEdit = (event: AppEvent) => {
@@ -230,7 +233,7 @@ export const EventManager: React.FC = () => {
     }
   };
 
-  const listEvents = eventView === 'trash' ? trashEvents : sourceData.events;
+  const listEvents = eventView === 'trash' ? trashEvents : adminEvents;
 
   const handleSave = async () => {
     if (!editingId) return;
@@ -774,7 +777,8 @@ export const EventManager: React.FC = () => {
                         currentSnapshot={editForm as Record<string, unknown>}
                         onRestored={async () => {
                           await refresh();
-                          const updated = sourceData.events.find((e) => e.id === editingId);
+                          const events = await reloadAdminEvents();
+                          const updated = events.find((e) => e.id === editingId);
                           if (updated) {
                             skipDirtyRef.current = true;
                             setEditForm(updated);
@@ -798,7 +802,8 @@ export const EventManager: React.FC = () => {
 
             {workspaceTab === 'events' && (
               <div className="admin-catalog-panel">
-                {eventView === 'trash' && loadingTrash ? (
+                {(eventView === 'trash' && loadingTrash && trashEvents.length === 0) ||
+                (eventView === 'active' && loadingAdminEvents && adminEvents.length === 0) ? (
                   <CatalogListSkeleton count={3} />
                 ) : listEvents.length === 0 ? (
                   <EmptyState

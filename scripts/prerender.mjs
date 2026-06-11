@@ -12,17 +12,24 @@
  */
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { copyFile, mkdir, unlink, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer'
+import { injectCmsBootstrapIntoHtml } from './lib/cms-bootstrap-html.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(__dirname, '..')
 const distDir = resolve(repoRoot, 'dist')
 const shellFile = resolve(distDir, '.prerender-shell.html')
+const bootstrapFile = resolve(repoRoot, 'public/cms-bootstrap.json')
 
-const API_URL = (process.env.PRERENDER_API_URL || 'http://localhost:3001').replace(/\/$/, '')
+const API_URL = (
+  process.env.PRERENDER_API_URL ||
+  process.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, '') ||
+  'http://localhost:3001'
+).replace(/\/$/, '')
+const PRERENDER_OPTIONAL = process.env.PRERENDER_OPTIONAL === '1'
 const PREVIEW_PORT = Number(process.env.PRERENDER_PREVIEW_PORT || 4173)
 const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`
 
@@ -147,7 +154,15 @@ async function prerenderPath(page, path) {
     slugSegment ?? null,
   )
 
-  const html = await page.content()
+  let html = await page.content()
+  if (existsSync(bootstrapFile)) {
+    try {
+      const payload = JSON.parse(await readFile(bootstrapFile, 'utf8'))
+      html = injectCmsBootstrapIntoHtml(html, payload)
+    } catch {
+      /* keep captured html */
+    }
+  }
   const outFile = distFileForPath(path)
   await mkdir(dirname(outFile), { recursive: true })
   await writeFile(outFile, html, 'utf8')
@@ -193,5 +208,9 @@ async function main() {
 
 main().catch((err) => {
   console.error('[prerender] Failed:', err.message)
+  if (PRERENDER_OPTIONAL) {
+    console.warn('[prerender] PRERENDER_OPTIONAL=1 — continuing without static HTML')
+    process.exit(0)
+  }
   process.exit(1)
 })

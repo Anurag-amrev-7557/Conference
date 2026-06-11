@@ -1,8 +1,36 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import viteCompression from 'vite-plugin-compression'
+function injectCmsBootstrapIntoHtml(html: string, payload: unknown): string {
+  const json = JSON.stringify(payload).replace(/</g, '\\u003c')
+  const tag = `<script id="cms-bootstrap" type="application/json">${json}</script>`
+  const withoutExisting = html.replace(
+    /\s*<script id="cms-bootstrap" type="application\/json">[\s\S]*?<\/script>/,
+    '',
+  )
+  return withoutExisting.replace('</head>', `    ${tag}\n  </head>`)
+}
+
+function cmsBootstrapInjectPlugin(): Plugin {
+  const bootstrapPath = resolve(__dirname, 'public/cms-bootstrap.json')
+
+  return {
+    name: 'cms-bootstrap-inject',
+    transformIndexHtml(html) {
+      if (!existsSync(bootstrapPath)) return html
+      try {
+        const payload = JSON.parse(readFileSync(bootstrapPath, 'utf8'))
+        return injectCmsBootstrapIntoHtml(html, payload)
+      } catch {
+        return html
+      }
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,6 +40,7 @@ export default defineConfig({
     },
   } as import('vite').UserConfig['resolve'],
   plugins: [
+    cmsBootstrapInjectPlugin(),
     react(),
     tailwindcss(),
     viteCompression({ algorithm: 'gzip', ext: '.gz' }),

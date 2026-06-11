@@ -1,5 +1,5 @@
 import cors from 'cors';
-import type { Request, RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 import { getProductionSiteOrigins } from './siteOrigins';
 
 function parseOrigins(value: string | undefined, fallback: string[]): string[] {

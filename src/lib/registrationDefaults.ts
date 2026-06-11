@@ -78,4 +78,13 @@ export const defaultConferenceRegistrationForm: ConferenceRegistrationFormSettin
   registrationOpen: true,
   registrationClosedMessage:
     'Registration is closed for this summit. Join our waitlist on the homepage for future events.',
+  showSiteFooter: true,
+  validationMessages: {
+    nameRequired: 'Please enter your full name.',
+    emailRequired: 'Please enter your email.',
+    emailInvalid: 'Please enter a valid email address.',
+    phoneRequired: 'Please enter your phone number.',
+    linkedInRequired: 'Please enter your LinkedIn profile.',
+    designationRequired: 'Please select how you are registering.',
+  },
 };

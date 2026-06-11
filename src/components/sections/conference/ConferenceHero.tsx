@@ -9,6 +9,10 @@ import { resolveMediaUrl } from "../../../lib/assetUrl"
 
 const revealEase = [0.22, 1, 0.36, 1] as const
 
+function prefersReducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
 export function ConferenceHero() {
   const conference = useConferenceContent()
   const { hero } = conference
@@ -16,8 +20,10 @@ export function ConferenceHero() {
   const videoSrc = resolveMediaUrl(rawVideoSrc, CONFERENCE_HERO_VIDEO_PUBLIC)
   const posterSrc = resolveMediaUrl(rawPosterSrc) || rawPosterSrc
   const { heroRevealReady, heroEntranceFast } = useConferenceReveal()
+  const mediaRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [useVideo, setUseVideo] = useState(true)
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false)
+  const [useVideo, setUseVideo] = useState(() => !prefersReducedMotion())
   const [videoReady, setVideoReady] = useState(false)
 
   const entranceDuration = heroEntranceFast ? 0.48 : 0.55
@@ -29,16 +35,33 @@ export function ConferenceHero() {
       : 0
 
   useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
+    const el = mediaRef.current
+    if (!el) return
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (reducedMotion) {
-      setUseVideo(false)
-      setVideoReady(false)
-      video.pause()
-      return
+    if (prefersReducedMotion()) return
+
+    if (typeof IntersectionObserver === "undefined") {
+      const raf = requestAnimationFrame(() => setShouldLoadVideo(true))
+      return () => cancelAnimationFrame(raf)
     }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoadVideo(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "120px 0px" },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !shouldLoadVideo) return
 
     const onCanPlay = () => {
       setVideoReady(true)
@@ -49,17 +72,17 @@ export function ConferenceHero() {
     else video.addEventListener("canplay", onCanPlay, { once: true })
 
     return () => video.removeEventListener("canplay", onCanPlay)
-  }, [videoSrc])
+  }, [videoSrc, shouldLoadVideo])
 
   return (
     <section id="conference-hero" className="conference-hero">
       <div className="conference-hero__stage">
-        <div className="conference-hero__media" aria-hidden>
+        <div ref={mediaRef} className="conference-hero__media" aria-hidden>
           <div
             className="conference-hero__poster"
             style={{ backgroundImage: `url(${posterSrc})` }}
           />
-          {useVideo ? (
+          {shouldLoadVideo && useVideo ? (
             <video
               ref={videoRef}
               className={`conference-hero__video${videoReady ? " conference-hero__video--ready" : ""}`}
@@ -67,7 +90,7 @@ export function ConferenceHero() {
               muted
               loop
               playsInline
-              preload="auto"
+              preload="none"
               poster={posterSrc}
               onError={() => {
                 setUseVideo(false)
@@ -94,6 +117,7 @@ export function ConferenceHero() {
                 src={resolveMediaUrl(hero.badgeLogoUrl.trim(), CONFERENCE_HERO_LOGO_PUBLIC)}
                 alt={hero.badge || "Superhumanly AI"}
                 className="conference-hero__badge-logo"
+                fetchPriority="high"
               />
             ) : (
               <>

@@ -48,12 +48,12 @@ export function UndoRedoProvider({ children }: { children: React.ReactNode }) {
 
 export function useRegisterUndoRedo(handlers: UndoHandlers) {
   const ctx = useContext(UndoRedoContext)
-  if (!ctx) return
 
   useEffect(() => {
+    if (!ctx) return
     ctx.register(handlers)
     return () => ctx.register(null)
-  }, [ctx, handlers.undo, handlers.redo, handlers.canUndo, handlers.canRedo])
+  }, [ctx, handlers])
 }
 
 export function useFormHistory<T>(initial: T) {

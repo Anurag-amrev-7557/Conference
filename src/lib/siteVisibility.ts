@@ -49,6 +49,7 @@ export const CONFERENCE_SECTION_VISIBILITY_META = {
   sponsors: { label: 'Sponsors', description: 'Sponsor logos.' },
   partners: { label: 'Partners', description: 'Partner logos.' },
   testimonials: { label: 'Testimonials', description: 'Attendee quotes.' },
+  pastSpeakers: { label: 'Past speakers', description: 'Alumni speaker highlights from prior summits.' },
   venue: { label: 'Venue', description: 'Location and map.' },
   tickets: { label: 'Tickets', description: 'Pricing tiers.' },
   faq: { label: 'FAQ', description: 'Questions and answers.' },

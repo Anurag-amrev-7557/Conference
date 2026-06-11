@@ -486,7 +486,7 @@ export const api = {
   },
 
   // Admin (requires token)
-  async updateGlobalContent(token: string, data: any, options?: { version?: number }) {
+  async updateGlobalContent(token: string, data: Record<string, unknown>, options?: { version?: number }) {
     const body = options?.version != null ? { ...data, version: options.version } : data;
     const res = await fetch(`${API_BASE}/admin/content`, {
       method: 'PATCH',
@@ -510,7 +510,7 @@ export const api = {
     return payload as { success: boolean; version?: number };
   },
 
-  async createArticle(token: string, article: any) {
+  async createArticle(token: string, article: Record<string, unknown>) {
     const res = await fetch(`${API_BASE}/admin/blogs`, {
       method: 'POST',
       headers: {
@@ -524,7 +524,7 @@ export const api = {
     return data;
   },
 
-  async updateArticle(token: string, id: string, article: any) {
+  async updateArticle(token: string, id: string, article: Record<string, unknown>) {
     const sanitizedArticle = sanitizeArticlePayload(article as Record<string, unknown>);
     const res = await fetch(`${API_BASE}/admin/blogs/${id}`, {
       method: 'PUT',
@@ -548,7 +548,7 @@ export const api = {
     return res.json();
   },
 
-  async createEvent(token: string, event: any) {
+  async createEvent(token: string, event: Record<string, unknown>) {
     const sanitizedEvent = sanitizeEventPayload(event as Record<string, unknown>);
     const res = await fetch(`${API_BASE}/admin/events`, {
       method: 'POST',
@@ -563,7 +563,7 @@ export const api = {
     return data;
   },
 
-  async updateEvent(token: string, id: string, event: any) {
+  async updateEvent(token: string, id: string, event: Record<string, unknown>) {
     const sanitizedEvent = sanitizeEventPayload(event as Record<string, unknown>);
     const res = await fetch(`${API_BASE}/admin/events/${id}`, {
       method: 'PUT',

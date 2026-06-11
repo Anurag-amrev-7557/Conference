@@ -49,10 +49,12 @@ function subnavRegistryToken(groupsKey: string, activeId: string) {
 export function useAdminWorkspaceNavRegistry(config: WorkspaceSubnavConfig | null) {
   const ctx = useAdminWorkspaceNav()
   const onSelectRef = useRef(config?.onSelect)
-  onSelectRef.current = config?.onSelect
-
   const groupsRef = useRef(config?.groups)
-  groupsRef.current = config?.groups
+
+  useEffect(() => {
+    onSelectRef.current = config?.onSelect
+    groupsRef.current = config?.groups
+  }, [config?.onSelect, config?.groups])
 
   const setSubnav = ctx?.setSubnav
   const activeId = config?.activeId
@@ -86,7 +88,7 @@ export function useAdminWorkspaceNavRegistry(config: WorkspaceSubnavConfig | nul
       registeredTokenRef.current = null
       setSubnav(null)
     }
-  }, [setSubnav, groupsKey, activeId, config != null])
+  }, [setSubnav, groupsKey, activeId, config])
 }
 
 /** Applies a section chosen from the mobile drawer before the workspace mounted. */

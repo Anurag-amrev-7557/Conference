@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWebsiteData } from '../WebsiteDataProvider';
 import { api } from '../../lib/api';
 import { useAdminSession } from './useAdminSession';
+import { useAdminArticles, useAdminEvents } from './useAdminCatalog';
 import {
   FileText,
   Settings,
@@ -120,10 +121,12 @@ export const AdminOverview: React.FC = () => {
     }
   };
 
-  const publishedArticles = data.articles.filter((a) => a.isPublished).length;
-  const publishedEvents = data.events.filter((e) => e.isPublished).length;
+  const { items: adminArticles } = useAdminArticles();
+  const { items: adminEvents } = useAdminEvents();
+  const publishedArticles = adminArticles.filter((a) => a.isPublished).length;
+  const publishedEvents = adminEvents.filter((e) => e.isPublished).length;
   const activeModules = Object.values(data.settings.visibility).filter(Boolean).length;
-  const draftArticles = data.articles.length - publishedArticles;
+  const draftArticles = adminArticles.length - publishedArticles;
   const totalModules = Object.values(data.settings.visibility).length;
 
   const stats = [
@@ -131,14 +134,14 @@ export const AdminOverview: React.FC = () => {
       key: 'articles',
       label: 'Published articles',
       value: publishedArticles,
-      total: data.articles.length,
+      total: adminArticles.length,
       tone: 'success' as const,
     },
     {
       key: 'events',
       label: 'Published events',
       value: publishedEvents,
-      total: data.events.length,
+      total: adminEvents.length,
       tone: 'neutral' as const,
     },
     {

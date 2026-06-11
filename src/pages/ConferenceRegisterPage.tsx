@@ -1,14 +1,16 @@
 import { useEffect } from 'react'
-import { Navbar } from '../components/Navbar'
+import { Footer } from '../components/Footer'
 import { BookDemoForm } from '../components/book-demo/BookDemoForm'
 import { BookDemoPanel } from '../components/book-demo/BookDemoPanel'
 import { BookDemoTrustFooter } from '../components/book-demo/BookDemoTrustFooter'
 import { WaveDivider } from '../components/wave/WaveDivider'
+import { useRegistrationFormSettings } from '../hooks/useRegistrationFormSettings'
 import { SeoHead } from '../seo/SeoHead'
 import { usePageSeo } from '../seo/usePageSeo'
 
 export function ConferenceRegisterPage() {
   const seo = usePageSeo()
+  const registration = useRegistrationFormSettings()
 
   useEffect(() => {
     document.documentElement.classList.add('book-demo-route')
@@ -19,7 +21,6 @@ export function ConferenceRegisterPage() {
     <>
       <SeoHead seo={seo} />
       <div className="book-demo-page min-h-svh text-white">
-        <Navbar />
         <main id="main-content" tabIndex={-1} className="book-demo-main">
           <div className="book-demo">
             <section className="book-demo-dark" aria-labelledby="book-demo-heading">
@@ -52,6 +53,7 @@ export function ConferenceRegisterPage() {
             </section>
           </div>
         </main>
+        {registration.showSiteFooter !== false ? <Footer /> : null}
       </div>
     </>
   )

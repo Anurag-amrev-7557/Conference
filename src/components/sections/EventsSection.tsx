@@ -138,7 +138,7 @@ function EventPreviewCard({ event, index, cardCtaUpcoming, cardCtaPast }: EventP
   )
 }
 
-export function EventsSection() {
+export function EventsSection({ className }: { className?: string }) {
   const { data } = useWebsiteData()
   const preview = data.settings.sections?.eventsPreview
   const previewCount =
@@ -170,7 +170,11 @@ export function EventsSection() {
   const lede = preview?.lede?.trim() || DEFAULT_LEDE
 
   return (
-    <section ref={sectionRef} id="events" className="events-section premium-home-section">
+    <section
+      ref={sectionRef}
+      id="events"
+      className={cn("events-section premium-home-section", className)}
+    >
       <div className="events-section__ambient" aria-hidden />
 
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">

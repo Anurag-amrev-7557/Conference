@@ -39,7 +39,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             </p>
             <button
               type="button"
-              className="admin-btn admin-btn--secondary"
+              className="inline-flex items-center justify-center rounded-lg border border-border bg-off px-4 py-2 text-sm font-medium text-text transition-colors duration-150 hover:bg-bg active:scale-[0.97]"
               onClick={this.handleReset}
             >
               Try again

@@ -6,7 +6,6 @@ import type { AppEvent } from "../lib/websiteData"
 import { formatEventDayLabel } from "../lib/eventDates"
 import { usePagination } from "../lib/usePagination"
 import { Footer } from "../components/Footer"
-import { Navbar } from "../components/Navbar"
 import { BlogCtaSection } from "../components/blog/BlogCtaSection"
 import { CatalogHero } from "../components/catalog/CatalogHero"
 import { CatalogToolbar } from "../components/catalog/CatalogToolbar"
@@ -16,6 +15,7 @@ import { JsonLd } from "../seo/JsonLd"
 import { usePageSeo } from "../seo/usePageSeo"
 import { usePageJsonLd } from "../seo/usePageJsonLd"
 import { renderCatalogTitle } from "../lib/renderSectionTitle"
+import { isEffectivelyPublished } from "../lib/publishSchedule"
 
 type EventFilter = "All" | "Upcoming" | "Past"
 
@@ -35,7 +35,7 @@ export function EventsPage() {
   const q = searchQuery.trim().toLowerCase()
 
   const filteredEvents = useMemo(() => {
-    let list = data.events.filter((e) => e.isPublished)
+    let list = data.events.filter((e) => isEffectivelyPublished(e))
     if (activeFilter !== "All") {
       list = list.filter((e) => e.status === activeFilter)
     }
@@ -61,15 +61,13 @@ export function EventsPage() {
     setSearchQuery("")
   }
 
-  const publishedCount = data.events.filter((e) => e.isPublished).length
+  const publishedCount = data.events.filter((e) => isEffectivelyPublished(e)).length
 
   return (
     <>
       <SeoHead seo={seo} />
       <JsonLd graph={jsonLd} />
       <div className="events-page overflow-x-hidden public-page-shell public-inner-page">
-        <Navbar />
-
         <CatalogHero
           eyebrow={data.settings.catalogPages?.events?.eyebrow?.trim() || "Events"}
           title={renderCatalogTitle(data.settings.catalogPages?.events, (

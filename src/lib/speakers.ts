@@ -1,10 +1,25 @@
-import type { ConferenceSpeaker } from './websiteData'
+import type { ConferenceSpeaker, SpeakerRoster } from './websiteData'
 
 export const SPEAKERS_CATALOG_PAGE_SIZE = 12
 
-export type SpeakerCatalogFilter = 'all' | 'featured'
+export type SpeakerCatalogFilter = 'all' | 'featured' | 'alumni'
 export type SpeakerSort = 'featured-first' | 'name-asc' | 'name-desc' | 'company-asc'
 export type SpeakerViewMode = 'grid' | 'list'
+
+export function resolveSpeakerRoster(speaker: ConferenceSpeaker): SpeakerRoster {
+  return speaker.roster === 'past' ? 'past' : 'current'
+}
+
+export function normalizeSpeaker(speaker: ConferenceSpeaker): ConferenceSpeaker {
+  return {
+    ...speaker,
+    roster: resolveSpeakerRoster(speaker),
+  }
+}
+
+export function normalizeSpeakers(speakers: ConferenceSpeaker[]): ConferenceSpeaker[] {
+  return speakers.map(normalizeSpeaker)
+}
 
 export function isPublishableSpeaker(speaker: ConferenceSpeaker): boolean {
   return Boolean(speaker.name?.trim())
@@ -14,12 +29,24 @@ export function getPublishableSpeakers(speakers: ConferenceSpeaker[]): Conferenc
   return speakers.filter(isPublishableSpeaker)
 }
 
+export function getCurrentSpeakers(speakers: ConferenceSpeaker[]): ConferenceSpeaker[] {
+  return getPublishableSpeakers(speakers).filter((speaker) => resolveSpeakerRoster(speaker) === 'current')
+}
+
+export function getPastSpeakers(speakers: ConferenceSpeaker[]): ConferenceSpeaker[] {
+  return getPublishableSpeakers(speakers).filter((speaker) => resolveSpeakerRoster(speaker) === 'past')
+}
+
+export function countPastSpeakers(speakers: ConferenceSpeaker[]): number {
+  return getPastSpeakers(speakers).length
+}
+
 /**
  * Speakers shown on the summit homepage carousel.
- * Only explicitly featured speakers appear — no fallback to the full roster.
+ * Only explicitly featured current-roster speakers appear.
  */
 export function getFeaturedSpeakers(speakers: ConferenceSpeaker[]): ConferenceSpeaker[] {
-  return getPublishableSpeakers(speakers).filter((speaker) => speaker.featured === true)
+  return getCurrentSpeakers(speakers).filter((speaker) => speaker.featured === true)
 }
 
 /** Homepage carousel — curated IDs, featured flag, optional max cap. */
@@ -27,7 +54,7 @@ export function getHomepageSpeakers(
   speakers: ConferenceSpeaker[],
   options?: { homepageSpeakerIds?: string[]; maxFeatured?: number },
 ): ConferenceSpeaker[] {
-  const publishable = getPublishableSpeakers(speakers)
+  const publishable = getCurrentSpeakers(speakers)
   const ids = options?.homepageSpeakerIds?.filter(Boolean) ?? []
 
   let list: ConferenceSpeaker[]
@@ -45,13 +72,57 @@ export function getHomepageSpeakers(
   return list
 }
 
+export function getSpeakerEditions(speakers: ConferenceSpeaker[], roster: SpeakerRoster = 'past'): string[] {
+  const editions = new Set<string>()
+  for (const speaker of getPublishableSpeakers(speakers)) {
+    if (resolveSpeakerRoster(speaker) !== roster) continue
+    const edition = speaker.edition?.trim()
+    if (edition) editions.add(edition)
+  }
+  return [...editions].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+}
+
+export function filterSpeakersByEdition(
+  speakers: ConferenceSpeaker[],
+  edition: string | 'all',
+): ConferenceSpeaker[] {
+  const list = getPastSpeakers(speakers)
+  if (edition === 'all') return list
+  return list.filter((speaker) => speaker.edition?.trim() === edition)
+}
+
+/** Homepage past speakers — curated IDs, optional edition filter, max cap. */
+export function getHomepagePastSpeakers(
+  speakers: ConferenceSpeaker[],
+  options?: {
+    homepagePastSpeakerIds?: string[]
+    maxPast?: number
+    edition?: string | 'all'
+  },
+): ConferenceSpeaker[] {
+  const edition = options?.edition ?? 'all'
+  let list = filterSpeakersByEdition(speakers, edition)
+  const ids = options?.homepagePastSpeakerIds?.filter(Boolean) ?? []
+
+  if (ids.length > 0) {
+    const byId = new Map(list.map((speaker) => [speaker.id, speaker]))
+    list = ids.map((id) => byId.get(id)).filter((speaker): speaker is ConferenceSpeaker => Boolean(speaker))
+  }
+
+  const max = options?.maxPast
+  if (typeof max === 'number' && max > 0) {
+    return list.slice(0, max)
+  }
+  return list
+}
+
 export function getCatalogPageSize(settingsPageSize: number | undefined, fallback: number): number {
   const size = settingsPageSize ?? fallback
   return size > 0 ? size : fallback
 }
 
 export function countFeaturedSpeakers(speakers: ConferenceSpeaker[]): number {
-  return getPublishableSpeakers(speakers).filter((speaker) => speaker.featured).length
+  return getCurrentSpeakers(speakers).filter((speaker) => speaker.featured).length
 }
 
 export function getSpeakerCompanies(speakers: ConferenceSpeaker[]): string[] {
@@ -100,7 +171,11 @@ export function filterSpeakers(
   let list = getPublishableSpeakers(speakers)
 
   if (options.filter === 'featured') {
-    list = list.filter((speaker) => speaker.featured)
+    list = list.filter((speaker) => speaker.featured && resolveSpeakerRoster(speaker) === 'current')
+  }
+
+  if (options.filter === 'alumni') {
+    list = getPastSpeakers(speakers)
   }
 
   const company = options.company?.trim()
@@ -117,6 +192,7 @@ export function filterSpeakers(
       speaker.company,
       speaker.talkTitle,
       speaker.bio,
+      speaker.edition,
     ]
       .filter(Boolean)
       .join(' ')

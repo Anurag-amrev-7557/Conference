@@ -10,10 +10,90 @@
 ```text
 https://your-project.web.app     → Firebase Hosting (frontend)
 https://book-website-api.onrender.com  → Render (API)
+  ├── /api/v1/content/bootstrap  → live CMS snapshot (first-paint source)
   ├── /api/v1/*                  → JSON API + admin
   ├── /media/*                   → hero video, logos, CMS uploads
   └── /health                    → uptime checks
 ```
+
+---
+
+## CMS content on first paint (no Cloud Functions required)
+
+Firebase **Spark (free)** cannot deploy Cloud Functions in production. You do **not** need them for CMS: the live API on Render is the source of truth.
+
+### How it works
+
+| Layer | What | When it updates |
+|-------|------|-----------------|
+| **Live API** | `GET /api/v1/content/bootstrap` | Immediately on every admin save |
+| **Client prefetch** | `main.tsx` fetches bootstrap before React mounts | Every page load |
+| **Build snapshot** | `public/cms-bootstrap.json` baked into `index.html` | Each `firebase-build` / `npm run build` |
+| **Session cache** | `sessionStorage` (30 min) | After a successful API fetch |
+
+```text
+Page load
+  ├─ inline HTML bootstrap (from last firebase-build)     ← fast offline fallback
+  ├─ prefetch GET /api/v1/content/bootstrap (Render)      ← wins if contentVersion is newer
+  └─ React renders once with merged CMS data              ← no hardcoded marketing flash
+```
+
+After an admin saves in the CMS, the **next visitor** gets fresh content from Render without redeploying Firebase. No full-page loader.
+
+### Render env (recommended — zero config)
+
+No extra variables are required. Ensure these are already set:
+
+| Variable | Purpose |
+|----------|---------|
+| `API_PUBLIC_URL` | Bootstrap + media URLs |
+| `SITE_URL` | CORS allows your Firebase / custom domain |
+| `DATABASE_URL` | CMS persistence |
+
+Verify bootstrap is live:
+
+```bash
+curl -s https://YOUR-RENDER-URL.onrender.com/api/v1/content/bootstrap | head -c 200
+# Should return JSON with "contentVersion", "settings", "articles", …
+```
+
+### Optional Render env (advanced publish hooks)
+
+Set these **only** if you want side effects after admin saves (debounced ~500 ms). The default Firebase + Render setup does **not** need them.
+
+| Variable | Platform | Purpose |
+|----------|----------|---------|
+| `CMS_BOOTSTRAP_PUBLISH_PATH` | Co-located static | Write `cms-bootstrap.json` to disk (not used with Firebase Hosting) |
+| `CMS_BOOTSTRAP_PUBLISH_URL` | Custom webhook | `POST` full bootstrap JSON + optional `Authorization: Bearer` |
+| `CMS_BOOTSTRAP_PUBLISH_TOKEN` | With `PUBLISH_URL` | Shared secret for the webhook |
+| `CMS_BOOTSTRAP_DEPLOY_WEBHOOK_URL` | Vercel / CI | Trigger a static rebuild after CMS mutations |
+
+**Firebase Spark:** skip `PUBLISH_PATH` and Cloud Functions. Live prefetch from Render is sufficient.
+
+**Vercel frontend:** optional `CMS_BOOTSTRAP_DEPLOY_WEBHOOK_URL` → Vercel deploy hook refreshes the baked `index.html` snapshot (slower than API prefetch, ~minutes).
+
+Admin mutations that trigger publish (when hooks are set): `PATCH /content`, blog/event CRUD, revision restore, import.
+
+### Local dev
+
+```bash
+# Terminal 1 — API
+cd server && npm run dev
+
+# Terminal 2 — frontend (predev regenerates public/cms-bootstrap.json)
+npm run dev
+```
+
+`vite.config.ts` injects `public/cms-bootstrap.json` into `index.html`. With the API running, prefetch uses the live bootstrap automatically.
+
+### Why not Firebase Cloud Functions?
+
+| Plan | Cloud Functions |
+|------|-----------------|
+| **Spark (free)** | No production deploy |
+| **Blaze (pay-as-you-go)** | Allowed; generous free tier, billing account required |
+
+For this stack, **Render already serves live bootstrap** — upgrading Firebase to Blaze only makes sense if you need same-origin `/cms-bootstrap.json` without calling Render (unusual with `VITE_API_URL`).
 
 ---
 
@@ -151,8 +231,11 @@ This repo also includes GitHub Actions + frontend `ApiKeepAlive` as extras—not
 ### Smoke test
 
 - [ ] Homepage loads and media assets resolve without 404
+- [ ] `curl …/api/v1/content/bootstrap` returns JSON with your CMS `contentVersion`
+- [ ] Homepage shows CMS copy on first load (no flash of old hardcoded text)
 - [ ] Admin login at `https://your-site.web.app/admin`
 - [ ] Save a change in Conference → Hero → persists after refresh
+- [ ] Hard-refresh homepage in a private window → change visible without `firebase deploy`
 - [ ] Upload image in Admin → Media → URL is `https://res.cloudinary.com/...`
 - [ ] Submit test registration → admin inbox receives Approve/Deny email → click updates CRM
 

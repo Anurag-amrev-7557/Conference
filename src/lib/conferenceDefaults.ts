@@ -6,6 +6,7 @@ import type {
   ConferenceTicketsContent,
   ConferenceVideoContent,
 } from './websiteData'
+import { normalizeSpeakers } from './speakers'
 
 export const DEFAULT_CONFERENCE_SECTION_VISIBILITY: Required<ConferenceSectionVisibility> = {
   hero: true,
@@ -16,6 +17,7 @@ export const DEFAULT_CONFERENCE_SECTION_VISIBILITY: Required<ConferenceSectionVi
   sponsors: true,
   partners: true,
   testimonials: true,
+  pastSpeakers: true,
   venue: true,
   tickets: true,
   faq: true,
@@ -184,6 +186,14 @@ export const defaultConferenceContent: ConferenceContent = {
       titleAccent: 'are saying',
       lede: 'Leaders who have joined past summits share why the experience matters.',
     },
+    pastSpeakers: {
+      eyebrow: 'Summit lineage',
+      title: 'Past',
+      titleAccent: 'Speakers',
+      lede: 'Leaders who have taken the Superhumanly stage — across editions.',
+      ctaLabel: 'Explore the full archive',
+      ctaHref: '/speakers?roster=past',
+    },
   },
   tickets: defaultConferenceTickets,
   logos: [
@@ -235,6 +245,41 @@ export const defaultConferenceContent: ConferenceContent = {
       featured: true,
       image:
         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=800',
+    },
+    {
+      id: 'ps1',
+      name: 'Dr. Amara Okafor',
+      title: 'Head of AI Research',
+      company: 'Helix Labs',
+      roster: 'past',
+      edition: '2025',
+      image:
+        'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&q=80&w=800',
+      bio: 'Pioneered responsible AI governance frameworks adopted by Fortune 500 teams.',
+      talkTitle: 'Building Trust in Agentic Systems',
+    },
+    {
+      id: 'ps2',
+      name: 'James Whitfield',
+      title: 'CTO',
+      company: 'VectorPath',
+      roster: 'past',
+      edition: '2025',
+      image:
+        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800',
+      bio: 'Scaled production LLM deployments across regulated industries.',
+    },
+    {
+      id: 'ps3',
+      name: 'Priya Natarajan',
+      title: 'VP Product',
+      company: 'Cortex AI',
+      roster: 'past',
+      edition: '2024',
+      image:
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=800',
+      bio: 'Led product strategy for enterprise copilots serving 2M+ users.',
+      talkTitle: 'From Copilots to Autonomous Workflows',
     },
   ],
   agenda: [
@@ -486,6 +531,7 @@ export function mergeConferenceContent(patch?: Partial<ConferenceContent>): Conf
       tickets: mergeSection(base.sections.tickets, patch.sections?.tickets),
       partners: mergeSection(base.sections.partners, patch.sections?.partners),
       testimonials: mergeSection(base.sections.testimonials, patch.sections?.testimonials),
+      pastSpeakers: mergeSection(base.sections.pastSpeakers, patch.sections?.pastSpeakers),
     },
     tickets: patch.tickets?.tiers?.length
       ? {
@@ -497,7 +543,13 @@ export function mergeConferenceContent(patch?: Partial<ConferenceContent>): Conf
       : base.tickets ?? defaultConferenceTickets,
     logos: patch.logos?.length ? patch.logos : base.logos,
     partners: patch.partners?.length ? patch.partners : base.partners ?? [],
-    speakers: patch.speakers?.length ? patch.speakers : base.speakers,
+    homepagePastSpeakerIds: patch.homepagePastSpeakerIds ?? base.homepagePastSpeakerIds,
+    maxPastSpeakers: patch.maxPastSpeakers ?? base.maxPastSpeakers,
+    sectionOrder: patch.sectionOrder ?? base.sectionOrder,
+    embeddedBlockOrder: patch.embeddedBlockOrder ?? base.embeddedBlockOrder,
+    speakers: patch.speakers?.length
+      ? normalizeSpeakers(patch.speakers)
+      : normalizeSpeakers(base.speakers),
     agenda: patch.agenda?.length ? patch.agenda : base.agenda,
     faq: patch.faq?.length ? patch.faq : base.faq,
     testimonials: patch.testimonials?.length ? patch.testimonials : base.testimonials ?? [],

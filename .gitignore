@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Environment secrets
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -26,4 +31,15 @@ dist-ssr
 
 # Local SQLite (SEC-06)
 server/prisma/dev.db
+server/prisma/test-integration.db
+server/backups/
 *.db-journal
+
+# Generated at build / predev
+public/cms-bootstrap.json
+
+# Firebase local cache
+.firebase/
+
+# TypeScript build info
+server/tsconfig.tsbuildinfo

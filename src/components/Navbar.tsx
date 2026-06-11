@@ -33,10 +33,19 @@ export function Navbar() {
   const { links, primaryCta, navbarVisible } = settings.navigation
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { pathname } = useLocation()
-  const [isOverHero, setIsOverHero] = useState(
+  const [heroIntersecting, setHeroIntersecting] = useState(
     () => pathname === "/" || pathname === "/register",
   )
+  const [prevPathname, setPrevPathname] = useState(pathname)
   const dockRef = useRef<HTMLDivElement>(null)
+
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname)
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false)
+  }
+
+  const isOverHero =
+    pathname === "/register" ? true : pathname === "/" || pathname === "/home" ? heroIntersecting : false
   const isDarkTheme = isOverHero
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
@@ -82,32 +91,20 @@ export function Navbar() {
   }, [isMobileMenuOpen])
 
   useEffect(() => {
-    setIsMobileMenuOpen(false)
-  }, [pathname])
-
-  useEffect(() => {
-    if (pathname === "/register") {
-      setIsOverHero(true)
-      return
-    }
+    if (pathname !== "/" && pathname !== "/home") return
 
     const heroSelector =
-      pathname === "/" ? "#conference-hero" : pathname === "/home" ? ".premium-home-hero" : null
-
-    if (!heroSelector) {
-      setIsOverHero(false)
-      return
-    }
+      pathname === "/" ? "#conference-hero" : ".premium-home-hero"
 
     const heroEl = document.querySelector(heroSelector)
     if (!heroEl) {
-      setIsOverHero(false)
-      return
+      const raf = requestAnimationFrame(() => setHeroIntersecting(false))
+      return () => cancelAnimationFrame(raf)
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsOverHero(entry.isIntersecting)
+        setHeroIntersecting(entry.isIntersecting)
       },
       { threshold: 0, rootMargin: "-72px 0px 0px 0px" },
     )

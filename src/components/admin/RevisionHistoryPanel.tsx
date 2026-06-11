@@ -67,7 +67,7 @@ export const RevisionHistoryPanel: React.FC<RevisionHistoryPanelProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [open, token, entityType, entityId]);
+  }, [open, token, entityType, entityId, toast]);
 
   const loadDetail = async (id: string) => {
     if (expandedId === id) {

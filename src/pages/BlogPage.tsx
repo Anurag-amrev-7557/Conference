@@ -4,7 +4,6 @@ import { Link } from "react-router-dom"
 import { PlaybookArticleCard } from "../components/blog/PlaybookArticleCard"
 import { PlaybookArticlesSkeleton } from "../components/blog/PlaybookArticlesSkeleton"
 import { useWebsiteData } from "../components/WebsiteDataProvider"
-import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 import { BlogCtaSection } from "../components/blog/BlogCtaSection"
 import { CatalogHero } from "../components/catalog/CatalogHero"
@@ -16,6 +15,7 @@ import { JsonLd } from "../seo/JsonLd"
 import { usePageSeo } from "../seo/usePageSeo"
 import { usePageJsonLd } from "../seo/usePageJsonLd"
 import { renderCatalogTitle } from "../lib/renderSectionTitle"
+import { isEffectivelyPublished } from "../lib/publishSchedule"
 
 const DEFAULT_CATEGORY_FILTERS = [
   { id: "ALL", label: "All" },
@@ -32,7 +32,10 @@ export function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
   const [searchQuery, setSearchQuery] = useState("")
 
-  const articles = data.articles.filter((a) => a.isPublished)
+  const articles = useMemo(
+    () => data.articles.filter((a) => isEffectivelyPublished(a)),
+    [data.articles],
+  )
   const q = searchQuery.trim().toLowerCase()
 
   const filteredArticles = useMemo(() => {
@@ -71,8 +74,6 @@ export function BlogPage() {
       <SeoHead seo={seo} />
       <JsonLd graph={jsonLd} />
       <div className="blog-page overflow-x-hidden public-page-shell public-inner-page">
-        <Navbar />
-
         <CatalogHero
           eyebrow={data.settings.catalogPages?.blog?.eyebrow?.trim() || "Blog"}
           title={renderCatalogTitle(data.settings.catalogPages?.blog, (

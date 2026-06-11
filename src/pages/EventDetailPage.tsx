@@ -13,8 +13,8 @@ import { useWebsiteData } from "../components/WebsiteDataProvider"
 import type { AppEvent } from "../lib/websiteData"
 import { BlogCtaSection } from "../components/blog/BlogCtaSection"
 import { Footer } from "../components/Footer"
-import { Navbar } from "../components/Navbar"
 import { formatEventDayLabel } from "../lib/eventDates"
+import { isEffectivelyPublished } from "../lib/publishSchedule"
 import { SeoHead } from "../seo/SeoHead"
 import { JsonLd } from "../seo/JsonLd"
 import { usePageSeo } from "../seo/usePageSeo"
@@ -78,7 +78,7 @@ export function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data, loading } = useWebsiteData()
-  const event = data.events.find((e) => e.id === id && e.isPublished)
+  const event = data.events.find((e) => e.id === id && isEffectivelyPublished(e))
   const seo = usePageSeo(event ? { event } : undefined)
   const jsonLd = usePageJsonLd()
   const { day, weekday } = event ? formatEventDayLabel(event) : { day: "", weekday: "" }
@@ -103,9 +103,8 @@ export function EventDetailPage() {
     return (
       <>
         <SeoHead seo={seo} />
-        <Navbar />
-        <main className="catalog-main max-w-[1200px] mx-auto px-5 py-32 text-center text-muted">
-          Loading event…
+        <main className="catalog-main max-w-[1200px] mx-auto px-5 py-32 text-center text-text3" aria-busy="true">
+          <p className="sr-only">Loading event…</p>
         </main>
         <Footer />
       </>
@@ -129,8 +128,6 @@ export function EventDetailPage() {
       />
       <JsonLd graph={jsonLd} />
       <div className="event-detail-page overflow-x-hidden public-page-shell public-inner-page">
-        <Navbar />
-
         <main className="event-detail">
           <div className="event-detail__shell mx-auto px-5 sm:px-8 lg:px-8 pt-28 sm:pt-32">
             <Link to="/events" className="event-detail__back">

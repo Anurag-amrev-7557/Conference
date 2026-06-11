@@ -43,6 +43,7 @@ import { MediaUrlField } from './MediaUrlField';
 import { AdminWorkspaceShell } from './AdminWorkspaceShell';
 import { BLOG_TAB_INTROS } from './workspaceTabIntros';
 import { useApplyPendingAdminSection } from './admin-workspace-nav';
+import { useAdminArticles } from './useAdminCatalog';
 import {
   CatalogViewToggle,
   CatalogListSkeleton,
@@ -111,7 +112,9 @@ function withCacheBust(url: string, nonce: number): string {
 }
 
 export const BlogManager: React.FC = () => {
-  const { data, sourceData, updateArticle, deleteArticle, refresh } = useWebsiteData();
+  const { data, updateArticle, deleteArticle, refresh } = useWebsiteData();
+  const { items: adminArticles, loading: loadingAdminArticles, reload: reloadAdminArticles } =
+    useAdminArticles();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Article>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -160,10 +163,10 @@ export const BlogManager: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [articleView, adminToken]);
+  }, [articleView, adminToken, toast]);
 
   const storedArticle = editingId
-    ? sourceData.articles.find((a) => a.id === editingId)
+    ? adminArticles.find((a) => a.id === editingId)
     : undefined;
 
   const handleEdit = (article: Article) => {
@@ -273,7 +276,7 @@ export const BlogManager: React.FC = () => {
     }
   };
 
-  const listArticles = articleView === 'trash' ? trashArticles : sourceData.articles;
+  const listArticles = articleView === 'trash' ? trashArticles : adminArticles;
 
   const handleSave = async () => {
     if (!editingId) return;
@@ -706,10 +709,14 @@ export const BlogManager: React.FC = () => {
                         currentSnapshot={editForm as Record<string, unknown>}
                         onRestored={async () => {
                           await refresh();
-                          const updated = sourceData.articles.find((a) => a.id === editingId);
+                          const articles = await reloadAdminArticles();
+                          const updated = articles.find((a) => a.id === editingId);
                           if (updated) {
                             skipDirtyRef.current = true;
-                            setEditForm(updated);
+                            setEditForm({
+                              ...updated,
+                              content: toEditorHtml(updated.content),
+                            });
                           }
                         }}
                       />
@@ -730,7 +737,8 @@ export const BlogManager: React.FC = () => {
 
             {workspaceTab === 'articles' && (
               <div className="admin-catalog-panel">
-                {articleView === 'trash' && loadingTrash ? (
+                {(articleView === 'trash' && loadingTrash && trashArticles.length === 0) ||
+                (articleView === 'active' && loadingAdminArticles && adminArticles.length === 0) ? (
                   <CatalogListSkeleton count={3} />
                 ) : listArticles.length === 0 ? (
                   <EmptyState

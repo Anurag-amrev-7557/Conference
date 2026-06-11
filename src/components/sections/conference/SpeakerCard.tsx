@@ -13,6 +13,8 @@ type SpeakerCardProps = {
   showTalkChip?: boolean
   showFeaturedBadge?: boolean
   featuredBadgeLabel?: string
+  showEditionBadge?: boolean
+  editionBadgeLabel?: string
 }
 
 function getInitials(name: string): string {
@@ -33,6 +35,8 @@ export function SpeakerCard({
   showTalkChip = true,
   showFeaturedBadge = false,
   featuredBadgeLabel = 'Featured',
+  showEditionBadge = false,
+  editionBadgeLabel,
 }: SpeakerCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   const imageSrc = resolveAssetUrl(speaker.image)?.trim()
@@ -47,6 +51,8 @@ export function SpeakerCard({
   const hasSession = Boolean(talkTitle) && showTalkChip && variant === 'default'
   const isCompact = variant === 'compact'
   const isInteractive = interactive && Boolean(onSelect)
+  const editionLabel = editionBadgeLabel?.trim() || speaker.edition?.trim() || ''
+  const showEdition = showEditionBadge && Boolean(editionLabel)
 
   const Root = isInteractive ? 'button' : 'article'
 
@@ -79,6 +85,9 @@ export function SpeakerCard({
           )}
           {showFeaturedBadge && speaker.featured ? (
             <span className="speaker-card__featured-badge">{featuredBadgeLabel}</span>
+          ) : null}
+          {showEdition ? (
+            <span className="speaker-card__edition-badge">{editionLabel}</span>
           ) : null}
           <div className="speaker-card__media-shade" aria-hidden />
         </div>

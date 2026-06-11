@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { Mic2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { resolveAssetUrl } from '../../lib/assetUrl'
 import type { ConferenceSpeaker } from '../../lib/websiteData'
 
@@ -19,19 +19,18 @@ function getInitials(name: string): string {
 }
 
 export function SpeakerDetailDialog({ speaker, onClose }: SpeakerDetailDialogProps) {
-  const [imageFailed, setImageFailed] = useState(false)
-
-  useEffect(() => {
-    setImageFailed(false)
-  }, [speaker?.id])
+  const [imageFailedById, setImageFailedById] = useState<Record<string, boolean>>({})
 
   const open = Boolean(speaker)
+  const imageFailed = speaker ? Boolean(imageFailedById[speaker.id]) : false
   const imageSrc = speaker ? resolveAssetUrl(speaker.image)?.trim() : ''
   const showImage = Boolean(imageSrc) && !imageFailed
   const initials = speaker ? getInitials(speaker.name) : ''
   const hasMeta = Boolean(speaker?.title?.trim() || speaker?.company?.trim())
   const hasBio = Boolean(speaker?.bio?.trim())
   const hasSession = Boolean(speaker?.talkTitle?.trim())
+  const edition = speaker?.edition?.trim()
+  const isAlumni = speaker?.roster === 'past'
   const linkedIn = speaker?.linkedIn?.trim()
   const twitter = speaker?.twitter?.trim()
 
@@ -77,7 +76,10 @@ export function SpeakerDetailDialog({ speaker, onClose }: SpeakerDetailDialogPro
                     src={imageSrc}
                     alt={speaker.name}
                     className="speaker-detail-dialog__photo"
-                    onError={() => setImageFailed(true)}
+                    onError={() => {
+                      if (!speaker) return
+                      setImageFailedById((prev) => ({ ...prev, [speaker.id]: true }))
+                    }}
                   />
                 ) : (
                   <div className="speaker-detail-dialog__fallback" aria-hidden>
@@ -87,6 +89,11 @@ export function SpeakerDetailDialog({ speaker, onClose }: SpeakerDetailDialogPro
               </div>
 
               <div className="speaker-detail-dialog__details">
+                {isAlumni && edition ? (
+                  <p className="speaker-detail-dialog__edition">
+                    Summit {edition}
+                  </p>
+                ) : null}
                 {hasSession ? (
                   <div className="speaker-detail-dialog__session">
                     <Mic2 className="speaker-detail-dialog__session-icon" aria-hidden />

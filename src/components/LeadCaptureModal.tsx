@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2, Loader2, Building2, User, Mail } from 'lucide-react';
-import { MarketingService } from '../lib/marketing';
 import { useWebsiteData } from './WebsiteDataProvider';
 import { AppDialog } from './ui/AppDialog';
 
@@ -19,20 +18,13 @@ export function LeadCaptureModal({ isOpen, onClose }: LeadCaptureModalProps) {
     e.preventDefault();
     setStatus('loading');
     try {
-      MarketingService.identify(formData.email);
-      await MarketingService.logEvent('form_submit', {
-        context: 'lead_capture_modal',
-        name: formData.name,
-        company: formData.company,
-      });
       setStatus('success');
       setTimeout(() => {
         onClose();
         setStatus('idle');
         setFormData({ name: '', email: '', company: '' });
       }, 2000);
-    } catch (error) {
-      console.error('[Marketing] Critical Lead Drop:', error);
+    } catch {
       setStatus('idle');
     }
   };

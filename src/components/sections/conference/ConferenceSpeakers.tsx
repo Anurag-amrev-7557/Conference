@@ -2,8 +2,8 @@ import { ArrowUpRight } from 'lucide-react'
 import { useMemo, useState, type CSSProperties } from 'react'
 import { useConferenceContent } from '../../../hooks/useConferenceContent'
 import {
+  getCurrentSpeakers,
   getHomepageSpeakers,
-  getPublishableSpeakers,
 } from '../../../lib/speakers'
 import { resolveCtaHref, SectionCtaLink } from '../../../lib/sectionCta'
 import type { ConferenceSectionCopy } from '../../../lib/websiteData'
@@ -32,7 +32,7 @@ export function ConferenceSpeakers() {
   const conference = useConferenceContent()
   const { speakers, sections } = conference
   const copy = sections.speakers
-  const publishableSpeakers = useMemo(() => getPublishableSpeakers(speakers), [speakers])
+  const publishableSpeakers = useMemo(() => getCurrentSpeakers(speakers), [speakers])
   const featuredSpeakers = useMemo(
     () =>
       getHomepageSpeakers(speakers, {
@@ -42,7 +42,6 @@ export function ConferenceSpeakers() {
     [speakers, conference.homepageSpeakerIds, conference.maxFeaturedSpeakers],
   )
   const [selectedSpeaker, setSelectedSpeaker] = useState<ConferenceSpeaker | null>(null)
-  const featuredBadgeLabel = copy?.featuredBadgeLabel?.trim() || 'Featured'
 
   const lede =
     copy?.lede?.trim() ||
@@ -54,7 +53,7 @@ export function ConferenceSpeakers() {
     publishableSpeakers.length > 0 ? (
       <SectionCtaLink
         href={resolveCtaHref(copy?.ctaHref, '/speakers')}
-        className="conference-section__cta-btn group"
+        className="conference-section__cta-btn conference-section__cta-btn--lg group"
       >
         {getSpeakersSectionCtaLabel(copy, publishableSpeakers.length)}
         <ArrowUpRight
@@ -103,7 +102,7 @@ export function ConferenceSpeakers() {
             {copy?.emptyStateCtaLabel?.trim() ? (
               <SectionCtaLink
                 href={resolveCtaHref(copy?.emptyStateCtaHref, '/speakers')}
-                className="conference-section__cta-btn group"
+                className="conference-section__cta-btn conference-section__cta-btn--lg group"
               >
                 {copy.emptyStateCtaLabel}
               </SectionCtaLink>
@@ -125,8 +124,6 @@ export function ConferenceSpeakers() {
                   speaker={speaker}
                   priority={idx < 2}
                   interactive
-                  showFeaturedBadge
-                  featuredBadgeLabel={featuredBadgeLabel}
                   showTalkChip
                   onSelect={setSelectedSpeaker}
                 />

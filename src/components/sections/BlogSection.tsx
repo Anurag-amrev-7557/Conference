@@ -8,11 +8,12 @@ import { EditorialEyebrow } from "../ui/EditorialEyebrow"
 import { renderSectionHeading } from "../../lib/renderSectionTitle"
 import { PlaybookArticleCard } from "../blog/PlaybookArticleCard"
 import { PlaybookArticlesSkeleton } from "../blog/PlaybookArticlesSkeleton"
+import { cn } from "../../lib/utils"
 
 const DEFAULT_LEDE =
   "Frameworks, research, and field-tested playbooks for shipping agentic AI—without the hype."
 
-export function BlogSection() {
+export function BlogSection({ className }: { className?: string }) {
   const { data, loading } = useWebsiteData()
   const preview = data.settings.sections?.blogPreview
   const previewCount = preview?.previewCount && preview.previewCount > 0 ? preview.previewCount : 3
@@ -42,7 +43,11 @@ export function BlogSection() {
   }, [])
 
   return (
-    <section ref={sectionRef} id={sectionId} className="playbook-section premium-home-section">
+    <section
+      ref={sectionRef}
+      id={sectionId}
+      className={cn("playbook-section premium-home-section", className)}
+    >
       <div className="playbook-section__ambient" aria-hidden />
 
       <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 max-w-[1600px] mx-auto">

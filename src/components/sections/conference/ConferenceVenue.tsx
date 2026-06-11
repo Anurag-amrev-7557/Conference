@@ -11,7 +11,7 @@ export function ConferenceVenue() {
       id="conference-venue"
       sectionClass="conference-venue-section"
       visibleClass="conference-venue-section--visible"
-      variant="light"
+      variant="muted"
     >
       <ConferenceSectionHeader
         copy={{

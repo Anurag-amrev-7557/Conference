@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Footer } from '../components/Footer'
-import { Navbar } from '../components/Navbar'
 import { BlogCtaSection } from '../components/blog/BlogCtaSection'
 import { CatalogHero } from '../components/catalog/CatalogHero'
 import { CatalogPagination } from '../components/catalog/CatalogPagination'
@@ -11,6 +11,7 @@ import { SpeakersCatalogToolbar } from '../components/speakers/SpeakersCatalogTo
 import { useConferenceContent } from '../hooks/useConferenceContent'
 import {
   countFeaturedSpeakers,
+  countPastSpeakers,
   getCatalogPageSize,
   filterSpeakers,
   getSpeakerCompanies,
@@ -28,19 +29,22 @@ import { SeoHead } from '../seo/SeoHead'
 import { usePageJsonLd } from '../seo/usePageJsonLd'
 import { usePageSeo } from '../seo/usePageSeo'
 
-const SPEAKER_FILTERS = [
+const BASE_SPEAKER_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'featured', label: 'Featured' },
 ] as const
+
+const ALUMNI_FILTER = { id: 'alumni', label: 'Alumni' } as const
 
 export function SpeakersPage() {
   const { data } = useWebsiteData()
   const conference = useConferenceContent()
   const seo = usePageSeo()
   const jsonLd = usePageJsonLd()
+  const [searchParams] = useSearchParams()
   const speakers = conference.speakers
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState<SpeakerCatalogFilter>('all')
+  const [userFilter, setUserFilter] = useState<SpeakerCatalogFilter | null>(null)
   const [activeCompany, setActiveCompany] = useState('all')
   const [sort, setSort] = useState<SpeakerSort>('featured-first')
   const [viewMode, setViewMode] = useState<SpeakerViewMode>('grid')
@@ -48,7 +52,23 @@ export function SpeakersPage() {
 
   const companies = useMemo(() => getSpeakerCompanies(speakers), [speakers])
   const featuredCount = countFeaturedSpeakers(speakers)
+  const pastCount = countPastSpeakers(speakers)
   const showFeaturedFilter = featuredCount > 0
+  const showAlumniFilter = pastCount > 0
+  const urlFilter: SpeakerCatalogFilter | null =
+    searchParams.get('roster') === 'past' && showAlumniFilter ? 'alumni' : null
+  const activeFilter = userFilter ?? urlFilter ?? 'all'
+
+  const speakerFilters = useMemo(() => {
+    const filters: { id: string; label: string }[] = [{ id: 'all', label: 'All' }]
+    if (showFeaturedFilter) {
+      filters.push(BASE_SPEAKER_FILTERS[1])
+    }
+    if (showAlumniFilter) {
+      filters.push(ALUMNI_FILTER)
+    }
+    return filters
+  }, [showFeaturedFilter, showAlumniFilter])
 
   const filteredSpeakers = useMemo(() => {
     const filtered = filterSpeakers(speakers, {
@@ -67,7 +87,7 @@ export function SpeakersPage() {
   )
 
   const resetFilters = () => {
-    setActiveFilter('all')
+    setUserFilter(null)
     setActiveCompany('all')
     setSearchQuery('')
     setSort('featured-first')
@@ -80,8 +100,6 @@ export function SpeakersPage() {
       <SeoHead seo={seo} />
       <JsonLd graph={jsonLd} />
       <div className="speakers-page overflow-x-hidden public-page-shell public-inner-page">
-        <Navbar />
-
         <CatalogHero
           eyebrow={catalog?.eyebrow?.trim() || 'Speakers'}
           title={renderCatalogTitle(catalog, (
@@ -101,9 +119,9 @@ export function SpeakersPage() {
               searchId="speakers-search-input"
               searchValue={searchQuery}
               onSearchChange={setSearchQuery}
-              filters={showFeaturedFilter ? [...SPEAKER_FILTERS] : []}
+              filters={speakerFilters.length > 1 ? speakerFilters : []}
               activeFilterId={activeFilter}
-              onFilterChange={(id) => setActiveFilter(id as SpeakerCatalogFilter)}
+              onFilterChange={(id) => setUserFilter(id as SpeakerCatalogFilter)}
               companies={companies}
               activeCompany={activeCompany}
               onCompanyChange={setActiveCompany}
@@ -152,6 +170,8 @@ export function SpeakersPage() {
                       interactive
                       variant="compact"
                       showFeaturedBadge
+                      showEditionBadge={speaker.roster === 'past'}
+                      showTalkChip={speaker.roster !== 'past'}
                       onSelect={setSelectedSpeaker}
                     />
                   </li>

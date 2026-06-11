@@ -91,17 +91,20 @@ npm run dev
 
 ## 4. Persisting admin (CMS) changes
 
-Admin saves go to the **Render API database** and **upload disk** — not Firebase Hosting.
+Admin saves go to the **Render API database** (Postgres on Neon/Supabase in production) — not Firebase Hosting.
 
 | What | Where | Survives redeploy if… |
 |------|-------|------------------------|
-| CMS content | SQLite on Render disk | Disk mounted at `/var/data` |
-| Uploads | `{UPLOAD_ROOT}/media` | Same disk |
+| CMS content | Postgres (`DATABASE_URL`) | DB provider snapshots / backups |
+| Uploads | Cloudinary (or Render disk if `STORAGE_PROVIDER=local`) | Cloudinary account / disk mounted |
 | Frontend static files | Firebase Hosting | Redeploy replaces build only |
+| Live first-paint CMS | `GET /api/v1/content/bootstrap` on Render | API + DB healthy (no Firebase redeploy needed) |
 
-**Why CMS resets:** Render disk not attached, or `DATABASE_URL` points outside `/var/data`.
+Visitors load fresh CMS data via API prefetch on each visit. Firebase only needs redeploy when you change frontend code or want to refresh the baked `index.html` snapshot.
 
-**Backups:** `cd server && npm run backup:db` or `POST /api/v1/admin/backup`
+**Backups:** Postgres provider tools, or `cd server && npm run backup:db` / `POST /api/v1/admin/backup` for SQLite dev.
+
+**Full CMS bootstrap guide:** [docs/FIREBASE_DEPLOY.md](./docs/FIREBASE_DEPLOY.md#cms-content-on-first-paint-no-cloud-functions-required)
 
 ---
 

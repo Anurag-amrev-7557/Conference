@@ -26,7 +26,9 @@ export function ConferenceVideo() {
   const videoSrc = resolveMediaUrl(rawVideoSrc, CONFERENCE_HERO_VIDEO_PUBLIC)
   const poster = resolveAssetUrl(posterSrc) || posterSrc
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [useVideo, setUseVideo] = useState(true)
+  const [useVideo, setUseVideo] = useState(
+    () => typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
   const [isPlaying, setIsPlaying] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const [durationLabel, setDurationLabel] = useState('')
@@ -46,9 +48,7 @@ export function ConferenceVideo() {
     const el = videoRef.current
     if (!el) return
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reducedMotion) {
-      setUseVideo(false)
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       el.pause()
       return
     }
@@ -136,7 +136,6 @@ export function ConferenceVideo() {
           </>
         }
         ledeFallback="Step inside the energy of Superhumanly Summit — keynotes, workshops, and the conversations that shape what ships next."
-        compactEyebrow
         actions={headerActions}
       />
 

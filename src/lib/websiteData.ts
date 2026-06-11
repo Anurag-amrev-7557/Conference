@@ -222,6 +222,8 @@ export interface ConferenceVideoContent {
   posterUrl?: string;
 }
 
+export type SpeakerRoster = 'current' | 'past';
+
 export interface ConferenceSpeaker {
   id: string;
   name: string;
@@ -230,6 +232,10 @@ export interface ConferenceSpeaker {
   image: string;
   /** When true, shown on the summit homepage speaker carousel. */
   featured?: boolean;
+  /** Defaults to `current` when omitted. */
+  roster?: SpeakerRoster;
+  /** Summit edition label, e.g. "2024", "2025". */
+  edition?: string;
   bio?: string;
   talkTitle?: string;
   timeSlot?: string;
@@ -316,6 +322,7 @@ export interface ConferenceSectionVisibility {
   sponsors?: boolean;
   partners?: boolean;
   testimonials?: boolean;
+  pastSpeakers?: boolean;
   venue?: boolean;
   tickets?: boolean;
   faq?: boolean;
@@ -329,6 +336,7 @@ export type ConferenceSectionId =
   | 'sponsors'
   | 'partners'
   | 'testimonials'
+  | 'pastSpeakers'
   | 'venue'
   | 'tickets'
   | 'faq';
@@ -347,6 +355,9 @@ export interface ConferenceContent {
   /** Optional manual ordering/limit for homepage featured speakers. */
   homepageSpeakerIds?: string[];
   maxFeaturedSpeakers?: number;
+  /** Optional manual ordering/limit for homepage past speakers. */
+  homepagePastSpeakerIds?: string[];
+  maxPastSpeakers?: number;
   /** Per-block toggles for summit homepage sections at /. */
   sectionVisibility?: ConferenceSectionVisibility;
   venue?: ConferenceVenueContent;
@@ -363,6 +374,7 @@ export interface ConferenceContent {
     tickets?: ConferenceSectionCopy;
     partners?: ConferenceSectionCopy;
     testimonials?: ConferenceSectionCopy;
+    pastSpeakers?: ConferenceSectionCopy;
   };
   tickets?: ConferenceTicketsContent;
   logos: ConferenceLogo[];
@@ -547,208 +559,10 @@ export interface WebsiteData {
   appearance: SiteAppearance;
 }
 
-export const initialData: WebsiteData = {
-  hero: {
-    tagline: "",
-    headline: "",
-    headlineAccent: "",
-    subtitle: "",
-    videoUrl: "",
-  },
-  settings: {
-    seo: {
-      title: "Superhumanly Playbook — Master Agentic AI Automation",
-      description: "Scale your business and automate your workflows with the definitive Agentic AI Playbook. Join 2,500+ innovators today."
-    },
-    book: {
-      title: "The Blueprint for Automating Business with Agentic AI",
-      tagline: "The definitive playbook for scaling with AI agent swarms.",
-      abstract:
-        "Stop wasting hours on manual tasks. This book gives you a practical, step-by-step system to build, deploy, and scale agentic AI inside your business — without hiring a developer or drowning in jargon.",
-      authorName: "Superhumanly",
-      coverImageUrl: "",
-      publisherName: "Superhumanly Press",
-    },
-    navigation: {
-      links: [
-        { id: "1", name: "Blog", href: "/blog" },
-        { id: "3", name: "About Us", href: "#who-we-are" },
-        { id: "4", name: "Events", href: "/events" }
-      ],
-      socials: [
-        { id: "1", platform: "LinkedIn", href: "https://linkedin.com/company/superhumanly" },
-        { id: "2", platform: "Youtube", href: "https://youtube.com/@superhumanly" },
-        { id: "3", platform: "Instagram", href: "https://instagram.com/superhumanly.ai" },
-        { id: "4", platform: "X", href: "https://x.com/superhumanly" }
-      ],
-      footerLinks: [
-        { id: "f1", name: 'The Playbook', href: '/blog' },
-        { id: "f3", name: 'Strategy', href: '/#who-we-are' },
-        { id: "f4", name: 'Live Training', href: '/events' },
-        { id: "f5", name: "Join Registry", href: "/#final-cta" }
-      ],
-      primaryCta: { label: 'Join Now', href: '/#final-cta' },
-    },
-    footer: {
-      tagline: 'Orchestrating the future of automated business systems.',
-      copyright: '© Superhumanly AI Playbook.',
-      registryStatusLabel: 'Registry open',
-      registryCtaLabel: 'Join the registry',
-      navColumnTitle: 'Section Index',
-      socialColumnTitle: 'Connection',
-      privacyUrl: '#',
-      termsUrl: '#',
-      privacyLabel: 'Privacy Policy',
-      termsLabel: 'Terms of Service',
-    },
-    visibility: {
-      showcase: true,
-      blog: true,
-      events: true,
-      finalCta: true,
-      footer: true,
-    },
-    newsletter: {
-      enabled: true,
-    },
-    catalogPages: {
-      blog: {
-        eyebrow: 'Blog',
-        title: 'Where builders',
-        titleAccent: 'learn to ship',
-        lede: 'Architecture, automation, and intelligence for builders shipping agentic systems.',
-        searchPlaceholder: 'Search for articles',
-        pageSize: 9,
-        emptyStateTitle: 'Playbooks are on the way',
-        emptyStateBody: 'New guides and research drop here as we publish.',
-        emptyStateCtaLabel: 'Back to homepage',
-        emptyStateCtaHref: '/',
-      },
-      events: {
-        eyebrow: 'Events',
-        title: 'Where AI leaders',
-        titleAccent: 'come together',
-        lede: 'Explore upcoming masterclasses, networking sessions, and venture workshops.',
-        searchPlaceholder: 'Search for events',
-        pageSize: 9,
-        emptyStateTitle: 'No events scheduled yet',
-        emptyStateBody: 'Check back soon for live training and summit sessions.',
-      },
-      speakers: {
-        eyebrow: 'Speakers',
-        title: 'The minds shaping',
-        titleAccent: 'agentic AI',
-        lede: 'Browse summit speakers from across industry, research, and venture—each bringing hard-won insight to the stage.',
-        searchPlaceholder: 'Search by name, company, or talk',
-        pageSize: 12,
-        layout: 'grid-list-toggle',
-        emptyStateTitle: 'Speaker lineup coming soon',
-        emptyStateBody: 'We are finalizing the summit roster.',
-        emptyStateCtaLabel: 'Register for updates',
-        emptyStateCtaHref: '/register',
-      },
-    },
-    blogCategories: [
-      { id: 'RESEARCH', label: 'Research' },
-      { id: 'STRATEGY', label: 'Strategy' },
-      { id: 'PLAYBOOK', label: 'Playbook' },
-      { id: 'GUIDE', label: 'Guide' },
-    ],
-    routeVisibility: {
-      blog: true,
-      events: true,
-      speakers: true,
-      register: true,
-    },
-    leadCaptureModal: {
-      title: 'Get the playbook',
-      lede: 'Join the registry for exclusive guides and summit updates.',
-      submitLabel: 'Subscribe',
-      successTitle: "You're on the list",
-      successMessage: 'Check your inbox for the playbook.',
-      emailPlaceholder: 'you@company.com',
-    },
-    customCss: "",
-    scripts: {
-      header: "",
-      footer: ""
-    }
-  },
-  appearance: {
-    primaryColor: "#0052cc",
-    brandName: "Superhumanly - Thoughts",
-    brandLogoText: "S",
-    typography: {
-      headingFont: 'serif',
-      bodyFont: 'sans',
-      baseSize: 'medium'
-    },
-    theme: {
-      borderRadius: 'lg',
-      buttonStyle: 'glass',
-      shadowIntensity: 'soft'
-    }
-  },
-  articles: [],
-  events: [],
-  stats: [],
-  pillars: [
-    {
-      id: "1",
-      iconName: "Database",
-      title: "Precision Ingestion",
-      description: "Connect your private data layer (Knowledge Base, CRM, APIs). Our system autonomously vectors these into a semantic mesh.",
-      prompt: "Synthesizing knowledge graph from 50,000 corporate records...",
-      color: "text-blue-500"
-    },
-    {
-      id: "2",
-      iconName: "Cpu",
-      title: "Agentic Logic",
-      description: "Define behaviors using natural language. The orchestrator decomposes complex goals into executable agent swarms.",
-      prompt: "Running multi-agent reasoning chain for lead intent...",
-      color: "text-[#6366f1]"
-    },
-    {
-      id: "3",
-      iconName: "Send",
-      title: "Autonomous Dispatch",
-      description: "The final agent executes high-priority actions: hyper-personalized outreach, real-time strategy calls, and revenue events.",
-      prompt: "Dispatched hyper-personalized campaign to prospect id #921",
-      color: "text-green-500"
-    },
-  ],
-  perks: [
-    {
-      id: "1",
-      iconName: "MessageSquare",
-      title: "Weekly Syncs",
-      label: "LIVE SESSIONS",
-      description: "Join weekly live sessions with Maria and fellow founders."
-    },
-    {
-      id: "2",
-      iconName: "BookOpen",
-      title: "Resource Library",
-      label: "VIP ACCESS",
-      description: "Access our exclusive vault of agentic playbooks and templates."
-    },
-    {
-      id: "3",
-      iconName: "Zap",
-      title: "AI Support",
-      label: "AGENTIC HELP",
-      description: "Direct access to our custom agents for your business."
-    },
-    {
-      id: "4",
-      iconName: "Shield",
-      title: "Secure Network",
-      label: "VETTED ACCESS",
-      description: "Connect with a strictly vetted group of innovators."
-    }
-  ]
-};
+import { structuralDefaults } from './structuralDefaults';
+
+/** Offline structural shell — authoritative content comes from cms-bootstrap + API. */
+export const initialData: WebsiteData = structuralDefaults;
 
 export const pillarIcons = {
   BookOpen,

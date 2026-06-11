@@ -4,7 +4,9 @@ import { SectionWaveLabel } from '../ui/SectionWaveLabel'
 function LogoWordmark({ label }: { label: string }) {
   return (
     <span className="book-demo-trust__logo" role="img" aria-label={`${label} logo`}>
-      <span aria-hidden>{label}</span>
+      <span className="book-demo-trust__logo-mark" aria-hidden>
+        {label}
+      </span>
     </span>
   )
 }

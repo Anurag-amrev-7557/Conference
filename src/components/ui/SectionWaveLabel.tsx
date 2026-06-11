@@ -24,7 +24,7 @@ export function SectionWaveLabel({
     variant === 'pill' ? (
       <span
         className={cn(
-          'text-[0.875rem] font-medium tracking-[-0.02em] text-zinc-700',
+          'whitespace-nowrap text-[0.875rem] font-medium leading-none tracking-[-0.02em] text-zinc-700',
           textClassName,
         )}
       >
@@ -38,7 +38,7 @@ export function SectionWaveLabel({
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-3',
+          'inline-flex flex-nowrap items-center gap-3',
           variant === 'pill' &&
             'rounded-full border border-zinc-200/90 bg-white px-4 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]',
           className,

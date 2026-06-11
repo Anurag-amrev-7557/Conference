@@ -1,4 +1,5 @@
 import type { Article } from './websiteData'
+import { isEffectivelyPublished } from './publishSchedule'
 
 /** Contextual card CTA copy by article category. */
 export function getArticleCtaLabel(category: string): string {
@@ -88,15 +89,16 @@ export function selectPreviewArticles(
   limit = 3,
   featuredIds?: string[],
 ): Article[] {
-  const published = articles.filter((article) => article.isPublished)
+  const published = articles.filter((article) => isEffectivelyPublished(article))
   const curatedIds = featuredIds?.filter(Boolean) ?? []
 
   if (curatedIds.length > 0) {
     const byId = new Map(published.map((article) => [article.id, article]))
-    return curatedIds
+    const curated = curatedIds
       .map((id) => byId.get(id))
       .filter((article): article is Article => Boolean(article))
       .slice(0, limit)
+    if (curated.length > 0) return curated
   }
 
   const byTitle = new Map<string, Article>()

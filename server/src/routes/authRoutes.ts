@@ -42,7 +42,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       { expiresIn: '24h' },
     );
     res.json({ token, success: true, role: admin.role, username: admin.username });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Authentication failed.' });
   }
 });

@@ -8,6 +8,7 @@ export const DEFAULT_CONFERENCE_SECTION_ORDER: ConferenceSectionId[] = [
   'sponsors',
   'partners',
   'testimonials',
+  'pastSpeakers',
   'venue',
   'tickets',
   'faq',

@@ -42,9 +42,12 @@ import type {
   ConferenceAgendaDay,
   ConferenceAgendaSession,
   ConferenceContent,
+  ConferenceSpeaker,
   ConferenceTicketTier,
   ConferenceVideoContent,
+  SpeakerRoster,
 } from '../../lib/websiteData';
+import { getSpeakerEditions } from '../../lib/speakers';
 import {
   mergeConferenceContent,
   normalizeRegisterCtaLabel,
@@ -114,6 +117,49 @@ function formatEventStartLabel(value?: string | null): string | null {
   return parsed.toLocaleDateString();
 }
 
+type PastSpeakerImportRow = {
+  name?: string;
+  title?: string;
+  company?: string;
+  image?: string;
+  edition?: string;
+  bio?: string;
+  talkTitle?: string;
+  timeSlot?: string;
+  linkedIn?: string;
+  twitter?: string;
+};
+
+function parsePastSpeakersImport(json: string): ConferenceSpeaker[] {
+  const parsed = JSON.parse(json) as unknown;
+  if (!Array.isArray(parsed)) {
+    throw new Error('JSON must be an array of speaker objects.');
+  }
+
+  return parsed.map((row, index) => {
+    const item = row as PastSpeakerImportRow;
+    const name = item.name?.trim();
+    if (!name) {
+      throw new Error(`Row ${index + 1} is missing a name.`);
+    }
+
+    return {
+      id: newId(),
+      name,
+      title: item.title?.trim() ?? '',
+      company: item.company?.trim() ?? '',
+      image: item.image?.trim() ?? '',
+      roster: 'past' as SpeakerRoster,
+      edition: item.edition?.trim() ?? '',
+      bio: item.bio?.trim(),
+      talkTitle: item.talkTitle?.trim(),
+      timeSlot: item.timeSlot?.trim(),
+      linkedIn: item.linkedIn?.trim(),
+      twitter: item.twitter?.trim(),
+    };
+  });
+}
+
 export const ConferenceManager: React.FC = () => {
   const { sourceData, updateSettings } = useWebsiteData();
   const articleOptions = sourceData.articles
@@ -154,6 +200,8 @@ export const ConferenceManager: React.FC = () => {
   const [speakersRouteSeo, setSpeakersRouteSeo] = useState(
     () => sourceData.settings.routeSeo?.['/speakers'] ?? {},
   );
+  const [pastSpeakersImportJson, setPastSpeakersImportJson] = useState('');
+  const [pastSpeakersImportError, setPastSpeakersImportError] = useState('');
 
   useEffect(() => {
     skipDirtyRef.current = true;
@@ -750,6 +798,7 @@ export const ConferenceManager: React.FC = () => {
                   ['agenda', 'Agenda', Calendar],
                   ['tickets', 'Ticket passes', Ticket],
                   ['testimonials', 'Testimonials', MessageSquare],
+                  ['pastSpeakers', 'Past speakers', Users],
                 ] as const
               ).map(([key, title, Icon]) => (
                 <AdminEditorSection
@@ -769,7 +818,7 @@ export const ConferenceManager: React.FC = () => {
                       value={form.sections[key]?.title ?? ''}
                       onChange={(v) => patchSection(key, 'title', v)}
                     />
-                    {(key === 'speakers' || key === 'sponsors' || key === 'partners' || key === 'testimonials') && (
+                    {(key === 'speakers' || key === 'sponsors' || key === 'partners' || key === 'testimonials' || key === 'pastSpeakers') && (
                       <Field
                         label="Title accent"
                         value={form.sections[key]?.titleAccent ?? ''}
@@ -782,7 +831,7 @@ export const ConferenceManager: React.FC = () => {
                       onChange={(v) => patchSection(key, 'lede', v)}
                       multiline
                     />
-                    {(key === 'speakers' || key === 'sponsors' || key === 'agenda') && (
+                    {(key === 'speakers' || key === 'sponsors' || key === 'agenda' || key === 'pastSpeakers') && (
                       <>
                         <Field
                           label="CTA label"
@@ -850,6 +899,69 @@ export const ConferenceManager: React.FC = () => {
                           multiline
                         />
                       </>
+                    ) : null}
+                    {key === 'pastSpeakers' ? (
+                      <AdminEditorSubsection title="Alumni stats (optional)">
+                        {(form.sections.pastSpeakers?.metrics ?? []).map((metric, mi) => (
+                          <AdminFieldGrid key={metric.id} columns={2}>
+                            <AdminEditorField label="Value">
+                              <AdminEditorInput
+                                value={metric.value}
+                                onChange={(e) => {
+                                  const metrics = [...(form.sections.pastSpeakers?.metrics ?? [])];
+                                  metrics[mi] = { ...metric, value: e.target.value };
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    sections: {
+                                      ...prev.sections,
+                                      pastSpeakers: { ...prev.sections.pastSpeakers, metrics },
+                                    },
+                                  }));
+                                }}
+                              />
+                            </AdminEditorField>
+                            <AdminEditorField label="Label">
+                              <AdminEditorInput
+                                value={metric.label}
+                                onChange={(e) => {
+                                  const metrics = [...(form.sections.pastSpeakers?.metrics ?? [])];
+                                  metrics[mi] = { ...metric, label: e.target.value };
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    sections: {
+                                      ...prev.sections,
+                                      pastSpeakers: { ...prev.sections.pastSpeakers, metrics },
+                                    },
+                                  }));
+                                }}
+                              />
+                            </AdminEditorField>
+                          </AdminFieldGrid>
+                        ))}
+                        <AdminButton
+                          type="button"
+                          variant="ghost"
+                          disabled={(form.sections.pastSpeakers?.metrics ?? []).length >= 3}
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              sections: {
+                                ...prev.sections,
+                                pastSpeakers: {
+                                  ...prev.sections.pastSpeakers,
+                                  metrics: [
+                                    ...(prev.sections.pastSpeakers?.metrics ?? []),
+                                    { id: newId(), value: '', label: '' },
+                                  ],
+                                },
+                              },
+                            }))
+                          }
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add stat
+                        </AdminButton>
+                      </AdminEditorSubsection>
                     ) : null}
                     {key === 'sponsors' ? (
                       <>
@@ -1084,17 +1196,67 @@ export const ConferenceManager: React.FC = () => {
                     ...prev,
                     speakers: [
                       ...prev.speakers,
-                      { id: newId(), name: '', title: '', company: '', image: '' },
+                      { id: newId(), name: '', title: '', company: '', image: '', roster: 'current' },
                     ],
                   }))
                 }
               >
+                <AdminEditorSubsection title="Import past speakers (JSON)">
+                  <AdminEditorField
+                    label="Bulk import"
+                    hint='Paste a JSON array: [{ "name": "...", "title": "...", "company": "...", "image": "...", "edition": "2024" }]'
+                  >
+                    <AdminEditorTextarea
+                      value={pastSpeakersImportJson}
+                      onChange={(e) => {
+                        setPastSpeakersImportJson(e.target.value);
+                        setPastSpeakersImportError('');
+                      }}
+                      rows={6}
+                      placeholder='[{"name":"Jane Doe","title":"CTO","company":"Acme","edition":"2024","image":"/media/..."}]'
+                    />
+                  </AdminEditorField>
+                  {pastSpeakersImportError ? (
+                    <p className="text-sm text-red-600">{pastSpeakersImportError}</p>
+                  ) : null}
+                  <AdminButton
+                    type="button"
+                    variant="ghost"
+                    disabled={!pastSpeakersImportJson.trim()}
+                    onClick={() => {
+                      try {
+                        const imported = parsePastSpeakersImport(pastSpeakersImportJson);
+                        setForm((prev) => ({
+                          ...prev,
+                          speakers: [...prev.speakers, ...imported],
+                        }));
+                        setPastSpeakersImportJson('');
+                        setPastSpeakersImportError('');
+                        toast({
+                          variant: 'success',
+                          title: 'Past speakers imported',
+                          description: `${imported.length} alumni speaker${imported.length === 1 ? '' : 's'} added.`,
+                        });
+                      } catch (error) {
+                        setPastSpeakersImportError(
+                          error instanceof Error ? error.message : 'Invalid JSON.',
+                        );
+                      }
+                    }}
+                  >
+                    Import past speakers
+                  </AdminButton>
+                </AdminEditorSubsection>
                 <SortableList
                   items={form.speakers}
                   onReorder={(speakers) => setForm((prev) => ({ ...prev, speakers }))}
                   renderItem={(sp, i) => (
                   <CollapsibleListItem
-                    title={sp.name?.trim() ? sp.name.trim() : `Speaker ${i + 1}`}
+                    title={
+                      sp.name?.trim()
+                        ? `${sp.name.trim()}${sp.roster === 'past' ? ' · Alumni' : ''}`
+                        : `Speaker ${i + 1}`
+                    }
                     onRemove={() => removeAt(setForm, 'speakers', i)}
                     defaultOpen={i === 0}
                   >
@@ -1125,10 +1287,51 @@ export const ConferenceManager: React.FC = () => {
                       className="admin-editor-input"
                       placeholder="Company"
                     />
+                    <AdminEditorField label="Roster">
+                      <div className="flex flex-wrap gap-2">
+                        {(['current', 'past'] as const).map((roster) => (
+                          <button
+                            key={roster}
+                            type="button"
+                            className={cn(
+                              'admin-editor-input px-3 py-1.5 text-sm capitalize',
+                              (sp.roster ?? 'current') === roster && 'ring-2 ring-[var(--admin-accent)]',
+                            )}
+                            onClick={() =>
+                              updateAt(setForm, 'speakers', i, {
+                                ...sp,
+                                roster,
+                                featured: roster === 'past' ? false : sp.featured,
+                              })
+                            }
+                          >
+                            {roster === 'past' ? 'Past (alumni)' : 'Current'}
+                          </button>
+                        ))}
+                      </div>
+                    </AdminEditorField>
+                    {(sp.roster ?? 'current') === 'past' ? (
+                      <AdminEditorField label="Edition" hint="e.g. 2024 or Summit 2025">
+                        <AdminEditorInput
+                          value={sp.edition ?? ''}
+                          onChange={(e) =>
+                            updateAt(setForm, 'speakers', i, { ...sp, edition: e.target.value })
+                          }
+                          placeholder="2024"
+                          list={`speaker-editions-${sp.id}`}
+                        />
+                        <datalist id={`speaker-editions-${sp.id}`}>
+                          {getSpeakerEditions(form.speakers, 'past').map((edition) => (
+                            <option key={edition} value={edition} />
+                          ))}
+                        </datalist>
+                      </AdminEditorField>
+                    ) : null}
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
                         checked={sp.featured === true}
+                        disabled={(sp.roster ?? 'current') === 'past'}
                         onChange={(e) =>
                           updateAt(setForm, 'speakers', i, { ...sp, featured: e.target.checked })
                         }
@@ -1137,9 +1340,8 @@ export const ConferenceManager: React.FC = () => {
                       Featured on summit homepage
                     </label>
                     <p className="text-xs text-[var(--admin-text-muted)]">
-                      Only checked speakers appear on the homepage carousel. Extra cards scroll
-                      horizontally when they do not fit on screen. Unchecked speakers stay on
-                      /speakers only.
+                      Only current-roster speakers can be featured on the homepage carousel.
+                      Alumni appear in the Past speakers section and /speakers Alumni filter.
                     </p>
                     <MediaUrlField
                       label="Photo"

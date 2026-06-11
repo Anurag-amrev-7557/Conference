@@ -21,12 +21,13 @@ import { sanitizeArticleHtml, validateCustomCss, validateInjectedScripts } from 
 import { embedHomepageInSettingsPatch, expandHomepageFromSettings } from '../lib/homepageContent';
 import { isSafeMediaFilename, listMediaFiles } from '../lib/listMediaFiles';
 import { deleteMediaFile, uploadMediaImage, uploadOgImage } from '../lib/mediaStorage';
-import { loadAdminPermissions, mergeAdminPermissions, resolvePermissionsForRole } from '../lib/adminPermissions';
+import { loadAdminPermissions, mergeAdminPermissions } from '../lib/adminPermissions';
 import { deepMergeObjects, safeParseJsonRecord } from '../lib/mergePatch';
 import { backupDatabase } from '../lib/backupDatabase';
 import { notifyRegistrantOfStatus } from '../lib/registrationNotifications';
 import { writeAuditLog, saveContentRevision, getAdminFromRequest } from '../lib/auditLog';
 import { blockViewerMutations, requireMinRole } from '../middleware/requireRole';
+import { cmsBootstrapPublishMiddleware } from '../middleware/cmsBootstrapPublish';
 import {
   assertCanChangePrivilegedRole,
   assertCanDeleteAdminUser,
@@ -165,6 +166,7 @@ export const authenticateAdmin = (req: Request, res: Response, next: NextFunctio
 
 router.use(authenticateAdmin);
 router.use(blockViewerMutations);
+router.use(cmsBootstrapPublishMiddleware);
 
 // POST /api/v1/admin/og-image — resize to 1200×630 JPEG under public/og/
 router.post('/og-image', (req, res, next) => {
@@ -247,7 +249,7 @@ router.delete('/media/:filename', async (req, res) => {
       return res.status(404).json({ error: 'File not found.' });
     }
     res.json({ success: true });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Failed to delete file.' });
   }
 });
