@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { articleCreateSchema, articleUpdateSchema } from './article'
+import { describe, expect, it } from 'vitest';
+import { articleCreateSchema, articleUpdateSchema } from './article';
 
 const baseArticle = {
   slug: 'test-post',
   title: 'Test',
   category: 'AI',
   authorName: 'Author',
-}
+};
 
 describe('article SEO schemas (CMS-01)', () => {
   it('accepts optional SEO fields on create', () => {
@@ -16,10 +16,10 @@ describe('article SEO schemas (CMS-01)', () => {
       seoDescription: 'Meta description',
       ogImage: 'https://cdn.example.com/og.jpg',
       noindex: true,
-    })
-    expect(parsed.seoTitle).toBe('Custom SEO')
-    expect(parsed.noindex).toBe(true)
-  })
+    });
+    expect(parsed.seoTitle).toBe('Custom SEO');
+    expect(parsed.noindex).toBe(true);
+  });
 
   it('rejects non-https ogImage when provided', () => {
     expect(() =>
@@ -27,11 +27,22 @@ describe('article SEO schemas (CMS-01)', () => {
         ...baseArticle,
         ogImage: 'javascript:alert(1)',
       }),
-    ).toThrow()
-  })
+    ).toThrow();
+  });
 
   it('allows partial SEO update', () => {
-    const parsed = articleUpdateSchema.parse({ seoTitle: 'Updated only' })
-    expect(parsed.seoTitle).toBe('Updated only')
-  })
-})
+    const parsed = articleUpdateSchema.parse({ seoTitle: 'Updated only' });
+    expect(parsed.seoTitle).toBe('Updated only');
+  });
+
+  it('accepts null SEO fields when cleared in admin', () => {
+    const parsed = articleUpdateSchema.parse({
+      seoTitle: null,
+      seoDescription: null,
+      ogImage: null,
+    });
+    expect(parsed.seoTitle).toBeNull();
+    expect(parsed.seoDescription).toBeNull();
+    expect(parsed.ogImage).toBeNull();
+  });
+});

@@ -1,5 +1,31 @@
 import { z } from 'zod';
 
+/** Admin forms may send null for cleared optional SEO fields; Prisma columns are nullable. */
+function optionalArticleNullableString(maxLen?: number) {
+  const base = maxLen ? z.string().max(maxLen) : z.string();
+  return z.preprocess((value) => {
+    if (value === undefined) return undefined;
+    if (value === null || value === '') return null;
+    return String(value);
+  }, base.nullable().optional());
+}
+
+const optionalArticleOgImage = z.preprocess(
+  (value) => {
+    if (value === undefined) return undefined;
+    if (value === null || value === '') return null;
+    return String(value);
+  },
+  z
+    .string()
+    .max(2048)
+    .nullable()
+    .optional()
+    .refine((v) => v == null || /^https:\/\//.test(v), {
+      message: 'ogImage must be an https URL when provided',
+    }),
+);
+
 export const articleCreateSchema = z
   .object({
     slug: z.string().min(1),
@@ -16,15 +42,9 @@ export const articleCreateSchema = z
     authorRole: z.string().optional(),
     authorAvatar: z.string().optional(),
     publishedAt: z.string().optional(),
-    seoTitle: z.string().max(200).optional(),
-    seoDescription: z.string().max(500).optional(),
-    ogImage: z
-      .string()
-      .max(2048)
-      .optional()
-      .refine((v) => !v || v === '' || /^https:\/\//.test(v), {
-        message: 'ogImage must be an https URL when provided',
-      }),
+    seoTitle: optionalArticleNullableString(200),
+    seoDescription: optionalArticleNullableString(500),
+    ogImage: optionalArticleOgImage,
     noindex: z.boolean().optional(),
   })
   .strict();
