@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+
 type RegisterSuccessPanelProps = {
   active: boolean
   title: string
@@ -6,9 +8,18 @@ type RegisterSuccessPanelProps = {
 }
 
 export function RegisterSuccessPanel({ active, title, message, email }: RegisterSuccessPanelProps) {
+  const titleRef = useRef<HTMLHeadingElement>(null)
   const body = message.replace('{email}', email || 'your email')
   const emailIndex = body.indexOf(email)
   const hasEmailHighlight = email && emailIndex >= 0
+
+  useEffect(() => {
+    if (!active) return
+    const frame = requestAnimationFrame(() => {
+      titleRef.current?.focus()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [active])
 
   return (
     <div
@@ -41,7 +52,13 @@ export function RegisterSuccessPanel({ active, title, message, email }: Register
           </span>
         </div>
         <div className="book-demo-register-success__copy">
-          <h2 className="book-demo-register-success__title">{title}</h2>
+          <h2
+            ref={titleRef}
+            tabIndex={-1}
+            className="book-demo-register-success__title"
+          >
+            {title}
+          </h2>
           <p className="book-demo-register-success__text">
             {hasEmailHighlight ? (
               <>

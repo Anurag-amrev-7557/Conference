@@ -5,7 +5,7 @@ import { PlaybookArticleCard } from "../components/blog/PlaybookArticleCard"
 import { PlaybookArticlesSkeleton } from "../components/blog/PlaybookArticlesSkeleton"
 import { useWebsiteData } from "../components/WebsiteDataProvider"
 import { Footer } from "../components/Footer"
-import { BlogCtaSection } from "../components/blog/BlogCtaSection"
+import { FinalCTA } from "../components/sections/FinalCTA"
 import { CatalogHero } from "../components/catalog/CatalogHero"
 import { CatalogToolbar } from "../components/catalog/CatalogToolbar"
 import { CatalogPagination } from "../components/catalog/CatalogPagination"
@@ -154,8 +154,11 @@ export function BlogPage() {
             </>
           )}
 
-          <BlogCtaSection />
         </main>
+
+        {(data.settings.visibility.finalCta ?? true) ? (
+          <FinalCTA useSummitRegister surfaceVariant="muted" />
+        ) : null}
 
         <Footer />
       </div>

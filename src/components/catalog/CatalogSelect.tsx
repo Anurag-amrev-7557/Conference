@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Search } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 export type CatalogSelectOption = {
@@ -15,6 +15,8 @@ type CatalogSelectProps = {
   options: CatalogSelectOption[]
   placeholder?: string
   disabled?: boolean
+  searchable?: boolean
+  searchPlaceholder?: string
   className?: string
   'aria-label'?: string
 }
@@ -25,13 +27,27 @@ export function CatalogSelect({
   options,
   placeholder = 'Select…',
   disabled,
+  searchable = false,
+  searchPlaceholder = 'Search…',
   className,
   'aria-label': ariaLabel,
 }: CatalogSelectProps) {
   const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({})
   const rootRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const selected = options.find((option) => option.value === value)
+
+  const visibleOptions = useMemo(() => {
+    if (!searchable) return options
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return options
+    return options.filter(
+      (option) =>
+        option.value === 'all' || option.label.toLowerCase().includes(query),
+    )
+  }, [options, searchable, searchQuery])
 
   const updateMenuPosition = useCallback(() => {
     const root = rootRef.current
@@ -54,10 +70,22 @@ export function CatalogSelect({
     })
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
-
     updateMenuPosition()
+  }, [open, updateMenuPosition])
+
+  useEffect(() => {
+    if (!open) {
+      setSearchQuery('')
+      return
+    }
+
+    if (searchable) {
+      requestAnimationFrame(() => {
+        searchInputRef.current?.focus({ preventScroll: true })
+      })
+    }
 
     const onDoc = (event: MouseEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
@@ -81,7 +109,17 @@ export function CatalogSelect({
       window.removeEventListener('resize', onReflow)
       window.removeEventListener('scroll', onReflow, true)
     }
-  }, [open, updateMenuPosition])
+  }, [open, searchable, updateMenuPosition])
+
+  const toggleOpen = () => {
+    if (disabled) return
+    if (open) {
+      setOpen(false)
+      return
+    }
+    updateMenuPosition()
+    setOpen(true)
+  }
 
   const menu = (
     <AnimatePresence>
@@ -92,10 +130,39 @@ export function CatalogSelect({
           exit={{ opacity: 0, y: 2, scale: 0.99 }}
           transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
           className="catalog-select__menu"
-          style={menuStyle}
+          style={{
+            ...menuStyle,
+            visibility:
+              menuStyle.top !== undefined || menuStyle.bottom !== undefined
+                ? 'visible'
+                : 'hidden',
+          }}
           role="listbox"
         >
-          {options.map((option) => {
+          {searchable ? (
+            <li className="catalog-select__search" role="presentation">
+              <div className="catalog-select__search-wrap">
+                <Search className="catalog-select__search-icon" aria-hidden />
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  placeholder={searchPlaceholder}
+                  className="catalog-select__search-input"
+                  aria-label={searchPlaceholder}
+                />
+              </div>
+            </li>
+          ) : null}
+          {visibleOptions.length === 0 ? (
+            <li className="catalog-select__empty" role="presentation">
+              No matches
+            </li>
+          ) : null}
+          {visibleOptions.map((option) => {
             const active = option.value === value
             return (
               <li key={option.value} role="presentation">
@@ -130,7 +197,7 @@ export function CatalogSelect({
       <button
         type="button"
         className={cn('catalog-select__trigger', open && 'catalog-select__trigger--open')}
-        onClick={() => !disabled && setOpen((current) => !current)}
+        onClick={toggleOpen}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}

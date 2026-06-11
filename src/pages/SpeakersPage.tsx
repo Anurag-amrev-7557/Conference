@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Footer } from '../components/Footer'
-import { BlogCtaSection } from '../components/blog/BlogCtaSection'
+import { FinalCTA } from '../components/sections/FinalCTA'
 import { CatalogHero } from '../components/catalog/CatalogHero'
 import { CatalogPagination } from '../components/catalog/CatalogPagination'
 import { SpeakerCard } from '../components/sections/conference/SpeakerCard'
@@ -99,7 +99,7 @@ export function SpeakersPage() {
     <>
       <SeoHead seo={seo} />
       <JsonLd graph={jsonLd} />
-      <div className="speakers-page overflow-x-hidden public-page-shell public-inner-page">
+      <div className="speakers-page public-page-shell public-inner-page">
         <CatalogHero
           eyebrow={catalog?.eyebrow?.trim() || 'Speakers'}
           title={renderCatalogTitle(catalog, (
@@ -169,9 +169,8 @@ export function SpeakersPage() {
                       priority={idx < 4}
                       interactive
                       variant="compact"
-                      showFeaturedBadge
                       showEditionBadge={speaker.roster === 'past'}
-                      showTalkChip={speaker.roster !== 'past'}
+                      showTalkChip={false}
                       onSelect={setSelectedSpeaker}
                     />
                   </li>
@@ -184,8 +183,11 @@ export function SpeakersPage() {
             )}
           </div>
 
-          <BlogCtaSection />
         </main>
+
+        {(data.settings.visibility.finalCta ?? true) ? (
+          <FinalCTA useSummitRegister surfaceVariant="muted" />
+        ) : null}
 
         <Footer />
       </div>

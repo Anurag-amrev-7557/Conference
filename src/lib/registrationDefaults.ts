@@ -38,7 +38,7 @@ export const defaultConferenceRegistrationForm: ConferenceRegistrationFormSettin
   submitLabel: 'Complete registration',
   successTitle: 'You’re registered',
   successMessage:
-    'Thanks for reserving your pass. We sent a confirmation to your email — see you at the summit.',
+    'Thanks for reserving your pass. We sent a receipt to {email} — our team will confirm your spot within one business day.',
   fields: {
     name: { label: 'Full name', placeholder: 'Jane Doe', required: true },
     email: { label: 'Email', placeholder: 'you@company.com', required: true },

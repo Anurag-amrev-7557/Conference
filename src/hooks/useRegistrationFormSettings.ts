@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useWebsiteData } from '../components/WebsiteDataProvider';
-import { defaultConferenceRegistrationForm } from '../lib/registrationDefaults';
+import { defaultConferenceRegistrationForm, formatPriceFromCents } from '../lib/registrationDefaults';
+import { isValidDesignationValue } from '../lib/registrationValidation';
 import { mergeDesignationOptions } from '../lib/mergeDesignationOptions';
 import type { ConferenceRegistrationFormSettings } from '../lib/registrationTypes';
 
@@ -16,10 +17,16 @@ export function useRegistrationFormSettings(): ConferenceRegistrationFormSetting
         ? fromSettings.ticketPriceCents
         : defaultConferenceRegistrationForm.ticketPriceCents;
 
+    const mergedDesignationOptions = mergeDesignationOptions(
+      fromSettings.designationOptions,
+      defaultConferenceRegistrationForm.designationOptions,
+    ).filter((option) => isValidDesignationValue(option.value));
+
     return {
       ...defaultConferenceRegistrationForm,
       ...fromSettings,
       ticketPriceCents,
+      priceAmount: formatPriceFromCents(ticketPriceCents),
       fields: {
         ...defaultConferenceRegistrationForm.fields,
         ...fromSettings.fields,
@@ -44,10 +51,7 @@ export function useRegistrationFormSettings(): ConferenceRegistrationFormSetting
           ...fromSettings.fields?.designation,
         },
       },
-      designationOptions: mergeDesignationOptions(
-        fromSettings.designationOptions,
-        defaultConferenceRegistrationForm.designationOptions,
-      ),
+      designationOptions: mergedDesignationOptions,
       panelStats:
         fromSettings.panelStats?.length
           ? fromSettings.panelStats

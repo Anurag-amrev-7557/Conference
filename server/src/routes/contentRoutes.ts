@@ -2,7 +2,10 @@ import { Router, Request } from 'express';
 import prisma from '../lib/prisma';
 import { validateBody } from '../middleware/validateBody';
 import { registrationCreateSchema } from '../schemas/registration';
-import { notifyAdminOfRegistration } from '../lib/registrationNotifications';
+import {
+  notifyAdminOfRegistration,
+  notifyRegistrantOfSubmission,
+} from '../lib/registrationNotifications';
 import { registrationLimiter, newsletterLimiter } from '../middleware/rateLimiters';
 import { getNewsletterSettings } from '../lib/newsletterSettings';
 import { newsletterSignupSchema } from '../schemas/newsletter';
@@ -99,6 +102,9 @@ router.post('/conference-registration', registrationLimiter, validateBody(regist
     });
     void notifyAdminOfRegistration(record).catch((err) => {
       console.error('Registration notify admin failed:', err);
+    });
+    void notifyRegistrantOfSubmission(record).catch((err) => {
+      console.error('Registration notify registrant failed:', err);
     });
     res.status(201).json({
       id: record.id,

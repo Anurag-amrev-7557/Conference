@@ -77,28 +77,26 @@ export function SpeakersCatalogToolbar({
 
   return (
     <div className="speakers-catalog-toolbar">
-      <div className="speakers-catalog-toolbar__search">
-        <div className="catalog-search">
-          <Search className="catalog-search__icon" aria-hidden />
-          <label className="sr-only" htmlFor={searchId}>
-            Search speakers
-          </label>
-          <input
-            id={searchId}
-            type="search"
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by name, company, or talk"
-            className="catalog-search__input"
-          />
-        </div>
+      <div className="catalog-search speakers-catalog-toolbar__search">
+        <Search className="catalog-search__icon" aria-hidden />
+        <label className="sr-only" htmlFor={searchId}>
+          Search speakers
+        </label>
+        <input
+          id={searchId}
+          type="search"
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search by name, company, or talk"
+          className="catalog-search__input"
+        />
       </div>
 
       <div className="speakers-catalog-toolbar__controls">
         {filters.length > 0 ? (
           <div
             ref={segmentsRef}
-            className="catalog-segments speakers-catalog-toolbar__segments"
+            className="catalog-segments"
             role="tablist"
             aria-label="Speaker filters"
           >
@@ -138,6 +136,8 @@ export function SpeakersCatalogToolbar({
             value={activeCompany}
             onChange={onCompanyChange}
             options={companyOptions}
+            searchable
+            searchPlaceholder="Search companies"
             aria-label="Filter by company"
           />
         ) : null}

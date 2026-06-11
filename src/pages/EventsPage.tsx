@@ -6,7 +6,7 @@ import type { AppEvent } from "../lib/websiteData"
 import { formatEventDayLabel } from "../lib/eventDates"
 import { usePagination } from "../lib/usePagination"
 import { Footer } from "../components/Footer"
-import { BlogCtaSection } from "../components/blog/BlogCtaSection"
+import { FinalCTA } from "../components/sections/FinalCTA"
 import { CatalogHero } from "../components/catalog/CatalogHero"
 import { CatalogToolbar } from "../components/catalog/CatalogToolbar"
 import { CatalogPagination } from "../components/catalog/CatalogPagination"
@@ -121,8 +121,11 @@ export function EventsPage() {
             </>
           )}
 
-          <BlogCtaSection />
         </main>
+
+        {(data.settings.visibility.finalCta ?? true) ? (
+          <FinalCTA useSummitRegister surfaceVariant="muted" />
+        ) : null}
 
         <Footer />
       </div>

@@ -1,4 +1,4 @@
-import { ChevronRight, Mic2, UserRound } from 'lucide-react'
+import { ChevronRight, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { resolveAssetUrl } from '../../lib/assetUrl'
 import type { ConferenceSpeaker } from '../../lib/websiteData'
@@ -51,23 +51,12 @@ export function SpeakerListRow({ speaker, onSelect }: SpeakerListRowProps) {
       </div>
 
       <div className="speaker-list-row__body">
-        <div className="speaker-list-row__primary">
-          <h3 className="speaker-list-row__name">{speaker.name}</h3>
-          {speaker.featured ? (
-            <span className="speaker-list-row__badge">Featured</span>
-          ) : null}
-        </div>
+        <h3 className="speaker-list-row__name">{speaker.name}</h3>
         {speaker.title?.trim() ? (
           <p className="speaker-list-row__role">{speaker.title}</p>
         ) : null}
         {speaker.company?.trim() ? (
           <p className="speaker-list-row__company">{speaker.company}</p>
-        ) : null}
-        {speaker.talkTitle?.trim() ? (
-          <p className="speaker-list-row__session">
-            <Mic2 className="speaker-list-row__session-icon" aria-hidden />
-            <span>{speaker.talkTitle}</span>
-          </p>
         ) : null}
       </div>
 

@@ -7,52 +7,84 @@ type WaveDividerProps = {
   variant?: 'light' | 'dark'
 }
 
+const H = 40
+const AMP = 6
+const WAVELENGTH = 120
+
 export function WaveDivider({ className, variant = 'light' }: WaveDividerProps) {
   const gradId = useId().replace(/:/g, '')
   const wrapRef = useRef<HTMLDivElement>(null)
   const pathRef = useRef<SVGPathElement>(null)
+  const phaseRef = useRef(0)
+  const widthRef = useRef(1200)
+  const animatingRef = useRef(false)
   const [width, setWidth] = useState(1200)
-  const [phase, setPhase] = useState(0)
   const [drawn, setDrawn] = useState(false)
 
-  const h = 40
-  const amp = 6
-  const wavelength = 120
-  const d = buildWavePath(width, h, phase, amp, wavelength, 2)
+  const applyPath = (nextWidth: number, phase: number) => {
+    pathRef.current?.setAttribute(
+      'd',
+      buildWavePath(nextWidth, H, phase, AMP, WAVELENGTH, 2),
+    )
+  }
 
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return
+
     const ro = new ResizeObserver(([entry]) => {
-      setWidth(Math.max(320, Math.floor(entry.contentRect.width)))
+      const nextWidth = Math.max(320, Math.floor(entry.contentRect.width))
+      widthRef.current = nextWidth
+      setWidth(nextWidth)
+      applyPath(nextWidth, phaseRef.current)
     })
     ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
-  useEffect(() => {
-    const el = wrapRef.current
-    if (!el) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setDrawn(true)
-      },
-      { threshold: 0.2 },
-    )
-    obs.observe(el)
-
-    if (reduced) return () => obs.disconnect()
+    applyPath(widthRef.current, phaseRef.current)
 
     let raf = 0
     const tick = () => {
-      setPhase((p) => p + 0.04)
+      if (!animatingRef.current) {
+        raf = 0
+        return
+      }
+      phaseRef.current += 0.04
+      applyPath(widthRef.current, phaseRef.current)
       raf = requestAnimationFrame(tick)
     }
-    raf = requestAnimationFrame(tick)
+
+    const start = () => {
+      if (reduced || raf) return
+      animatingRef.current = true
+      raf = requestAnimationFrame(tick)
+    }
+
+    const stop = () => {
+      animatingRef.current = false
+      if (raf) {
+        cancelAnimationFrame(raf)
+        raf = 0
+      }
+    }
+
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setDrawn(true)
+          start()
+        } else {
+          stop()
+        }
+      },
+      { threshold: 0.05 },
+    )
+    obs.observe(el)
+
     return () => {
-      cancelAnimationFrame(raf)
+      stop()
       obs.disconnect()
+      ro.disconnect()
     }
   }, [])
 
@@ -67,7 +99,7 @@ export function WaveDivider({ className, variant = 'light' }: WaveDividerProps) 
       )}
       aria-hidden
     >
-      <svg className="wave-divider__svg" viewBox={`0 0 ${width} ${h}`} preserveAspectRatio="none">
+      <svg className="wave-divider__svg" viewBox={`0 0 ${width} ${H}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id={`wave-divider-grad-${gradId}`} x1="0%" y1="0%" x2="100%" y2="0%">
             {variant === 'dark' ? (
@@ -92,7 +124,7 @@ export function WaveDivider({ className, variant = 'light' }: WaveDividerProps) 
         <path
           ref={pathRef}
           className="wave-divider__path"
-          d={d}
+          d={buildWavePath(width, H, 0, AMP, WAVELENGTH, 2)}
           fill="none"
           stroke={`url(#wave-divider-grad-${gradId})`}
           strokeWidth="2"

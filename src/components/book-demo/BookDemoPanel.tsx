@@ -1,11 +1,11 @@
 import { CalendarDays, Mic2, Users } from 'lucide-react'
-import { useRegistrationFormSettings } from '../../hooks/useRegistrationFormSettings'
+import { useRegistrationFormSettingsContext } from '../../context/RegistrationFormSettingsContext'
 import { SectionWaveLabel } from '../ui/SectionWaveLabel'
 
 const statIcons = [Users, Mic2, CalendarDays] as const
 
 export function BookDemoPanel() {
-  const form = useRegistrationFormSettings()
+  const form = useRegistrationFormSettingsContext()
   const quote = form.panelQuote
 
   return (

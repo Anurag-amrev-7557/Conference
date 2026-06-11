@@ -67,6 +67,36 @@ export async function notifyAdminOfRegistration(record: ConferenceRegistrationRo
   return sendEmail({ to: notifyEmail, subject, html, text });
 }
 
+/** Receipt sent immediately after a pending registration is created. */
+export async function notifyRegistrantOfSubmission(record: ConferenceRegistrationRow) {
+  const settings = await getConferenceRegistrationSettings();
+  if (settings.sendRegistrantEmails === false) {
+    return { skipped: true as const };
+  }
+
+  const subject = 'We received your Superhumanly Summit registration';
+  const text = [
+    `Hi ${record.name},`,
+    '',
+    'Thanks for reserving your summit pass. We received your registration and our team will confirm your spot within one business day.',
+    '',
+    'You do not need to take any further action right now.',
+    '',
+    '— Superhumanly Team',
+  ].join('\n');
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;line-height:1.55;color:#111;max-width:560px">
+      <p>Hi ${record.name},</p>
+      <p>Thanks for reserving your summit pass. We received your registration and our team will confirm your spot within <strong>one business day</strong>.</p>
+      <p>You do not need to take any further action right now.</p>
+      <p style="color:#666;font-size:13px">— Superhumanly Team</p>
+    </div>
+  `;
+
+  return sendEmail({ to: record.email, subject, html, text });
+}
+
 export async function notifyRegistrantOfStatus(
   record: ConferenceRegistrationRow,
   previousStatus?: string,

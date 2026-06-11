@@ -1,4 +1,4 @@
-import { useRegistrationFormSettings } from '../../hooks/useRegistrationFormSettings'
+import { useRegistrationFormSettingsContext } from '../../context/RegistrationFormSettingsContext'
 import { SectionWaveLabel } from '../ui/SectionWaveLabel'
 
 function LogoWordmark({ label }: { label: string }) {
@@ -23,7 +23,7 @@ function LogoTrack({ logos, ariaHidden = false }: { logos: string[]; ariaHidden?
 }
 
 export function BookDemoTrustFooter() {
-  const form = useRegistrationFormSettings()
+  const form = useRegistrationFormSettingsContext()
   const logos = form.trustFooter.logos
 
   return (

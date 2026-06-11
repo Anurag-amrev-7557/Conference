@@ -1,3 +1,9 @@
+import {
+  RegistrationApiError,
+  parseRegistrationResponse,
+  registrationErrorMessage,
+} from './registrationApi';
+
 export type MediaLibraryItem = {
   filename: string;
   url: string;
@@ -605,8 +611,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to submit registration');
+    const data = await parseRegistrationResponse(res);
+    if (!res.ok) {
+      throw new RegistrationApiError(
+        registrationErrorMessage(res.status, data, 'Failed to submit registration'),
+        res.status,
+      );
+    }
     return data as { id: string; success: boolean; message: string };
   },
 
